@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.asset.AssetIpMapper">
+
+
+    <select id="getPortCountBySubDomainId" resultType="java.lang.Long">
+        SELECT COUNT(ap.id)
+        FROM asset_ip_sub_domain
+                 LEFT JOIN asset_port ap ON ap.id = asset_ip_sub_domain.ip_id
+                 LEFT JOIN asset_sub_domain asd ON asset_ip_sub_domain.subdomain_id = asd.id
+        WHERE asd.id = #{id};
+    </select>
+
+    <select id="getPortCountByIpId" resultType="java.lang.Long">
+        SELECT COUNT(ap.id)
+        FROM asset_port ap
+        WHERE ap.ip = #{ipId};
+    </select>
+
+    <select id="getBySubDomainId" resultType="org.jeecg.modules.testnet.server.vo.asset.AssetIpVO">
+        select ai.*, count(ap.id) as portCount
+        from asset_ip ai
+                 left join asset_ip_sub_domain ais on ai.id = ais.ip_id
+                 left join asset_port ap on ai.id = ap.ip
+        where ais.subdomain_id = #{id}
+        group by ai.id;
+    </select>
+
+</mapper>

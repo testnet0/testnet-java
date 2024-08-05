@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.asset.AssetApiMapper">
+    <delete id="delByProjectId">
+        delete
+        from asset_api
+        where project_id = #{projectId}
+    </delete>
+
+    <delete id="delByAssetWebTreeId">
+        delete
+        from asset_api
+        where asset_web_tree_id = #{id}
+    </delete>
+
+    <select id="getCountByProject" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM asset_api aa
+                 LEFT JOIN asset_api_tree aat ON aa.asset_web_tree_id = aat.id
+                 LEFT JOIN asset_web aw ON aat.asset_web_id = aw.id
+        WHERE aw.project_id = #{id};
+    </select>
+
+    <update id="updateTreeNodeStatus" parameterType="java.lang.String">
+        update asset_api
+        set has_child = #{status}
+        where id = #{id}
+    </update>
+
+    <!-- 【vue3专用】 -->
+    <select id="queryListByPid" parameterType="java.lang.Object"
+            resultType="org.jeecg.common.system.vo.SelectTreeModel">
+        select
+        aa.id as "id",
+        aa.id as "key",
+        aa.id as "value",
+        (case when pid = '0' then aw.web_url else aa.path end) as "title",
+        (case when has_child = '1' then 0 else 1 end) as isLeaf,
+        aa.pid as parentId
+        from asset_api aa
+        left join asset_web aw ON aa.asset_web_id = aw.id
+        where aa.pid = #{pid} and aa.http_method = ''
+        <if test="query != null">
+            <foreach collection="query.entrySet()" item="value" index="key">
+                and ${key} = #{value}
+            </foreach>
+        </if>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jeecgframework.boot</groupId>
+        <artifactId>jeecg-boot-parent</artifactId>
+        <version>3.7.0</version>
+    </parent>
+    <groupId>cn.iotaa</groupId>
+    <artifactId>testnet-client</artifactId>
+    <version>1.0.0</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.test.skip>true</maven.test.skip>
+        <spring-boot.version>2.7.17</spring-boot.version>
+        <fasterxml.jackson.version>2.13.4.2</fasterxml.jackson.version>
+        <liteflow.version>2.12.0</liteflow.version>
+        <mysql-connector-java.version>8.0.27</mysql-connector-java.version>
+        <cos.api.version>5.6.155</cos.api.version>
+        <testnet-common.version>1.0.0</testnet-common.version>
+    </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.iotaa</groupId>
+            <artifactId>testnet-common</artifactId>
+            <version>${testnet-common.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.yomahub</groupId>
+            <artifactId>liteflow-rule-sql</artifactId>
+            <version>${liteflow.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.yomahub</groupId>
+            <artifactId>liteflow-spring-boot-starter</artifactId>
+            <version>${liteflow.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.yomahub</groupId>
+            <artifactId>liteflow-script-java</artifactId>
+            <version>${liteflow.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--mysql-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql-connector-java.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!--        必须安装jpython 否则启动报错-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.yomahub</groupId>-->
+        <!--            <artifactId>liteflow-script-python</artifactId>-->
+        <!--            <version>2.11.4.2</version>-->
+        <!--        </dependency>-->
+        <!--        按需加载 -->
+        <!--        <dependency>-->
+        <!--            <groupId>com.yomahub</groupId>-->
+        <!--            <artifactId>liteflow-script-groovy</artifactId>-->
+        <!--            <version>${liteflow.version}</version>-->
+        <!--        </dependency>-->
+        <!--                按需加载 -->
+        <!--        <dependency>-->
+        <!--            <groupId>com.yomahub</groupId>-->
+        <!--            <artifactId>liteflow-script-graaljs</artifactId>-->
+        <!--            <version>${liteflow.version}</version>-->
+        <!--        </dependency>-->
+        <dependency>
+            <groupId>dnsjava</groupId>
+            <artifactId>dnsjava</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+            <version>${cos.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.25</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <!--            <build>-->
+    <!--                <plugins>-->
+    <!--                    <plugin>-->
+    <!--                        <groupId>org.springframework.boot</groupId>-->
+    <!--                        <artifactId>spring-boot-maven-plugin</artifactId>-->
+    <!--                        <configuration>-->
+    <!--                            <layout>ZIP</layout>-->
+    <!--                            <includes>-->
+    <!--                                <include>-->
+    <!--                                    <groupId>nothing</groupId>-->
+    <!--                                    <artifactId>nothing</artifactId>-->
+    <!--                                </include>-->
+    <!--                            </includes>-->
+    <!--                        </configuration>-->
+    <!--                        <executions>-->
+    <!--                            <execution>-->
+    <!--                                <goals>-->
+    <!--                                    <goal>repackage</goal>-->
+    <!--                                </goals>-->
+    <!--                            </execution>-->
+    <!--                        </executions>-->
+    <!--                    </plugin>-->
+    <!--                </plugins>-->
+    <!--            </build>-->
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

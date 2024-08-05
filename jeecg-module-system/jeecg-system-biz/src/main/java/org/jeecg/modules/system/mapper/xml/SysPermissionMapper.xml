@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.system.mapper.SysPermissionMapper">
+
+
+	<resultMap id="TreeModel" type="org.jeecg.modules.system.model.TreeModel" >
+		<result column="id" property="key" jdbcType="VARCHAR"/>
+		<result column="name" property="title" jdbcType="VARCHAR"/>
+		<result column="icon" property="icon" jdbcType="VARCHAR"/>
+		<result column="parent_id" property="parentId" jdbcType="VARCHAR"/>
+		<result column="is_leaf" property="isLeaf" jdbcType="INTEGER"/>
+	</resultMap>
+	
+	<!-- 通过<resultMap>映射实体类属性名和表的字段名对应关系 -->
+	<resultMap id="SysPermission" type="org.jeecg.modules.system.entity.SysPermission">
+	   <!-- result属性映射非匹配字段 -->
+	    <result column="is_route" property="route"/>
+	    <result column="keep_alive" property="keepAlive"/>
+	    <result column="is_leaf" property="leaf"/>
+	</resultMap>
+	
+	
+	<select id="queryListByParentId" parameterType="Object"  resultMap="TreeModel">
+		   SELECT   
+                   id
+                   ,parent_id
+                   ,name
+                   ,icon
+                   ,is_leaf
+		   FROM   sys_permission
+		   WHERE 1=1
+		    <choose>
+		   		<when test="parentId != null and parentId != ''">
+		   			AND parent_id =  #{parentId,jdbcType=VARCHAR}
+		   		</when>
+		   		<otherwise>
+		   			AND parent_id is null
+		   		</otherwise>
+		    </choose>
+	</select>
+	
+	<!-- 获取登录用户拥有的权限 -->
+	<select id="queryByUser" parameterType="Object"  resultMap="SysPermission">
+		   SELECT * FROM (
+				SELECT  p.id,
+						p.parent_id,
+						p.name,
+						p.url,
+						p.component,
+						p.is_route,
+						p.component_name,
+						p.redirect,
+						p.menu_type,
+						p.perms,
+						p.perms_type,
+						p.sort_no,
+						p.always_show,
+						p.icon,
+						p.is_leaf,
+						p.keep_alive,
+						p.hidden,
+						p.hide_tab,
+						p.rule_flag,
+						p.status,
+						p.internal_or_external
+			   FROM  sys_permission p
+			   WHERE p.del_flag = 0
+		       AND  ( p.id in (
+			   		SELECT DISTINCT a.permission_id
+					FROM sys_role_permission a
+					JOIN sys_role b ON a.role_id = b.id
+					JOIN sys_user_role c ON c.role_id = b.id AND c.user_id = #{userId,jdbcType=VARCHAR}
+					)
+					or (p.url like '%:code' and p.url like '/online%' and p.hidden = 1)
+					or (p.url like '%:id' and p.url like '/online%' and p.hidden = 1)
+					or p.url = '/online'
+		       )
+			<!--update begin Author:lvdandan  Date:20200213 for：加入部门权限 -->
+			   UNION
+			   SELECT   p.id,
+						p.parent_id,
+						p.name,
+						p.url,
+						p.component,
+						p.is_route,
+						p.component_name,
+						p.redirect,
+						p.menu_type,
+						p.perms,
+						p.perms_type,
+						p.sort_no,
+						p.always_show,
+						p.icon,
+						p.is_leaf,
+						p.keep_alive,
+						p.hidden,
+						p.hide_tab,
+						p.rule_flag,
+						p.status,
+						p.internal_or_external
+			FROM  sys_permission p
+			WHERE p.id in(
+		        SELECT DISTINCT a.permission_id
+				FROM  sys_depart_role_permission a
+				INNER JOIN sys_depart_role b ON a.role_id = b.id
+				INNER JOIN sys_depart_role_user c ON c.drole_id = b.id AND c.user_id = #{userId,jdbcType=VARCHAR}
+				)
+			   and p.del_flag = 0
+			<!--update end Author:lvdandan  Date:20200213 for：加入部门权限 -->
+			
+			<!-- update begin Author: taoyan  Date:20200213 for：QQYUN-4303 【low app】 用户登录的时候 加载low app的套餐权限 加到用户信息 -->
+			UNION
+			SELECT  p.id,
+					p.parent_id,
+					p.name,
+					p.url,
+					p.component,
+					p.is_route,
+					p.component_name,
+					p.redirect,
+					p.menu_type,
+					p.perms,
+					p.perms_type,
+					p.sort_no,
+					p.always_show,
+					p.icon,
+					p.is_leaf,
+					p.keep_alive,
+					p.hidden,
+					p.hide_tab,
+					p.rule_flag,
+					p.status,
+					p.internal_or_external
+			FROM  sys_permission p
+			WHERE p.id in (
+				SELECT distinct a.permission_id
+				FROM sys_tenant_pack_perms a
+				INNER JOIN sys_tenant_pack b ON a.pack_id = b.id AND b.STATUS = '1'
+				INNER JOIN sys_tenant st ON st.id = b.tenant_id and st.del_flag = 0
+				INNER JOIN sys_tenant_pack_user c ON c.pack_id = b.id AND c.STATUS = '1' AND c.user_id = #{userId,jdbcType=VARCHAR}
+			)
+			and p.del_flag = 0
+		<!-- update end Author: taoyan  Date:20200213 for：QQYUN-4303 【low app】 用户登录的时候 加载low app的套餐权限 加到用户信息 -->
+			
+		   ) h order by h.sort_no ASC
+	</select>
+
+
+	<!-- 根据用户账号查询菜单权限 -->
+	<select id="queryCountByUsername" parameterType="Object" resultType="int">
+		select sum(cnt) from (
+		  select count(*) as cnt
+			from sys_role_permission a
+			join sys_permission b on a.permission_id = b.id
+			join sys_role c on a.role_id = c.id
+			join sys_user_role d on d.role_id = c.id
+			join sys_user e on d.user_id = e.id
+			where e.username = #{username}
+			<if test="permission.id !=null and permission.id != ''">
+				and b.id =  #{permission.id}
+			</if>
+			<if test="permission.url !=null and permission.url != ''">
+				and b.url =  #{permission.url}
+			</if>
+		union all
+		  select count(*) as cnt
+			from sys_permission z
+		    join sys_depart_role_permission y on z.id = y.permission_id
+			join sys_depart_role x on y.role_id = x.id
+			join sys_depart_role_user w on w.drole_id = x.id
+			join sys_user v on w.user_id = v.id
+			where v.username = #{username}
+			<if test="permission.id !=null and permission.id != ''">
+				and z.id =  #{permission.id}
+			</if>
+			<if test="permission.url !=null and permission.url != ''">
+				and z.url =  #{permission.url}
+			</if>
+		) temp
+	</select>
+
+	<!-- 查询部门权限数据 -->
+	<select id="queryDepartPermissionList" parameterType="String"  resultType="org.jeecg.modules.system.entity.SysPermission">
+		SELECT * FROM sys_permission
+		where del_flag = 0
+		and id in (
+			select permission_id from sys_depart_permission where depart_id = #{departId}
+		)
+		order by sort_no ASC 
+	</select>
+	
+	<!--根据用户名称和test角色id查询权限-->
+	<select id="queryPermissionByTestRoleId" resultType="org.jeecg.modules.system.entity.SysPermission">
+		SELECT p.*
+		FROM  sys_permission p
+		WHERE exists(
+				   select a.id from sys_role_permission a
+				   join sys_role b on a.role_id = b.id
+				   where p.id = a.permission_id AND b.id= 'ee8626f80f7c2619917b6236f3a7f02b'
+			   )
+		  and p.del_flag = 0
+	</select>
+
+</mapper>

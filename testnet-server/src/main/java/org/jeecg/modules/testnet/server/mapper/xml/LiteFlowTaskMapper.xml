@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.liteflow.LiteFlowTaskMapper">
+
+
+    <select id="getUndoList" resultType="org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask">
+        select *
+        from lite_flow_task
+        where un_finished_chain > 0
+        order by priority desc;
+    </select>
+
+
+    <select id="getBySubTaskId" resultType="org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask">
+        select *
+        from lite_flow_task
+        where id = (select task_id from lite_flow_sub_task where id = #{subTaskId});
+    </select>
+
+
+</mapper>

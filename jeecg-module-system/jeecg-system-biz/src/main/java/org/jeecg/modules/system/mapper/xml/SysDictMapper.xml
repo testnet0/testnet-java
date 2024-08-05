@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.system.mapper.SysDictMapper">
+
+	<!-- 通过字典code获取字典数据 -->
+	<select id="queryDictItemsByCode" parameterType="String"  resultType="org.jeecg.common.system.vo.DictModel">
+		   select s.item_value as "value",s.item_text as "text",s.item_color as color from sys_dict_item s
+		   where dict_id = (select id from sys_dict where dict_code = #{code})
+		   order by s.sort_order asc, s.create_time DESC;
+	</select>
+
+	<!-- 通过字典code获取有效的字典数据项 -->
+	<select id="queryEnableDictItemsByCode" parameterType="String"  resultType="org.jeecg.common.system.vo.DictModel">
+		   select s.item_value as "value",s.item_text as "text", s.item_color as "color" from sys_dict_item s
+		   where dict_id = (select id from sys_dict where dict_code = #{code})
+		   and s.status = 1
+		   order by s.sort_order asc, s.create_time DESC;
+	</select>
+
+	<!-- 通过多个字典code获取字典数据 -->
+	<select id="queryDictItemsByCodeList" parameterType="java.util.List" resultType="org.jeecg.common.system.vo.DictModelMany">
+		SELECT
+			dict.dict_code,
+			item.item_text AS "text",
+			item.item_value AS "value",
+			item.item_color AS "color"
+		FROM
+			sys_dict_item item
+		INNER JOIN sys_dict dict ON dict.id = item.dict_id
+		WHERE dict.dict_code IN (
+			<foreach item="dictCode" collection="dictCodeList" separator=",">
+				#{dictCode}
+			</foreach>
+		)
+		ORDER BY item.sort_order ASC
+	</select>
+
+	<!-- 通过字典code获取字典数据 -->
+	<select id="queryDictTextByKey" parameterType="String"  resultType="String">
+		   select s.item_text from sys_dict_item s 
+		   where s.dict_id = (select id from sys_dict where dict_code = #{code})
+		   and s.item_value = #{key}
+	</select>
+
+	<!-- 通过字典code获取字典数据，可批量查询 -->
+	<select id="queryManyDictByKeys" parameterType="String"  resultType="org.jeecg.common.system.vo.DictModelMany">
+		SELECT
+			dict.dict_code,
+			item.item_text AS "text",
+			item.item_value AS "value",
+			item.item_color AS "color"
+		FROM
+			sys_dict_item item
+		INNER JOIN sys_dict dict ON dict.id = item.dict_id
+		WHERE dict.dict_code IN (
+			<foreach item="dictCode" collection="dictCodeList" separator=",">
+				#{dictCode}
+			</foreach>
+		)
+		AND item.item_value IN (
+			<foreach item="key" collection="keys" separator=",">
+				#{key}
+			</foreach>
+		)
+	</select>
+	
+	<!-- 获取全部字典项 -->
+	<select id="queryAllDictItems" resultType="org.jeecg.common.system.vo.DictModelMany">
+		SELECT
+			dict.dict_code,
+			item.item_text AS "text",
+			item.item_value AS "value",
+			item.item_color AS "color"
+		FROM
+			sys_dict_item item
+		INNER JOIN sys_dict dict ON dict.id = item.dict_id
+		WHERE dict.del_flag = 0
+		<if test="tenantIdList!=null  and tenantIdList.size()>0">
+		AND  dict.tenant_id IN (
+			<foreach item="tenantId" collection="tenantIdList" separator=",">
+				#{tenantId}
+			</foreach>
+		)
+		</if>
+		AND item.status =1
+		order by dict.dict_code, item.sort_order
+	</select>
+
+	<!-- 查询部门信息 作为字典数据 -->
+	<select id="queryAllDepartBackDictModel" resultType="org.jeecg.common.system.vo.DictModel">
+		select id as "value",depart_name as "text" from sys_depart where del_flag = '0'
+	</select>
+
+	<!-- 查询用户信息 作为字典数据 -->
+	<select id="queryAllUserBackDictModel" resultType="org.jeecg.common.system.vo.DictModel">
+		select username as "value",realname as "text" from sys_user where del_flag = '0'
+	</select>
+	
+	
+	<!-- *****************以下方法写法存在SQL注入风险***************** -->
+
+	<!-- 重复校验 sql语句【已加入SQL注入check】 -->
+	<sql id="checkDuplicateCountSqlFragment">
+		SELECT COUNT(1) FROM ${tableName} WHERE ${fieldName} = #{fieldVal}
+	</sql>
+	<select id="duplicateCheckCountSql" resultType="Long" parameterType="org.jeecg.modules.system.model.DuplicateCheckVo">
+		<include refid="checkDuplicateCountSqlFragment"></include>
+		 AND id &lt;&gt; #{dataId}
+	</select>
+	<select id="duplicateCheckCountSqlNoDataId" resultType="Long" parameterType="org.jeecg.modules.system.model.DuplicateCheckVo">
+		<include refid="checkDuplicateCountSqlFragment"></include>
+	</select>
+		
+	<!-- 根据表名、显示字段名、存储字段名、父ID查询树   【已加入SQL注入check】 -->
+	<select id="queryTreeList" parameterType="Object" resultType="org.jeecg.modules.system.model.TreeSelectModel">
+		select ${text} as "title",
+			   ${code} as "key",
+			   <if test="hasChildField != null and hasChildField != ''">
+				   <choose>
+					   <when test="converIsLeafVal!=null and converIsLeafVal==1">
+						   (case when ${hasChildField} = '1' then 0 else 1 end) as isLeaf,
+					   </when>
+					   <otherwise>
+						   ${hasChildField} as isLeaf,
+					   </otherwise>
+				   </choose>
+			   </if>
+			   ${pidField} as parentId
+			   from ${table}
+			   where
+		       <!-- 父ID条件 -->
+			   <if test="query == null">
+				   <choose>
+					   <when test="pid != null and pid != ''">
+						   ${pidField} = #{pid}
+					   </when>
+					   <otherwise>
+						   (${pidField} = '' OR ${pidField} IS NULL)
+					   </otherwise>
+				   </choose>
+			   </if>
+			   <!-- 查询条件组装 -->
+			   <if test="query!= null">
+			       1 = 1
+				   <foreach collection="query.entrySet()" item="value"  index="key" >
+					   <choose>
+						   <when test="key == 'tenant_id'">
+							   and tenant_id = #{value}
+						   </when>
+						   <otherwise>
+							   and ${key} LIKE #{value}
+						   </otherwise>
+					   </choose>
+				   </foreach>
+					 <!-- 【issues/3709】自定义树查询条件没有处理父ID，没有树状结构了 -->
+					 <choose>
+						 <when test="pid != null and pid != ''">
+							 and ${pidField} = #{pid}
+						 </when>
+						 <otherwise>
+							 and (${pidField} = '' OR ${pidField} IS NULL)
+						 </otherwise>
+					 </choose>
+			   </if>
+	</select>
+
+	<!-- 分页查询字典表数据，支持text或code模糊查询匹配【已加入SQL注入check】 -->
+	<select id="queryDictTablePageList" parameterType="Object" resultType="org.jeecg.common.system.vo.DictModel">
+		select ${query.text} as "text", ${query.code} as "value" from ${query.table}
+		where
+		<if test="query.keyword != null and query.keyword != ''">
+			<bind name="bindKeyword" value="'%'+query.keyword+'%'"/>
+			 (${query.text} like #{bindKeyword} or ${query.code} like #{bindKeyword})
+		</if>
+		<if test="query.codeValue != null and query.codeValue != ''">
+			 ${query.code} = #{query.codeValue}
+		</if>
+	</select>
+	
+	<!--查询表字典数据，支持关键字和自定义查询条件【已加入SQL注入check】 -->
+	<sql id="queryTableDictWithFilterSqlFragment">
+		select ${text} as "text", ${code} as "value" from ${table}
+		<if test="filterSql != null and filterSql != ''">
+			where ${filterSql}
+		</if>
+	</sql>
+	<!--查询表字典数据，分页返回-->
+	<select id="queryPageTableDictWithFilter" parameterType="String"  resultType="org.jeecg.common.system.vo.DictModel">
+		<include refid="queryTableDictWithFilterSqlFragment"></include>
+	</select>
+	<!--查询表字典数据，不分页返回-->
+	<select id="queryTableDictWithFilter" parameterType="String"  resultType="org.jeecg.common.system.vo.DictModel">
+		<include refid="queryTableDictWithFilterSqlFragment"></include>
+	</select>
+
+	<!-- 查询表字典的数据, 支持设置过滤条件和code值 精确匹配查询【已加入SQL注入check】 -->
+	<select id="queryTableDictByKeysAndFilterSql" parameterType="String" resultType="org.jeecg.common.system.vo.DictModel">
+		select ${text} as "text", ${code} as "value" from ${table} 
+		where ${code} IN (
+		<foreach item="key" collection="codeValues" separator=",">
+			#{key}
+		</foreach>
+		)
+		<if test="filterSql != null and filterSql != ''">
+			and ${filterSql}
+		</if>
+	</select>
+
+	<!-- *****************以上方法写法存在SQL注入风险***************** -->
+	
+	<!--根据应用id获取字典列表和详情-->
+	<select id="getDictListByLowAppId" resultType="org.jeecg.modules.system.entity.SysDict">
+		select id,dict_name,dict_code from sys_dict
+		where
+		del_flag = 0
+		and low_app_id = #{lowAppId}
+		and tenant_id = #{tenantId}
+	</select>
+
+
+</mapper>

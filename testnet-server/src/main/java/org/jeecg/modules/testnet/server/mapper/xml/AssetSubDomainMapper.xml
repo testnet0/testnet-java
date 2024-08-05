@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.asset.AssetSubDomainMapper">
+
+
+    <select id="getSubDomainListByIpId" resultType="org.jeecg.modules.testnet.server.vo.asset.AssetSubDomainVO">
+        select *
+        from asset_sub_domain as asd
+                 LEFT JOIN asset_ip_sub_domain as asds on asd.id = asds.subdomain_id
+        where asds.ip_id = #{ipId}
+    </select>
+</mapper>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper">
+    <delete id="delByProjectId">
+        DELETE
+        FROM asset_web
+        WHERE project_id = #{projectId}
+    </delete>
+
+    <select id="getCountByProject" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM asset_web aw
+                 JOIN asset_port ap ON aw.port_id = ap.id
+                 JOIN asset_ip ai ON ap.ip = ai.id
+        WHERE ai.project_id = #{id};
+    </select>
+    <select id="delByPort" resultType="org.jeecg.modules.testnet.server.entity.asset.AssetWeb">
+        DELETE
+        FROM asset_web
+        WHERE port_id = #{portId}
+    </select>
+
+    <select id="findWebByPortId" resultType="java.lang.String">
+        SELECT id
+        FROM asset_web
+        WHERE port_id = #{portId}
+    </select>
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.liteflow.LiteFlowSubTaskMapper">
+
+    <delete id="deleteByMainId" parameterType="java.lang.String">
+        DELETE
+        FROM lite_flow_sub_task
+        WHERE task_id = #{mainId}    </delete>
+
+    <select id="selectByMainId" parameterType="java.lang.String"
+            resultType="org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask">
+        SELECT *
+        FROM lite_flow_sub_task
+        WHERE task_id = #{mainId}
+    </select>
+
+    <select id="getPendingList" resultType="org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask">
+        SELECT *
+        FROM lite_flow_sub_task
+        WHERE task_id = #{mainId}
+        AND task_status = 'PENDING'
+        <if test="size != null and size != 0">
+            LIMIT #{size}
+        </if>
+    </select>
+
+    <select id="getCurrentThreadCount" resultType="java.lang.Integer">
+        select count(lfst.id)
+        from lite_flow_sub_task lfst
+                 LEFT JOIN lite_flow_task lft ON lfst.task_id = lft.id
+        where lfst.task_status = 'running'
+          and lfst.client_id = #{clientId}
+          and lft.chain_id = #{chainId};
+    </select>
+    <select id="getRunningList" resultType="org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask">
+        SELECT *
+        FROM lite_flow_sub_task
+        WHERE task_status = 'running'
+    </select>
+    <select id="getUndoCountByTaskId" resultType="java.lang.Long">
+        select count(id)
+        from lite_flow_sub_task
+        where task_id = #{taskId}
+          and task_status = 'PENDING'
+    </select>
+</mapper>

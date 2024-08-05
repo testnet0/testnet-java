@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.asset.AssetPortMapper">
+
+    <delete id="delByProjectId">
+        DELETE
+        FROM asset_port
+        WHERE project_id = #{projectId}
+    </delete>
+
+
+    <select id="listByDomainId" resultType="org.jeecg.modules.testnet.server.entity.asset.AssetPort">
+        SELECT ap.*
+        FROM asset_port ap
+                 JOIN asset_ip ai ON ap.ip = ai.id
+                 JOIN asset_ip_sub_domain ais ON ais.ip_id = ai.id
+                 JOIN asset_sub_domain asd ON ais.subdomain_id = asd.id
+                 JOIN asset_domain ad ON asd.domain_id = ad.id
+        WHERE ad.id = #{domainId};
+
+    </select>
+    <select id="getCountByProject" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM asset_port ap
+                 JOIN asset_ip ai ON ap.ip = ai.id
+        WHERE ai.project_id = #{id};
+    </select>
+
+    <select id="getPortsCountByIpId" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM asset_port ap
+        WHERE ap.ip = #{ipId};
+    </select>
+    <select id="getPortsByIpId" resultType="org.jeecg.modules.testnet.server.entity.asset.AssetPort">
+        SELECT ap.*
+        FROM asset_port ap
+        WHERE ap.ip = #{ipId};
+    </select>
+
+</mapper>

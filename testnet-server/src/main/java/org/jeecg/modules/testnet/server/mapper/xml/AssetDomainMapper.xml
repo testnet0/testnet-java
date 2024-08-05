@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.testnet.server.mapper.asset.AssetDomainMapper">
+
+    <update id="updateDnsServer">
+        UPDATE asset_domain
+        SET dns_server = #{dnsServer}
+        WHERE id = #{domainId};
+    </update>
+    <update id="updateDomainWhois">
+        UPDATE asset_domain
+        SET whois = #{whois}
+        WHERE id = #{domainId};
+    </update>
+    <update id="updateCompanyAndIcpNumber">
+        UPDATE asset_domain
+        SET icp_number = #{icpNumber},
+            company_id = #{companyId}
+        WHERE id = #{domainId};
+    </update>
+</mapper>

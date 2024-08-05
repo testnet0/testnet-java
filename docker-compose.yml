@@ -1,0 +1,36 @@
+version: '2'
+services:
+  testnet-mysql:
+    image: testnet0/mysql:8.3
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
+      TZ: Asia/Shanghai
+    restart: always
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=1
+      --max_allowed_packet=128M
+      --default-authentication-plugin=caching_sha2_password
+    ports:
+      - "3306:3306"
+
+  testnet-redis:
+    image: testnet0/redis:5.0
+    ports:
+      - "6379:6379"
+    restart: always
+
+  testnet-es:
+    image: testnet0/elasticsearch:7.10.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    restart: always
