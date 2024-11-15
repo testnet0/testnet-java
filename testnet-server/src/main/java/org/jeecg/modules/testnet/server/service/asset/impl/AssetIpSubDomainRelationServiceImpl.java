@@ -56,7 +56,7 @@ public class AssetIpSubDomainRelationServiceImpl extends ServiceImpl<AssetIpSubd
                 if (StringUtils.isBlank(ip)) {
                     continue;
                 }
-                AssetIp assetIp = assetIpMapper.selectByIp(ip);
+                AssetIp assetIp = assetIpMapper.selectByIp(ip, domainToSubdomainAndIpDTO.getProjectId());
                 AssetIpSubDomainRelation assetIpSubDomainRelation = new AssetIpSubDomainRelation();
                 assetIpSubDomainRelation.setSubdomainId(domainToSubdomainAndIpDTO.getId());
                 if (assetIp == null) {

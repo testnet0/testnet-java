@@ -3,6 +3,7 @@ package org.jeecg.modules.testnet.server.listener;
 import com.alibaba.fastjson.JSONArray;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.modules.testnet.server.entity.client.Client;
 import org.jeecg.modules.testnet.server.entity.client.ClientConfig;
 import org.jeecg.modules.testnet.server.entity.client.ClientTools;
@@ -15,6 +16,7 @@ import org.jeecg.modules.testnet.server.service.liteflow.IChainService;
 import org.jeecg.modules.testnet.server.service.liteflow.IScriptService;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.stream.StreamListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import testnet.common.entity.liteflow.VersionMessage;
 import testnet.common.utils.ObjectBase64Decoder;
@@ -43,9 +45,12 @@ public class VersionMessageListener implements StreamListener<String, ObjectReco
     @Resource
     private IClientToolsService clientToolsService;
 
+    @Resource
+    private RedissonLockClient redissonLockClient;
 
     @Override
     @SneakyThrows
+    @Async("logMessageExecutor")
     public void onMessage(ObjectRecord<String, VersionMessage> record) {
         VersionMessage versionMessage = null;
         try {
@@ -55,31 +60,43 @@ public class VersionMessageListener implements StreamListener<String, ObjectReco
         }
         String clientName = versionMessage.getClientName();
         String clientVersion = versionMessage.getClientVersion();
-        Client client = clientService.getClientByName(clientName);
-        if (client != null) {
-            if (client.getStatus().equals("N")) {
+        if (redissonLockClient.tryLock(clientName, 10, 10)) {
+            Client client = clientService.getClientByName(clientName);
+            if (client != null) {
+                // 如果当前是离线状态 清理缓存
+                if (client.getStatus().equals("N")) {
+                    clientService.clearCache(clientName);
+                    // 安装工具
+                    autoInstallTools(client.getId());
+                }
+                client.setStatus("Y");
+                client.setClientVersion(clientVersion);
+                clientService.updateById(client);
+                redissonLockClient.unlock(clientName);
+            } else {
+                Client client1 = new Client();
+                client1.setClientName(clientName);
+                client1.setClientVersion(clientVersion);
+                client1.setStatus("Y");
+                clientService.save(client1);
                 clientService.clearCache(clientName);
-                log.info("开始自动安装工具:{}", clientName);
-                // 自动安装工具
-                List<ClientTools> clientToolsList = clientToolsService.getAntoInstallTools(client.getId());
-                JSONArray idsJsonArray = new JSONArray();
-                clientToolsList.forEach(tool -> idsJsonArray.add(tool.getId()));
-                clientToolsService.installTools(idsJsonArray);
+                addClientConfig(client1.getId());
+                addClientTool(client1.getId());
+                redissonLockClient.unlock(clientName);
+                autoInstallTools(client1.getId());
+                log.info("Client : {} insert success!", clientName);
             }
-            client.setStatus("Y");
-            client.setClientVersion(clientVersion);
-            clientService.updateById(client);
-        } else {
-            Client client1 = new Client();
-            client1.setClientName(clientName);
-            client1.setClientVersion(clientVersion);
-            client1.setStatus("Y");
-            clientService.save(client1);
-            clientService.clearCache(clientName);
-            addClientConfig(client1.getId());
-            addClientTool(client1.getId());
-            log.info("Client : {} insert success!", clientName);
         }
+    }
+
+    @Async
+    public void autoInstallTools(String clientId) {
+        // 自动安装工具
+        log.info("Client : {} auto install tools", clientId);
+        List<ClientTools> clientToolsList = clientToolsService.getAntoInstallTools(clientId);
+        JSONArray idsJsonArray = new JSONArray();
+        clientToolsList.forEach(tool -> idsJsonArray.add(tool.getId()));
+        clientToolsService.installTools(idsJsonArray);
     }
 
     private void addClientConfig(String clientId) {

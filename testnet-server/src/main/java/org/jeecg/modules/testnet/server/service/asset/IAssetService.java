@@ -23,4 +23,5 @@ public interface IAssetService<A extends AssetBase, V extends AssetBase, D exten
     boolean updateAssetByType(D asset);
 
     void delRelation(List<String> list);
+
 }

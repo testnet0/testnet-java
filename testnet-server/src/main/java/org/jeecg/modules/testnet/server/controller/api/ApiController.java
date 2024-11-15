@@ -100,7 +100,7 @@ public class ApiController {
     public <T extends AssetBase> Result<String> addAssetByApi(@RequestBody ApiAddVO apiAddVO) {
         if (apiAddVO.getToken() != null && apiAddVO.getToken().equals(token)) {
             AssetTypeEnums assetTypeEnums = AssetTypeEnums.fromCode(apiAddVO.getAssetType());
-            Class<T> assetClass = (Class<T>) assetCommonOptionService.getAssetClassByType(assetTypeEnums);
+            Class<T> assetClass = (Class<T>) assetCommonOptionService.getAssetDTOClassByType(assetTypeEnums);
             if (assetClass == null) {
                 return Result.error("未找到该资产类型");
             } else {

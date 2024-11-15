@@ -36,5 +36,5 @@ public interface LiteFlowSubTaskMapper extends BaseMapper<LiteFlowSubTask> {
 
     List<LiteFlowSubTask> getRunningList();
 
-    int getUndoCountByTaskId(String k);
+    Integer getUndoCountByTaskId(String k);
 }

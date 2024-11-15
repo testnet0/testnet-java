@@ -37,7 +37,7 @@
         FROM lite_flow_sub_task
         WHERE task_status = 'running'
     </select>
-    <select id="getUndoCountByTaskId" resultType="java.lang.Long">
+    <select id="getUndoCountByTaskId" resultType="java.lang.Integer">
         select count(id)
         from lite_flow_sub_task
         where task_id = #{taskId}

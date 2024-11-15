@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.common.es.JeecgElasticsearchTemplate;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
@@ -44,6 +45,9 @@ public class LiteFlowSubTaskServiceImpl extends ServiceImpl<LiteFlowSubTaskMappe
 
     @Resource
     private LiteFlowTaskMapper liteFlowTaskMapper;
+
+    @Resource
+    private RedissonLockClient redissonLockClient;
 
     @Override
     public List<LiteFlowSubTask> selectByMainId(String mainId) {
@@ -117,20 +121,27 @@ public class LiteFlowSubTaskServiceImpl extends ServiceImpl<LiteFlowSubTaskMappe
     @Override
     public void cancelSubTask(String ids) {
         Map<String, Integer> map = new HashMap<>();
+        List<LiteFlowSubTask> liteFlowSubTaskList = new ArrayList<>();
         for (String id : ids.split(",")) {
             LiteFlowSubTask liteFlowSubTask = getById(id);
             if (liteFlowSubTask != null && (liteFlowSubTask.getTaskStatus().equals(LiteFlowStatusEnums.PENDING.name()) || liteFlowSubTask.getTaskStatus().equals(LiteFlowStatusEnums.RUNNING.name()))) {
                 liteFlowSubTask.setTaskStatus(LiteFlowStatusEnums.CANCELED.name());
-                updateById(liteFlowSubTask);
+                liteFlowSubTaskList.add(liteFlowSubTask);
                 if (!map.containsKey(liteFlowSubTask.getTaskId())) {
                     map.put(liteFlowSubTask.getTaskId(), 1);
                 }
             }
+            updateBatchById(liteFlowSubTaskList);
             map.forEach((k, v) -> {
-                // 更新主表未完成任务数量 并发的时候可能会导致数量不准确，但是不影响使用
-                LiteFlowTask liteFlowTask = liteFlowTaskMapper.selectById(k);
-                liteFlowTask.setUnFinishedChain(liteFlowSubTaskMapper.getUndoCountByTaskId(k));
-                liteFlowTaskMapper.updateById(liteFlowTask);
+                // 更新主表未完成任务数量
+                if (redissonLockClient.tryLock(k, 10, 10)) {
+                    LiteFlowTask liteFlowTask = liteFlowTaskMapper.selectById(k);
+                    liteFlowTask.setUnFinishedChain(liteFlowSubTaskMapper.getUndoCountByTaskId(k));
+                    liteFlowTaskMapper.updateById(liteFlowTask);
+                    redissonLockClient.unlock(k);
+                } else {
+                    log.error("获取锁失败，更新主表未完成任务数量失败");
+                }
             });
         }
     }

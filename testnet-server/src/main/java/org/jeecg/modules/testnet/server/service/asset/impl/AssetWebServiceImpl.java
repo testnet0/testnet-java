@@ -107,7 +107,7 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
     public boolean addAssetByType(AssetWebDTO asset) {
         if (save(asset)) {
             saveAssetWebToES(asset);
-            if (asset.getStatusCode().equals(200)) {
+            if (asset.getStatusCode() != null && asset.getStatusCode().equals(200)) {
                 AssetApiDTO assetApiDTO = new AssetApiDTO();
                 assetApiDTO.setAbsolutePath(asset.getWebUrl());
                 assetApiDTO.setTitle(asset.getWebTitle());

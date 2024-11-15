@@ -159,7 +159,8 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     @RequiresPermissions("testnet.server:asset_web:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetWeb assetWeb) {
-        return super.exportXls(request, assetWeb, AssetWeb.class, "WEB服务");
+        return super.exportXlsSheet(request, assetWeb, AssetWeb.class, "WEB服务",null,50000);
+        // return super.exportXls(request, assetWeb, AssetWeb.class, "WEB服务");
     }
 
     /**

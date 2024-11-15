@@ -66,6 +66,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
                                               @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                               HttpServletRequest req) {
         QueryWrapper<Chain> queryWrapper = QueryGenerator.initQueryWrapper(chain, req.getParameterMap());
+        queryWrapper.ne("asset_type", "");
         Page<Chain> page = new Page<Chain>(pageNo, pageSize);
         IPage<Chain> pageList = chainService.page(page, queryWrapper);
         return Result.OK(pageList);

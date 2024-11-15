@@ -180,7 +180,7 @@ public class RedisStreamConfig {
                 .StreamMessageListenerContainerOptions
                 .builder()
                 .executor(Executors.newSingleThreadExecutor())
-                .batchSize(1)
+                .batchSize(2)
                 .pollTimeout(Duration.ofMillis(1000))
                 .targetType(LiteFlowResult.class)
                 .build();

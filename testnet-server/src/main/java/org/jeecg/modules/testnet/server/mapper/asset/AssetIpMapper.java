@@ -1,7 +1,6 @@
 package org.jeecg.modules.testnet.server.mapper.asset;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Select;
 import org.jeecg.modules.testnet.server.entity.asset.AssetIp;
 import org.jeecg.modules.testnet.server.vo.asset.AssetIpVO;
 
@@ -15,8 +14,8 @@ import java.util.List;
  */
 public interface AssetIpMapper extends BaseMapper<AssetIp> {
 
-    @Select("SELECT * FROM asset_ip WHERE ip = #{ip}")
-    AssetIp selectByIp(String ip);
+
+    AssetIp selectByIp(String ip,String projectId);
 
     long getPortCountBySubDomainId(String domainId);
 

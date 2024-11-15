@@ -150,7 +150,8 @@ public class AssetLabelController extends JeecgController<AssetLabel, IAssetLabe
     @RequiresPermissions("testnet.server:asset_label:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetLabel assetLabel) {
-        return super.exportXls(request, assetLabel, AssetLabel.class, "资产标签");
+        return super.exportXlsSheet(request, assetLabel, AssetLabel.class, "资产标签",null,50000);
+       // return super.exportXls(request, assetLabel, AssetLabel.class, "资产标签");
     }
 
     /**

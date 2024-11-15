@@ -8,7 +8,6 @@ package org.jeecg.modules.testnet.server.service.asset.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import cn.hutool.core.codec.Base64Encoder;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -16,8 +15,15 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jeecg.common.es.JeecgElasticsearchTemplate;
+import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.modules.testnet.server.dto.AssetApiDTO;
+import org.jeecg.modules.testnet.server.dto.AssetIpDTO;
+import org.jeecg.modules.testnet.server.dto.AssetPortDTO;
+import org.jeecg.modules.testnet.server.dto.AssetSubDomainIpsDTO;
+import org.jeecg.modules.testnet.server.dto.asset.AssetDomainDTO;
+import org.jeecg.modules.testnet.server.dto.asset.AssetVulDTO;
+import org.jeecg.modules.testnet.server.dto.asset.AssetWebDTO;
 import org.jeecg.modules.testnet.server.entity.asset.*;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTaskAsset;
 import org.jeecg.modules.testnet.server.mapper.liteflow.LiteFlowTaskAssetMapper;
@@ -25,9 +31,9 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetLabelService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
+import org.jeecg.modules.testnet.server.service.log.ILogService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import testnet.common.constan.Constants;
-import testnet.common.entity.liteflow.LogMessage;
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
@@ -74,8 +80,11 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
     @Resource
     private LiteFlowTaskAssetMapper liteFlowTaskAssetMapper;
 
+    @Autowired
+    private RedissonLockClient redissonLockClient;
+
     @Resource
-    private JeecgElasticsearchTemplate elasticsearchTemplate;
+    private ILogService logService;
 
 
     @Override
@@ -256,7 +265,7 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
                 }
             }
         } catch (Exception e) {
-            log.error("添加资产发生错误:{}", e.getMessage());
+            log.error("添加资产:{} 发生错误:{}", asset, e.getMessage());
         }
         return null;
     }
@@ -268,7 +277,7 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
             return null;
         }
         if (checkDuplicate && assetValidService.getUniqueAsset(asset, getAssetServiceByType(assetType), assetType) != null) {
-            log.error("更新:{}, 资产：{}错误，存在重复值！", assetType, asset);
+            log.error("更新:{}, 资产：{} 发生错误，存在重复值！", assetType, asset);
             return null;
         }
         try {
@@ -280,7 +289,7 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
                 }
             }
         } catch (Exception e) {
-            log.error("更新资产类型错误:{}", e.getMessage());
+            log.error("更新:{}, 资产：{} 发生错误：{}", assetType, asset, e.getMessage());
         }
         return null;
     }
@@ -292,52 +301,53 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
 
     @Override
     public <T extends AssetBase> T addOrUpdate(T asset, AssetTypeEnums assetType, String taskId, String subTaskId) {
-        LogMessage logMessage = new LogMessage();
-        logMessage.setTaskId(subTaskId);
-        logMessage.setLevel("INFO");
-        logMessage.setClientName("server");
+
         try {
             IAssetService<T, T, T> assetService = (IAssetService<T, T, T>) getAssetServiceByType(assetType);
             if (assetService != null) {
                 T oldAsset;
-                if (StringUtils.isNotBlank(asset.getId())) {
-                    oldAsset = getByIdAndAssetType(asset.getId(), assetType);
-                } else {
-                    oldAsset = assetValidService.getUniqueAsset(asset, assetService, assetType);
-                }
-                if (oldAsset == null) {
-                    String assetLabel = getAssetLabelIds(asset, "");
-                    asset.setAssetLabel(assetLabel);
-                    asset = addAssetByType(asset, assetType, false);
-                    if (StringUtils.isNotBlank(taskId)) {
-                        LiteFlowTaskAsset liteFlowTaskAsset = new LiteFlowTaskAsset();
-                        liteFlowTaskAsset.setAssetId(asset.getId());
-                        liteFlowTaskAsset.setLiteFlowTaskId(taskId);
-                        liteFlowTaskAsset.setAssetType(assetType.getCode());
-                        liteFlowTaskAssetMapper.insert(liteFlowTaskAsset);
-                        logMessage.setMessage(Base64Encoder.encode("添加资产: " + asset + " 成功"));
-                        elasticsearchTemplate.save(Constants.ES_LOG_INDEX, Constants.ES_LOG_TYPE, subTaskId, (JSONObject) JSONObject.toJSON(logMessage));
+                // 获得锁
+                String shaKey = assetValidService.getShaKey(asset, assetType);
+                if (redissonLockClient.tryLock(shaKey, 10, 10)) {
+                    if (StringUtils.isNotBlank(asset.getId())) {
+                        oldAsset = getByIdAndAssetType(asset.getId(), assetType);
+                    } else {
+                        oldAsset = assetValidService.getUniqueAsset(asset, assetService, assetType);
                     }
-                    return asset;
-                } else {
-                    T assetDTO = assetService.convertDTO(oldAsset);
-                    String assetLabel = getAssetLabelIds(asset, oldAsset.getAssetLabel());
-                    // 新的属性复制到 DTO
-                    BeanUtil.copyProperties(asset, assetDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-                    assetDTO.setAssetLabel(assetLabel);
-                    if (StringUtils.isNotBlank(taskId)) {
-                        logMessage.setMessage(Base64Encoder.encode("更新资产: " + asset + " 成功"));
-                        elasticsearchTemplate.save(Constants.ES_LOG_INDEX, Constants.ES_LOG_TYPE, subTaskId, (JSONObject) JSONObject.toJSON(logMessage));
+                    if (oldAsset == null) {
+                        String assetLabel = getAssetLabelIds(asset, "");
+                        asset.setAssetLabel(assetLabel);
+                        asset = addAssetByType(asset, assetType, false);
+                        if (asset == null) {
+                            logService.addINFOLog("server", "添加资产: " + asset + " 失败，请检查资产管理-黑名单", subTaskId);
+                        }
+                        if (StringUtils.isNotBlank(taskId)) {
+                            LiteFlowTaskAsset liteFlowTaskAsset = new LiteFlowTaskAsset();
+                            liteFlowTaskAsset.setAssetId(asset.getId());
+                            liteFlowTaskAsset.setLiteFlowTaskId(taskId);
+                            liteFlowTaskAsset.setAssetType(assetType.getCode());
+                            liteFlowTaskAssetMapper.insert(liteFlowTaskAsset);
+                            logService.addINFOLog("server", "添加资产: " + asset + " 成功", subTaskId);
+                        }
+                        redissonLockClient.unlock(shaKey);
+                        return asset;
+                    } else {
+                        T assetDTO = assetService.convertDTO(oldAsset);
+                        String assetLabel = getAssetLabelIds(asset, oldAsset.getAssetLabel());
+                        // 新的属性复制到 DTO
+                        BeanUtil.copyProperties(asset, assetDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
+                        assetDTO.setAssetLabel(assetLabel);
+                        logService.addINFOLog("server", "更新资产:" + asset + " 成功", subTaskId);
+                        assetDTO = updateAssetByType(assetDTO, assetType, false);
+                        redissonLockClient.unlock(shaKey);
+                        return assetDTO;
                     }
-                    return updateAssetByType(assetDTO, assetType, false);
+                } else {
+                    log.error("获取资产锁失败,资产:{}", asset);
                 }
             }
         } catch (Exception e) {
-            logMessage.setLevel("ERROR");
-            logMessage.setMessage(Base64Encoder.encode("添加资产: " + asset + " 成功"));
-            if (StringUtils.isNotBlank(logMessage.getTaskId())) {
-                elasticsearchTemplate.save(Constants.ES_LOG_INDEX, Constants.ES_LOG_TYPE, subTaskId, (JSONObject) JSONObject.toJSON(logMessage));
-            }
+            logService.addERRORLog("server", "更新资产:" + asset + " 失败", subTaskId);
             log.error("添加或更新资产失败,资产类型:{},错误信息:{}", assetType, e.getMessage());
         }
         return null;
@@ -432,6 +442,31 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
     }
 
     @Override
+    public Class<? extends AssetBase> getAssetDTOClassByType(AssetTypeEnums assetType) {
+        String code = assetType.getCode();
+        switch (code) {
+            case "domain":
+                return AssetDomainDTO.class;
+            case "sub_domain":
+                return AssetSubDomainIpsDTO.class;
+            case "ip":
+                return AssetIpDTO.class;
+            case "port":
+                return AssetPortDTO.class;
+            case "web":
+                return AssetWebDTO.class;
+            case "vul":
+                return AssetVulDTO.class;
+            case "api":
+                return AssetApiDTO.class;
+            case "company":
+                return AssetCompany.class;
+            default:
+                return null;
+        }
+    }
+
+    @Override
     public void deleteAssetByQuery(String params) {
         JSONObject jsonObject = JSONObject.parseObject(params);
         String assetType = jsonObject.getString("assetType");
@@ -455,17 +490,22 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
             sb = new StringBuilder(oldAssetLabelsId);
         }
         for (String label : assetLabels.split(",")) {
-            AssetLabel assetLabel = assetLabelService.getAssetLabelByAssetName(label);
-            if (assetLabel == null) {
-                assetLabel = new AssetLabel();
-                assetLabel.setLabelName(label);
-                assetLabelService.save(assetLabel);
-            }
-            if (!sb.toString().contains(assetLabel.getId())) {
-                if (sb.length() > 0) {
-                    sb.append(",");
+            if (redissonLockClient.tryLock(label, 10, 10)) {
+                AssetLabel assetLabel = assetLabelService.getAssetLabelByAssetName(label);
+                if (assetLabel == null) {
+                    assetLabel = new AssetLabel();
+                    assetLabel.setLabelName(label);
+                    assetLabelService.save(assetLabel);
                 }
-                sb.append(assetLabel.getId());
+                redissonLockClient.unlock(label);
+                if (!sb.toString().contains(assetLabel.getId())) {
+                    if (sb.length() > 0) {
+                        sb.append(",");
+                    }
+                    sb.append(assetLabel.getId());
+                }
+            } else {
+                log.error("获取标签锁失败,标签:{}", label);
             }
         }
         return sb.toString();

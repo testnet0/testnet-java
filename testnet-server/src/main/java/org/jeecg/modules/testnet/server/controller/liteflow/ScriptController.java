@@ -56,6 +56,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
                                                @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                                HttpServletRequest req) {
         QueryWrapper<Script> queryWrapper = QueryGenerator.initQueryWrapper(script, req.getParameterMap());
+        queryWrapper.ne("script_dict", "SYSTEM");
         Page<Script> page = new Page<Script>(pageNo, pageSize);
         IPage<Script> pageList = scriptService.page(page, queryWrapper);
         return Result.OK(pageList);

@@ -1,6 +1,7 @@
 package org.jeecg.modules.testnet.server.service.asset.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.jeecg.common.util.ReflectHelper;
@@ -11,11 +12,14 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.springframework.stereotype.Service;
 import testnet.common.enums.AssetTypeEnums;
+import testnet.common.utils.HashUtils;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -55,9 +59,19 @@ public class AssetValidServiceImpl implements IAssetValidService {
             }
             List<AssetBlackList> assetBlackList = assetBlackListService.getBlackList(assetType.getCode());
             for (AssetBlackList blackList : assetBlackList) {
-                if (fieldValue.toString().contains(blackList.getKeyword())) {
-                    log.error("{} ：{} 命中黑名单", assetType, fieldValue);
-                    return false;
+                if (blackList.getBlacklistType().equals("keyword")) {
+                    if (fieldValue.toString().contains(blackList.getKeyword())) {
+                        log.error("{} ：{} 命中黑名单", assetType, fieldValue);
+                        return false;
+                    }
+                } else {
+                    // 通过正则匹配
+                    Pattern pattern = Pattern.compile(blackList.getKeyword());
+                    Matcher matcher = pattern.matcher(fieldValue.toString());
+                    if (matcher.find()) {
+                        log.error("{} ：{} 命中黑名单", assetType, fieldValue);
+                        return false;
+                    }
                 }
             }
         }
@@ -160,6 +174,20 @@ public class AssetValidServiceImpl implements IAssetValidService {
                 break;
         }
         return map;
+    }
+
+    @SneakyThrows
+    @Override
+    public <T extends AssetBase> String getShaKey(T asset, AssetTypeEnums assetType) {
+        StringBuilder sb = new StringBuilder();
+        for (String fieldName : getValidFieldName(assetType).split(",")) {
+            Object fieldValue = ReflectHelper.getFieldVal(fieldName, asset);
+            sb.append(fieldName).append("=");
+            if (fieldValue != null) {
+                sb.append(fieldValue);
+            }
+        }
+        return HashUtils.calculateSHA256(sb.toString());
     }
 
 

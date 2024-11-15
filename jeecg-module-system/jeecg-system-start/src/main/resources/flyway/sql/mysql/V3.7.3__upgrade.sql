@@ -1,0 +1,15 @@
+UPDATE `lite_flow_script` SET `version_check_command` = 'httpx -version 2>&1 | grep -oP \'Current Version: \\Kv?\\d+\\.\\d+\\.\\d+\'' WHERE `id` = '1773261756402544642';
+UPDATE `lite_flow_script` SET `version_check_command` = 'python3 /testnet-client/tools/OneForAll/oneforall.py version 2>&1 | grep -oP ''v\\d+\\.\\d+\\.\\d+''' WHERE `id` = '1773680693413994497';
+UPDATE `lite_flow_script` SET `version_check_command` = 'naabu -version 2>&1 | grep -oP \'Current Version: \\K\\d+\\.\\d+\\.\\d+\'' WHERE `id` = '1773681041704804353';
+UPDATE `lite_flow_script` SET `version_check_command` = 'nuclei --version 2>&1 | grep -oP \'v\\d+\\.\\d+\\.\\d+\' | head -1' WHERE `id` = '1781286631852261378';
+UPDATE `lite_flow_script` SET `version_check_command` = 'nmap --version 2>&1 | grep -oP \'Nmap version \\K\\d+\\.\\d+\'' WHERE `id` = '1790213876943757314';
+UPDATE `lite_flow_script` SET `version_check_command` = 'subfinder -version 2>&1 | grep -oP \'v\\d+\\.\\d+\\.\\d+\' | head -1' WHERE `id` = '1795006678340747265';
+UPDATE `lite_flow_script` SET `version_check_command` = 'python3 /testnet-client/tools/dirsearch/dirsearch.py --version 2>&1 | grep -oP \'v?\\d+\\.\\d+\\.\\d+\'' WHERE `id` = '1801110432837046273';
+UPDATE `lite_flow_script` SET `version_check_command` = '/testnet-client/tools/TideFinger 2>&1 | grep -oP \'version: \\K\\S+\' | head -1' WHERE `id` = '1806588765662212097';
+UPDATE `lite_flow_script` SET `version_check_command` = '/testnet-client/tools/xapp 2>&1| grep -oP \'v\\d+\\.\\d+\\.\\d+\'' WHERE `id` = '1806614988580831233';
+UPDATE `lite_flow_script` SET `version_check_command` = 'masscan --version 2>&1| grep \"Masscan version\" | awk \'{print $3}\' || echo \"\"' WHERE `id` = '1806627700673200129';
+UPDATE `lite_flow_script` SET `version_check_command` = 'ffuf -V 2>&1| grep \"version\" | cut -d \' \' -f 3 || echo \"\"' WHERE `id` = '1806641579239260162';
+UPDATE `lite_flow_script` SET `version_check_command` = 'katana -version 2>&1  | grep -oP \'v\\d+\\.\\d+\\.\\d+\' | head -1' WHERE `id` = '1808796498016620546';
+UPDATE `lite_flow_script` SET `version_check_command` = '/testnet-client/tools/xpoc help 2>&1 | grep -oP \'\\/v\\K\\d+\\.\\d+\\.\\d+\'' WHERE `id` = '1810994896139808770';
+UPDATE `lite_flow_script` SET `version_check_command` = '/testnet-client/tools/rustscan -V 2>&1 | grep -oP \'rustscan \\K\\d+\\.\\d+\\.\\d+\'' WHERE `id` = '1817575106689097730';
+UPDATE `lite_flow_script` SET `version_check_command` = 'afrog --version 2>&1| grep \"Version\" | cut -d \' \' -f 3' WHERE `id` = '1817837720312664066';

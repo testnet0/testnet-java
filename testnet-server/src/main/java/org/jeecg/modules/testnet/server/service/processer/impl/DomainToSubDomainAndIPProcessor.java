@@ -8,6 +8,7 @@ package org.jeecg.modules.testnet.server.service.processer.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.modules.testnet.server.dto.AssetSubDomainIpsDTO;
 import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
@@ -20,6 +21,8 @@ import testnet.common.entity.liteflow.LiteFlowResult;
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -28,6 +31,8 @@ public class DomainToSubDomainAndIPProcessor implements IAssetResultProcessorSer
     @Resource
     private IAssetCommonOptionService assetCommonOptionService;
 
+    @Resource
+    private ISysBaseAPI sysBaseAPI;
 
     @Override
     public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
@@ -38,6 +43,10 @@ public class DomainToSubDomainAndIPProcessor implements IAssetResultProcessorSer
                 AssetSubDomainIpsDTO oldSubDomainIpsDTO = getAssetSubDomainIpsDTO(subDomain, assetDomain);
                 assetCommonOptionService.addOrUpdate(oldSubDomainIpsDTO, AssetTypeEnums.SUB_DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());
             });
+            Map<String, Object> params = new HashMap<>();
+            params.put("taskName", liteFlowTask.getTaskName());
+            params.put("subDomainNumber", String.valueOf(domainToSubdomainAndIp.getSubDomainList().size()));
+            sysBaseAPI.sendWebHookeMessage(liteFlowTask.getTaskName(), params, "domain_subdomain_notify");
         }
     }
 

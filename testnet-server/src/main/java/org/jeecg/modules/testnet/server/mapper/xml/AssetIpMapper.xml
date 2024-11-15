@@ -26,4 +26,10 @@
         group by ai.id;
     </select>
 
+    <select id="selectByIp" resultType="org.jeecg.modules.testnet.server.entity.asset.AssetIp">
+        select *
+        from asset_ip
+        where ip = #{ip} AND project_id = #{projectId};
+    </select>
+
 </mapper>

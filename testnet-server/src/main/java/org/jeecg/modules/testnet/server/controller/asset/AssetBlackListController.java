@@ -147,7 +147,8 @@ public class AssetBlackListController extends JeecgController<AssetBlackList, IA
     @RequiresPermissions("testnet.server:black_list:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetBlackList blackList) {
-        return super.exportXls(request, blackList, AssetBlackList.class, "黑名单");
+        return super.exportXlsSheet(request, blackList, AssetBlackList.class, "黑名单",null,50000);
+        // return super.exportXls(request, blackList, AssetBlackList.class, "黑名单");
     }
 
     /**

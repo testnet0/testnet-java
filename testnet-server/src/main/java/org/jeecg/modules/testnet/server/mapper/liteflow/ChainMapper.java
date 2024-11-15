@@ -12,4 +12,5 @@ import org.jeecg.modules.testnet.server.entity.liteflow.Chain;
  */
 public interface ChainMapper extends BaseMapper<Chain> {
 
+    Chain selectProcessorClassNameById(String id);
 }

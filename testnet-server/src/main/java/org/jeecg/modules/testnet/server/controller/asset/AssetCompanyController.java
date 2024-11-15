@@ -144,7 +144,8 @@ public class AssetCompanyController extends JeecgController<AssetCompany, AssetC
     @RequiresPermissions("testnet.server:asset_company:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetCompany assetCompany) {
-        return super.exportXls(request, assetCompany, AssetCompany.class, "公司");
+        return super.exportXlsSheet(request, assetCompany, AssetCompany.class, "公司",null,50000);
+        // return super.exportXls(request, assetCompany, AssetCompany.class, "公司");
     }
 
     /**

@@ -64,4 +64,5 @@ public interface ILiteFlowTaskService extends IService<LiteFlowTask> {
 
     Result<String> changeCronStatus(String id, Boolean status);
 
+    LiteFlowTask getByIdWithCache(String id);
 }

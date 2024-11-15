@@ -6,11 +6,13 @@
  **/
 package testnet.client.config;
 
+import io.lettuce.core.RedisCommandExecutionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.QueryTimeoutException;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
@@ -71,7 +73,13 @@ public class RedisStreamConfig {
         StreamMessageListenerContainer.ConsumerStreamReadRequest<String> request = StreamMessageListenerContainer.StreamReadRequest
                 .builder(streamOffset)
                 .consumer(Consumer.from(Constants.STREAM_CLIENT_GROUP, envConfig.getClientName()))
-                .cancelOnError(throwable -> !(throwable instanceof QueryTimeoutException))
+                .cancelOnError(throwable -> {
+                    if(throwable instanceof RedisSystemException && throwable.getCause().getMessage().contains("NOGROUP")){
+                        redisStreamService.initKeyAndGroup(Constants.STREAM_KEY_TASK_EXECUTE + envConfig.getClientName(), Constants.STREAM_CLIENT_GROUP);
+                        return false;
+                    }
+                    return true;
+                })
                 .autoAcknowledge(false)
                 .build();
         Subscription subscription = taskExecuteContainer.register(request, taskExecuteListener());

@@ -17,7 +17,7 @@ public class VersionReportService {
     @Resource
     private ILiteFlowMessageSendService clientStreamSendService;
 
-    @Scheduled(fixedRate = 2 * 1000L) // 每2秒执行一次
+    @Scheduled(fixedRate = 60 * 1000L) // 每2秒执行一次
     public void clientVersion() {
         clientStreamSendService.sendVersion();
     }

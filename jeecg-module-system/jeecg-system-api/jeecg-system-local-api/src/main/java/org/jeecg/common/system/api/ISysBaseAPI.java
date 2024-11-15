@@ -7,6 +7,7 @@ import org.jeecg.common.api.dto.OnlineAuthDTO;
 import org.jeecg.common.api.dto.message.*;
 import org.jeecg.common.constant.enums.EmailTemplateEnum;
 import org.jeecg.common.system.vo.*;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,8 @@ public interface ISysBaseAPI extends CommonAPI {
      * @param message
      */
     void sendTemplateMessage(MessageDTO message);
+
+    void sendWebHookeMessage(String title, Map<String, Object> params, String templateCode);
 
     /**
      * NEW根据模板编码获取模板内容【新，支持自定义推送类型】
@@ -457,7 +460,7 @@ public interface ISysBaseAPI extends CommonAPI {
      * @param pageSize 分页条数
      * @return
      */
-    List<DictModel> loadDictItemByKeyword(String dictCode, String keyword, Integer pageSize);
+    List<DictModel> loadDictItemByKeyword(String dictCode, String keyword, Integer pageNo, Integer pageSize);
 
     /**
      * 新增数据日志

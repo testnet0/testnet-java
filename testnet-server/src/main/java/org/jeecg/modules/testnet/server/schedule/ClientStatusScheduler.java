@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -31,7 +33,7 @@ public class ClientStatusScheduler {
     @Resource
     private ISysBaseAPI sysBaseApi;
 
-    @Scheduled(fixedRate = 5 * 1000L) // 每5秒执行一次
+    @Scheduled(fixedRate = 600 * 1000L) // 每60秒执行一次
     public void clientVersion() {
         List<Client> clients = clientService.getAllOnlineClients();
         for (Client client : clients) {
@@ -43,19 +45,14 @@ public class ClientStatusScheduler {
             }
             long timeDifferenceInMillis = currentTime.getTime() - updateTime.getTime(); // 时间差（毫秒）
             long timeDifferenceInSeconds = timeDifferenceInMillis / 1000;
-            if (timeDifferenceInSeconds > 30) {
+            if (timeDifferenceInSeconds > 300) {
                 client.setStatus("N"); // 更新状态为N
                 log.info("Client :{} is offline ", client.getClientName());
                 clientService.updateById(client);
                 clientService.clearCache(client.getClientName());
-                MessageDTO messageDTO = new MessageDTO();
-                messageDTO.setToAll(false);
-                messageDTO.setToUser("admin,TestNet");
-                messageDTO.setTitle("客户端离线通知");
-                messageDTO.setType(MessageTypeEnum.XT.getType());
-                messageDTO.setFromUser("system");
-                messageDTO.setContent("客户端：" + client.getClientName() + " 已离线，请检查状态");
-                sysBaseApi.sendTemplateMessage(messageDTO);
+                Map<String, Object> params = new HashMap<>();
+                params.put("clientName", client.getClientName());
+                sysBaseApi.sendWebHookeMessage("客户端离线通知", params, "client_status_notify");
             }
         }
     }

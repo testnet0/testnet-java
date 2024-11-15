@@ -8,6 +8,7 @@ import org.jeecg.modules.testnet.server.mapper.liteflow.ChainMapper;
 import org.jeecg.modules.testnet.server.service.client.IClientConfigService;
 import org.jeecg.modules.testnet.server.service.liteflow.IChainService;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -37,7 +38,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
     }
 
     @Override
-    @CacheEvict(value = "asset:chainList:cache#600", allEntries = true)
+    @CacheEvict(value = "asset:chain:cache#600", allEntries = true)
     public void clearCache() {
     }
 
@@ -68,6 +69,12 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
     @Override
     public List<Chain> getAllChainList() {
         return list();
+    }
+
+    @Override
+    @Cacheable(value = "liteflow:chain:cache", key = "#id", unless = "#result == null ")
+    public Chain getByIdWithCache(String id) {
+        return baseMapper.selectProcessorClassNameById(id);
     }
 
 }

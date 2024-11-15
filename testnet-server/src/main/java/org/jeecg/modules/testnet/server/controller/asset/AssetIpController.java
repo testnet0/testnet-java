@@ -145,7 +145,8 @@ public class AssetIpController extends JeecgController<AssetIp, AssetIpServiceIm
     @RequiresPermissions("testnet.server:asset_ip:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetIp assetIp) {
-        return super.exportXls(request, assetIp, AssetIp.class, "ip");
+        return super.exportXlsSheet(request, assetIp, AssetIp.class, "ip",null,50000);
+        //return super.exportXls(request, assetIp, AssetIp.class, "ip");
     }
 
     /**

@@ -9,6 +9,7 @@ package org.jeecg.modules.testnet.server.schedule;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.modules.testnet.server.entity.client.Client;
 import org.jeecg.modules.testnet.server.entity.client.ClientConfig;
 import org.jeecg.modules.testnet.server.entity.liteflow.Chain;
@@ -53,6 +54,9 @@ public class RunTask {
 
     @Resource
     private IRedisStreamService redisStreamService;
+
+    @Resource
+    private RedissonLockClient redissonLockClient;
 
 
     @Scheduled(fixedRate = 5 * 1000L) // 每5秒刷新一次
@@ -122,9 +126,18 @@ public class RunTask {
                     sendMessage(liteFlowTask, liteFlowSubTask, chain, client.getClientName());
                 });
                 liteFlowTask.setUnFinishedChain(liteFlowTask.getUnFinishedChain() - subTaskList.size());
-                liteFlowTaskService.updateById(liteFlowTask);
+                if (redissonLockClient.tryLock(liteFlowTask.getId(), 10, 10)) {
+                    try {
+                        liteFlowTaskService.updateById(liteFlowTask);
+                    } catch (Exception e) {
+                        log.error("更新主表未完成任务数量失败!", e);
+                    } finally {
+                        redissonLockClient.unlock(liteFlowTask.getId());
+                    }
+                } else {
+                    log.error("获取锁失败，更新主表未完成任务数量失败!");
+                }
             }
-
         }
     }
 
@@ -136,6 +149,7 @@ public class RunTask {
         taskExecuteMessage.setTaskParams(liteFlowSubTask.getSubTaskParam());
         taskExecuteMessage.setChainId(liteFlowTask.getChainId());
         taskExecuteMessage.setAssetType(liteFlowTask.getAssetType());
-        redisStreamService.addObject(Constants.STREAM_KEY_TASK_EXECUTE + clientName, taskExecuteMessage);
+        String recordId = redisStreamService.addObject(Constants.STREAM_KEY_TASK_EXECUTE + clientName, taskExecuteMessage);
+        log.info("发送消息成功，消息ID:{}", recordId);
     }
 }

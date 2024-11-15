@@ -2,4 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.testnet.server.mapper.liteflow.ChainMapper">
 
+    <select id="selectProcessorClassNameById" resultType="org.jeecg.modules.testnet.server.entity.liteflow.Chain">
+        select chain_name, processor_class_name
+        from lite_flow_chain
+        where id = #{id}
+    </select>
 </mapper>

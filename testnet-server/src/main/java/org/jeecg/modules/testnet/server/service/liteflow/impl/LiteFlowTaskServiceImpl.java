@@ -20,6 +20,7 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetSearchService;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowSubTaskService;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -138,6 +139,8 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
                         // 说明是通过搜索创建
                         List<String> assetList = assetCommonOptionService.queryByAssetType(liteFlowTask.getSearchParam(), liteFlowTask.getAssetType());
                         if (assetList != null && !assetList.isEmpty()) {
+                            liteFlowTask.setUnFinishedChain(assetList.size());
+                            liteFlowTaskMapper.updateById(liteFlowTask);
                             List<LiteFlowSubTask> subTaskList = new ArrayList<>();
                             assetList.forEach(asset -> {
                                 LiteFlowSubTask subTask = new LiteFlowSubTask();
@@ -148,15 +151,14 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
                                 subTaskList.add(subTask);
                             });
                             liteFlowSubTaskService.saveBatch(subTaskList);
-                            liteFlowTask.setUnFinishedChain(subTaskList.size());
-                            liteFlowTaskMapper.updateById(liteFlowTask);
                         }
                     } else {
                         LambdaQueryWrapper<LiteFlowSubTask> queryWrapper = new LambdaQueryWrapper<>();
                         queryWrapper.eq(LiteFlowSubTask::getTaskId, id);
                         queryWrapper.eq(LiteFlowSubTask::getVersion, version);
                         List<LiteFlowSubTask> liteFlowSubTasks = liteFlowSubTaskMapper.selectList(queryWrapper);
-
+                        liteFlowTask.setUnFinishedChain(liteFlowSubTasks.size());
+                        liteFlowTaskMapper.updateById(liteFlowTask);
                         List<LiteFlowSubTask> newLiteFlowSubTasks = new ArrayList<>();
                         liteFlowSubTasks.forEach(liteFlowSubTask -> {
                             LiteFlowSubTask newLiteFlowSubTask = new LiteFlowSubTask();
@@ -178,8 +180,6 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
                             }
                         });
                         liteFlowSubTaskService.saveBatch(newLiteFlowSubTasks);
-                        liteFlowTask.setUnFinishedChain(newLiteFlowSubTasks.size());
-                        liteFlowTaskMapper.updateById(liteFlowTask);
                     }
                 } else {
                     log.error("未找到对应的任务：{}", id);
@@ -237,10 +237,12 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
     public Result<String> stopTask(String id) {
         List<LiteFlowSubTask> liteFlowSubTasks = liteFlowSubTaskService.getPendingList(id, 0);
         if (liteFlowSubTasks != null && !liteFlowSubTasks.isEmpty()) {
+            List<LiteFlowSubTask> liteFlowSubTaskList = new ArrayList<>();
             liteFlowSubTasks.forEach(liteFlowSubTask -> {
                 liteFlowSubTask.setTaskStatus(LiteFlowStatusEnums.CANCELED.name());
-                liteFlowSubTaskService.updateById(liteFlowSubTask);
+                liteFlowSubTaskList.add(liteFlowSubTask);
             });
+            liteFlowSubTaskService.updateBatchById(liteFlowSubTaskList);
             LiteFlowTask liteFlowTask = getById(id);
             liteFlowTask.setUnFinishedChain(0);
             updateById(liteFlowTask);
@@ -270,6 +272,12 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
             updateById(liteFlowTask);
             return Result.ok("定时任务停止成功！");
         }
+    }
+
+    @Override
+    @Cacheable(value = "liteflow:task:cache", key = "#id", unless = "#result == null ")
+    public LiteFlowTask getByIdWithCache(String id) {
+        return getById(id);
     }
 
 }

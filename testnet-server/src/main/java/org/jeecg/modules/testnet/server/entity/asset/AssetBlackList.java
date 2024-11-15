@@ -86,4 +86,12 @@ public class AssetBlackList implements Serializable {
     @Excel(name = "备注", width = 15)
     @ApiModelProperty(value = "备注")
     private String remark;
+
+    /**
+     * 黑名单类型
+     */
+    @Excel(name = "黑名单类型", width = 15, dicCode = "blacklist_type")
+    @Dict(dicCode = "blacklist_type")
+    @ApiModelProperty(value = "黑名单类型")
+    private String blacklistType;
 }

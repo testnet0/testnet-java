@@ -94,6 +94,10 @@ public class Afrog implements JaninoCommonScriptBody {
             if (jsonObject.getString("fulltarget") != null) {
                 assetVul.setVulUrl(jsonObject.getString("fulltarget"));
             }
+            if (jsonObject.getJSONArray("pocresult") != null && jsonObject.getJSONArray("pocresult").size() > 1) {
+                assetVul.setRequestBody(jsonObject.getJSONArray("pocresult").getString(0));
+                assetVul.setResponseBody(jsonObject.getJSONArray("pocresult").getString(1));
+            }
             assetVulList.add(assetVul);
         }
         ipOrWebOrSubDomainToVulDTO.setAssetVulList(assetVulList);

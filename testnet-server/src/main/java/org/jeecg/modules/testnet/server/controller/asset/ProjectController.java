@@ -138,7 +138,8 @@ public class ProjectController extends JeecgController<Project, IProjectService>
     @RequiresPermissions("testnet.server:project:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, Project project) {
-        return super.exportXls(request, project, Project.class, "项目");
+        return super.exportXlsSheet(request, project, Project.class, "项目",null,50000);
+        // return super.exportXls(request, project, Project.class, "项目");
     }
 
     /**

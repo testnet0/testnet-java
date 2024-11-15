@@ -108,6 +108,7 @@ public class Httpx implements JaninoCommonScriptBody {
                     JSONObject hash = resultJson.getJSONObject("hash");
                     ipOrSubDomainOrPortToWebDTO.setBodyMd5(hash.getString("body_md5"));
                     ipOrSubDomainOrPortToWebDTO.setHeaderMd5(hash.getString("header_md5"));
+                    ipOrSubDomainOrPortToWebDTO.setSource("httpx");
                     JSONArray tech = resultJson.getJSONArray("tech");
                     if (tech != null) {
                         JSONArray jsonArray = new JSONArray();

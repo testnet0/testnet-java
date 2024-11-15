@@ -146,7 +146,8 @@ public class AssetPortController extends JeecgController<AssetPort, AssetPortSer
     @RequiresPermissions("testnet.server:asset_port:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetPort assetPort) {
-        return super.exportXls(request, assetPort, AssetPort.class, "端口");
+        return super.exportXlsSheet(request, assetPort, AssetPort.class, "端口",null,500000);
+        // return super.exportXls(request, assetPort, AssetPort.class, "端口");
     }
 
     /**

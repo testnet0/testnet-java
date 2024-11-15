@@ -23,4 +23,6 @@ public interface IChainService extends IService<Chain> {
     void changeStatus(String field, String id, Boolean status);
 
     List<Chain> getAllChainList();
+
+    Chain getByIdWithCache(String id);
 }

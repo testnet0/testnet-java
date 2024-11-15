@@ -30,6 +30,15 @@ public class ExecutorConfig {
         return threadPoolTaskExecutor;
     }
 
+    @Bean(name = "resultMessageExecutor")
+    public ThreadPoolTaskExecutor resultMessageExecutor() {
+        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+        threadPoolTaskExecutor.setCorePoolSize(getCorePoolSize() * 2);
+        threadPoolTaskExecutor.setMaxPoolSize(getMaxPoolSize() * 2);
+        threadPoolTaskExecutor.setThreadNamePrefix("result-consumer-");
+        return threadPoolTaskExecutor;
+    }
+
     // 线程池核心线程数
     public int getCorePoolSize() {
         int processNum = Runtime.getRuntime().availableProcessors();

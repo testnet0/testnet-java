@@ -120,6 +120,19 @@ public class JeecgController<T, S extends IService<T>> {
             map.put(NormalExcelConstants.DATA_LIST, exportList);
             listMap.add(map);
         }
+        if(listMap.isEmpty()){
+            Map<String, Object> map = new HashMap<>(5);
+            ExportParams exportParams=new ExportParams(title + "报表", "导出人:" + sysUser.getRealname(), title,jeecgBaseConfig.getPath().getUpload());
+            exportParams.setType(ExcelType.XSSF);
+            //map.put("title",exportParams);
+            //表格Title
+            map.put(NormalExcelConstants.PARAMS,exportParams);
+            //表格对应实体
+            map.put(NormalExcelConstants.CLASS,clazz);
+            List<T> exportList = new ArrayList<>();
+            map.put(NormalExcelConstants.DATA_LIST, exportList);
+            listMap.add(map);
+        }
         // Step.4 AutoPoi 导出Excel
         ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
         //此处设置的filename无效 ,前端会重更新设置一下

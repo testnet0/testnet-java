@@ -45,5 +45,7 @@ public interface IAssetCommonOptionService {
 
     Class<? extends AssetBase> getAssetClassByType(AssetTypeEnums assetType);
 
+    Class<? extends AssetBase> getAssetDTOClassByType(AssetTypeEnums assetType);
+
     void deleteAssetByQuery(String params);
 }

@@ -14,4 +14,5 @@ public interface IAssetValidService {
     Map<String, String> getUniqueCheckFieldName(AssetTypeEnums assetType);
 
 
+    <T extends AssetBase> String getShaKey(T asset, AssetTypeEnums assetType);
 }

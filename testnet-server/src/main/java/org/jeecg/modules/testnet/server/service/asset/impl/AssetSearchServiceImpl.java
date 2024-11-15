@@ -93,13 +93,15 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
         }
     }
 
+
     @Override
     @Async
-    public void importAsset(AssetSearchImportDTO assetSearchImportDTO) {
+    public void importAsset(AssetSearchImportDTO assetSearchImportDTO, String taskId, String subTaskId) {
         if (assetSearchImportDTO.getData() != null && !assetSearchImportDTO.getData().isEmpty()) {
             assetSearchImportDTO.getData().forEach(assetSearchVO -> {
                 // IP必须存在
                 if (StringUtils.isNotBlank(assetSearchVO.getIp())) {
+                    AssetIpDTO assetIpDTO = new AssetIpDTO();
                     AssetSubDomainIpsDTO assetSubDomainIpsDTO = new AssetSubDomainIpsDTO();
                     if (StringUtils.isNotBlank(assetSearchVO.getDomain())) {
                         String parentDomain = getTopDomain(assetSearchVO.getDomain());
@@ -109,7 +111,7 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                             assetCompany.setCompanyName(assetSearchVO.getCompany());
                             assetCompany.setSource(assetSearchImportDTO.getEngine());
                             assetCompany.setProjectId(assetSearchImportDTO.getProjectId());
-                            assetCompany = assetCommonOptionService.addOrUpdate(assetCompany, AssetTypeEnums.COMPANY, "", "");
+                            assetCompany = assetCommonOptionService.addOrUpdate(assetCompany, AssetTypeEnums.COMPANY, taskId, subTaskId);
                         }
                         if (StringUtils.isNotBlank(parentDomain)) {
                             assetDomain.setDomain(parentDomain);
@@ -119,7 +121,7 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                             if (assetCompany.getId() != null) {
                                 assetDomain.setCompanyId(assetCompany.getId());
                             }
-                            assetDomain = assetCommonOptionService.addOrUpdate(assetDomain, AssetTypeEnums.DOMAIN);
+                            assetDomain = assetCommonOptionService.addOrUpdate(assetDomain, AssetTypeEnums.DOMAIN, taskId, subTaskId);
                             if (assetDomain == null) {
                                 log.error("添加域名失败！");
                                 return;
@@ -132,18 +134,18 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                             assetSubDomainIpsDTO.setSource(assetSearchImportDTO.getEngine());
                             assetCompany.setSource(assetSearchImportDTO.getEngine());
                             assetSubDomainIpsDTO.setProjectId(assetSearchImportDTO.getProjectId());
-                            assetSubDomainIpsDTO = assetCommonOptionService.addOrUpdate(assetSubDomainIpsDTO, AssetTypeEnums.SUB_DOMAIN);
+                            assetSubDomainIpsDTO = assetCommonOptionService.addOrUpdate(assetSubDomainIpsDTO, AssetTypeEnums.SUB_DOMAIN, taskId, subTaskId);
                             if (assetSubDomainIpsDTO == null) {
                                 log.error("添加子域名失败！");
                                 return;
                             }
+                            Map<String, String> map = new HashMap<>();
+                            map.put("ip", assetSearchVO.getIp());
+                            map.put("project_id", assetSearchImportDTO.getProjectId());
+                            assetIpDTO = assetCommonOptionService.getDTOByFieldAndAssetType(map, AssetTypeEnums.IP);
+
                         }
-                    }
-                    Map<String, String> map = new HashMap<>();
-                    map.put("ip", assetSearchVO.getIp());
-                    AssetIpDTO assetIpDTO = assetCommonOptionService.getDTOByFieldAndAssetType(map, AssetTypeEnums.IP);
-                    if (assetIpDTO == null) {
-                        assetIpDTO = new AssetIpDTO();
+                    } else {
                         assetIpDTO.setIp(assetSearchVO.getIp());
                         assetIpDTO.setIsp(assetSearchVO.getIsp());
                         assetIpDTO.setCountry(assetSearchVO.getCountry());
@@ -151,11 +153,12 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                         assetIpDTO.setProjectId(assetSearchImportDTO.getProjectId());
                         assetIpDTO.setCity(assetSearchVO.getCity());
                         assetIpDTO.setSource(assetSearchImportDTO.getEngine());
-                        assetIpDTO = assetCommonOptionService.addOrUpdate(assetIpDTO, AssetTypeEnums.IP);
-                        if (assetIpDTO == null) {
-                            log.error("添加IP失败！");
-                            return;
-                        }
+                        assetIpDTO.setSubDomainIds("");
+                        assetIpDTO = assetCommonOptionService.addOrUpdate(assetIpDTO, AssetTypeEnums.IP, taskId, subTaskId);
+                    }
+                    if (assetIpDTO == null) {
+                        log.error("添加或更新IP失败！");
+                        return;
                     }
                     if (assetIpDTO.getId() != null) {
                         if (assetSearchVO.getPort() > 0) {
@@ -166,7 +169,7 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                             assetPortDTO.setSource(assetSearchImportDTO.getEngine());
                             assetPortDTO.setIsWeb(assetSearchVO.getIsWeb());
                             assetPortDTO.setProtocol(assetSearchVO.getBaseProtocol());
-                            assetPortDTO = assetCommonOptionService.addOrUpdate(assetPortDTO, AssetTypeEnums.PORT);
+                            assetPortDTO = assetCommonOptionService.addOrUpdate(assetPortDTO, AssetTypeEnums.PORT, taskId, subTaskId);
                             if (assetPortDTO.getId() != null) {
                                 if (StringUtils.isNotBlank(assetSearchVO.getUrl())) {
                                     AssetWebDTO assetWeb = new AssetWebDTO();
@@ -183,7 +186,7 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                                     assetWeb.setTech(assetSearchVO.getComponent());
                                     assetWeb.setBodyMd5(assetSearchVO.getResponseHash());
                                     assetWeb.setBody(assetSearchVO.getBody());
-                                    assetCommonOptionService.addOrUpdate(assetWeb, AssetTypeEnums.WEB);
+                                    assetCommonOptionService.addOrUpdate(assetWeb, AssetTypeEnums.WEB, taskId, subTaskId);
                                 }
                             }
                         }
@@ -196,7 +199,7 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                 }
             });
         } else {
-            importBatch(assetSearchImportDTO);
+            importBatch(assetSearchImportDTO, taskId, subTaskId);
         }
     }
 
@@ -209,19 +212,26 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
         if (page != null && page.getRecords() != null && !page.getRecords().isEmpty()) {
             int totalPages = (int) ((page.getTotal() + params.getPageSize() - 1) / params.getPageSize());
             liteFlowTask.setVersion(liteFlowTask.getVersion() + 1);
+            LiteFlowSubTask liteFlowSubTask = new LiteFlowSubTask();
+            liteFlowSubTask.setTaskId(liteFlowTask.getId());
+            liteFlowSubTask.setVersion(liteFlowTask.getVersion());
+            liteFlowSubTask.setTaskStatus(LiteFlowStatusEnums.SUCCEED.name());
+            assetSearchImportDTO.setData(page.getRecords());
+            liteFlowSubTaskService.save(liteFlowSubTask);
+            importAsset(assetSearchImportDTO, liteFlowTask.getId(), liteFlowSubTask.getId());
             if (totalPages > 1) {
                 liteFlowTask.setUnFinishedChain(totalPages - 1);
             }
             liteFlowTaskMapper.updateById(liteFlowTask);
             List<LiteFlowSubTask> subTaskList = getLiteFlowSubTasks(totalPages, liteFlowTask, liteFlowTask.getVersion());
             liteFlowSubTaskService.saveBatch(subTaskList);
-            assetSearchImportDTO.setData(page.getRecords());
-            importAsset(assetSearchImportDTO);
         }
 
     }
 
-    private void importBatch(AssetSearchImportDTO assetSearchImportDTO) {
+
+
+    private void importBatch(AssetSearchImportDTO assetSearchImportDTO, String taskId, String subTaskId) {
         AssetSearchDTO params = assetSearchImportDTO.getParams();
         Result<IPage<AssetSearchVO>> result = list(params);
         IPage<AssetSearchVO> page = result.getResult();
@@ -237,10 +247,18 @@ public class AssetSearchServiceImpl implements IAssetSearchService {
                 liteFlowTask.setUnFinishedChain(totalPages - 1);
             }
             liteFlowTaskMapper.insert(liteFlowTask);
+
+            liteFlowTask.setVersion(liteFlowTask.getVersion() + 1);
+            LiteFlowSubTask liteFlowSubTask = new LiteFlowSubTask();
+            liteFlowSubTask.setTaskId(liteFlowTask.getId());
+            liteFlowSubTask.setVersion(liteFlowTask.getVersion());
+            liteFlowSubTask.setTaskStatus(LiteFlowStatusEnums.SUCCEED.name());
+            assetSearchImportDTO.setData(page.getRecords());
+            importAsset(assetSearchImportDTO, taskId, subTaskId);
+
             List<LiteFlowSubTask> subTaskList = getLiteFlowSubTasks(totalPages, liteFlowTask, 1);
             liteFlowSubTaskService.saveBatch(subTaskList);
-            assetSearchImportDTO.setData(page.getRecords());
-            importAsset(assetSearchImportDTO);
+
         }
     }
 

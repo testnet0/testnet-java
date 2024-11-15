@@ -2,10 +2,12 @@ package org.jeecg.modules.testnet.server.listener;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowSubTaskService;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.stream.StreamListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import testnet.common.constan.Constants;
 import testnet.common.entity.liteflow.ClientStatus;
@@ -27,9 +29,13 @@ public class StatusMessageListener implements StreamListener<String, ObjectRecor
     @Resource
     private IRedisStreamService redisStreamService;
 
+    @Resource
+    private RedissonLockClient redissonLockClient;
+
 
     @SneakyThrows
     @Override
+    @Async("logMessageExecutor")
     public void onMessage(ObjectRecord<String, ClientStatus> record) {
         ClientStatus clientStatus = ObjectBase64Decoder.decodeFields(record.getValue());
         redisStreamService.ack(record.getStream(), Constants.STREAM_KEY_TASK_EXECUTE, record.getId().getValue());
@@ -40,14 +46,19 @@ public class StatusMessageListener implements StreamListener<String, ObjectRecor
             return;
         }
         try {
-            LiteFlowSubTask liteFlowSubTask = liteFlowSubTaskService.getById(taskId);
-            if (liteFlowSubTask != null) {
-                if (liteFlowSubTask.getTaskStatus().equals(LiteFlowStatusEnums.RUNNING.name())) {
-                    liteFlowSubTask.setTaskStatus(clientStatus.getStatus());
-                    liteFlowSubTaskService.updateById(liteFlowSubTask);
-                } else {
-                    log.info("任务已经完成，不能修改状态！");
+            if (redissonLockClient.tryLock(taskId, 10, 10)) {
+                LiteFlowSubTask liteFlowSubTask = liteFlowSubTaskService.getById(taskId);
+                if (liteFlowSubTask != null) {
+                    if (liteFlowSubTask.getTaskStatus().equals(LiteFlowStatusEnums.RUNNING.name())) {
+                        liteFlowSubTask.setTaskStatus(clientStatus.getStatus());
+                        liteFlowSubTaskService.updateById(liteFlowSubTask);
+                    } else {
+                        log.info("任务已经完成，不能修改状态！");
+                    }
+                    redissonLockClient.unlock(taskId);
                 }
+            } else {
+                log.error("任务状态获取锁失败！");
             }
             redisStreamService.del(record.getStream(), record.getId().getValue());
         } catch (Exception e) {

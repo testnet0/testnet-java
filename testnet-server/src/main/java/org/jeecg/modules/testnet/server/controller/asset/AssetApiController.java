@@ -124,7 +124,8 @@ public class AssetApiController extends JeecgController<AssetApi, AssetApiServic
     @RequiresPermissions("testnet.server:asset_api:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetApi assetApi) {
-        return super.exportXls(request, assetApi, AssetApi.class, "API");
+        return super.exportXlsSheet(request, assetApi, AssetApi.class, "API",null,50000);
+        // return super.exportXls(request, assetApi, AssetApi.class, "API");
     }
 
     /**

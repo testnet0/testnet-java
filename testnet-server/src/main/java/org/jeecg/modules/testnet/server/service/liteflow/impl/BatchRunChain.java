@@ -64,6 +64,7 @@ public class BatchRunChain {
                 task.setAssetNum(jsonArray.size());
                 task.setUnFinishedChain(jsonArray.size());
                 liteFlowTaskService.saveMain(task, null);
+                List<LiteFlowSubTask> subTaskList = new ArrayList<>();
                 // 批量扫描任务
                 jsonArray.forEach(o -> {
                     // 创建子任务
@@ -73,8 +74,9 @@ public class BatchRunChain {
                     subTask.setVersion(version);
                     subTask.setTaskStatus(LiteFlowStatusEnums.PENDING.name());
                     subTask.setSubTaskParam(jsonObject1.toJSONString());
-                    liteFlowSubTaskService.save(subTask);
+                    subTaskList.add(subTask);
                 });
+                liteFlowSubTaskService.saveBatch(subTaskList);
             } else {
                 List<String> assetList = assetCommonSearchService.queryByAssetType(params, assetType);
                 task.setUnFinishedChain(assetList.size());

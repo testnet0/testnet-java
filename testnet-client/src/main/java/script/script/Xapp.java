@@ -47,9 +47,11 @@ public class Xapp implements JaninoCommonScriptBody {
                     if (jsonArray != null) {
                         JSONObject jsonObject = new JSONObject();
                         JSONObject value = jsonArray.getJSONObject(0).getJSONObject("value");
-                        String title = value.getString("title");
-                        jsonObject.put("webTitle", title);
-                        sendService.INFO("提取到的标题是:{}", title);
+                        if (value.containsKey("title")) {
+                            String title = value.getString("title");
+                            jsonObject.put("webTitle", title);
+                            sendService.INFO("提取到的标题是:{}", title);
+                        }
                         JSONArray fingerprints = value.getJSONArray("fingerprints");
                         JSONObject httpFlow = value.getJSONObject("httpFlow");
                         if (httpFlow != null) {

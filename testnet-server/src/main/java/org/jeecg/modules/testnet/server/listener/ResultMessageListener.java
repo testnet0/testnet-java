@@ -10,9 +10,11 @@ import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
 import org.jeecg.modules.testnet.server.service.liteflow.IChainService;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowSubTaskService;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowTaskService;
+import org.jeecg.modules.message.handle.impl.WebhookMsgHandle;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.stream.StreamListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import testnet.common.constan.Constants;
 import testnet.common.entity.liteflow.LiteFlowResult;
@@ -42,22 +44,25 @@ public class ResultMessageListener implements StreamListener<String, ObjectRecor
     @Resource
     private ILiteFlowTaskService liteFlowTaskService;
 
+    @Resource
+    private WebhookMsgHandle webhookMsgHandle;
+
 
     @SneakyThrows
     @Override
+    @Async("resultMessageExecutor")
     public void onMessage(ObjectRecord<String, LiteFlowResult> record) {
         LiteFlowResult liteFLowResult = ObjectBase64Decoder.decodeFields(record.getValue());
         redisStreamService.ack(record.getStream(), Constants.STREAM_KEY_RESULT, record.getId().getValue());
         redisStreamService.del(record.getStream(), record.getId().getValue());
         log.info("接收到结果消息: {}", liteFLowResult);
         String taskId = liteFLowResult.getTaskId();
-
         LiteFlowSubTask liteFlowSubTask = liteFlowSubTaskService.getById(taskId);
         if (liteFlowSubTask == null) {
             log.error("实例不存在: {}", taskId);
         } else {
-            LiteFlowTask liteFlowTask = liteFlowTaskService.getById(liteFlowSubTask.getTaskId());
-            Chain chain = chainService.getById(liteFlowTask.getChainId());
+            LiteFlowTask liteFlowTask = liteFlowTaskService.getByIdWithCache(liteFlowSubTask.getTaskId());
+            Chain chain = chainService.getByIdWithCache(liteFlowTask.getChainId());
             if (chain != null && StringUtils.isNotBlank(chain.getProcessorClassName())) {
                 IAssetResultProcessorService assetResultProcessService = assetResultProcessMap.get(chain.getProcessorClassName());
                 if (assetResultProcessService != null) {

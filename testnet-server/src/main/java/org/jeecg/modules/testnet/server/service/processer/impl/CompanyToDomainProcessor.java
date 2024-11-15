@@ -8,6 +8,7 @@ package org.jeecg.modules.testnet.server.service.processer.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.modules.testnet.server.entity.asset.AssetCompany;
 import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
@@ -20,6 +21,8 @@ import testnet.common.entity.liteflow.LiteFlowResult;
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -27,6 +30,9 @@ public class CompanyToDomainProcessor implements IAssetResultProcessorService {
 
     @Resource
     private IAssetCommonOptionService assetCommonOptionService;
+
+    @Resource
+    private ISysBaseAPI sysBaseAPI;
 
     @Override
     public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
@@ -42,6 +48,11 @@ public class CompanyToDomainProcessor implements IAssetResultProcessorService {
                 assetDomain.setProjectId(assetCompany.getProjectId());
                 assetCommonOptionService.addOrUpdate(assetDomain, AssetTypeEnums.DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());
             });
+            Map<String, Object> params = new HashMap<>();
+            params.put("taskName", liteFlowTask.getTaskName());
+            params.put("domainNumber", domainToCompanyDTO.getDomainList().size());
+            sysBaseAPI.sendWebHookeMessage(liteFlowTask.getTaskName(), params, "company_domain_notify");
         }
     }
+
 }

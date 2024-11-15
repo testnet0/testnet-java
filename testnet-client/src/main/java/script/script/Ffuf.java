@@ -34,7 +34,7 @@ public class Ffuf implements JaninoCommonScriptBody {
             String resultPath = taskExecuteMessage.getResultPath() + "ffuf_search_" + UUID.randomUUID() + ".json";
             sendService.INFO("结果保存路径:{}", resultPath);
             JSONObject jsonObject = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
-            String webUrl = jsonObject.getString("absolutePath");
+            String webUrl = jsonObject.containsKey("absolutePath") ? jsonObject.getString("absolutePath") : jsonObject.getString("webUrl");
             command = String.format(command, webUrl, resultPath);
             sendService.INFO("开始执行FFUF敏感目录扫描,命令是:{}", command);
             CommandUtils.CommandResult result = CommandUtils.executeCommand(command);

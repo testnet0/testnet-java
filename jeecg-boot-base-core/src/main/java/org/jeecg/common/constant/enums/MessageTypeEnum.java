@@ -20,7 +20,10 @@ public enum MessageTypeEnum {
     /** 钉钉消息 */
     DD("dingtalk", "钉钉消息"),
     /** 企业微信 */
-    QYWX("wechat_enterprise", "企业微信");
+    QYWX("wechat_enterprise", "企业微信"),
+    /** webhook */
+    WEBHOOK("webhook", "webhook")
+    ;
 
     MessageTypeEnum(String type, String note){
         this.type = type;

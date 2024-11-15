@@ -143,7 +143,8 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
     @RequiresPermissions("testnet.server:asset_domain:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetDomain assetDomain) {
-        return super.exportXls(request, assetDomain, AssetDomain.class, "主域名");
+        return super.exportXlsSheet(request, assetDomain, AssetDomain.class, "主域名",null,50000);
+        // return super.exportXls(request, assetDomain, AssetDomain.class, "主域名");
     }
 
     /**

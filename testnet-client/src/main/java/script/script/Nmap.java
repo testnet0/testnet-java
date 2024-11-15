@@ -69,7 +69,7 @@ public class Nmap implements JaninoCommonScriptBody {
                         Element portElement = (Element) portNode;
                         // 检查端口是否为 closed 状态，若是则跳过
                         String state = portElement.getElementsByTagName("state").item(0).getAttributes().getNamedItem("state").getNodeValue();
-                        if ("closed".equals(state)) {
+                        if ("closed".equals(state) || "filtered".equals(state)) {
                             continue;
                         }
                         IpOrSubDomainToPortDTO.Port port = new IpOrSubDomainToPortDTO.Port();

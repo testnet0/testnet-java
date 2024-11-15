@@ -147,7 +147,8 @@ public class AssetVulController extends JeecgController<AssetVul, AssetVulServic
     @RequiresPermissions("testnet.server:asset_vul:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetVul assetVul) {
-        return super.exportXls(request, assetVul, AssetVul.class, "漏洞");
+        return super.exportXlsSheet(request, assetVul, AssetVul.class, "漏洞",null,50000);
+        // return super.exportXls(request, assetVul, AssetVul.class, "漏洞");
     }
 
     /**

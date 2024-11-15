@@ -273,10 +273,16 @@ jeecg:
     logRetentionDays: 30
   #分布式锁配置
   redisson:
-    address: 127.0.0.1:6379
-    password:
+    address: ${REDIS_HOST}:${REDIS_PORT}
+    password: ${REDIS_PASSWORD}
     type: STANDALONE
     enabled: true
+  # 百度开放API配置
+  baidu-api:
+    app-id: ??
+    api-key: ??
+    secret-key: ??
+
 #cas单点登录
 cas:
   prefixUrl: http://cas.example.org:8443/cas

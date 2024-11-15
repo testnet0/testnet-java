@@ -14,6 +14,7 @@ import org.jeecg.modules.testnet.server.entity.asset.AssetSubDomain;
 import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetIpSubdomainRelationService;
 import org.jeecg.modules.testnet.server.service.asset.impl.AssetSubDomainServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import testnet.common.enums.AssetTypeEnums;
@@ -37,6 +38,7 @@ public class AssetSubDomainController extends JeecgController<AssetSubDomain, As
     private IAssetCommonOptionService assetCommonOptionService;
     @Resource
     private IAssetIpSubdomainRelationService assetIpSubdomainRelationService;
+
 
     /**
      * 分页列表查询
@@ -147,7 +149,10 @@ public class AssetSubDomainController extends JeecgController<AssetSubDomain, As
     @RequiresPermissions("testnet.server:asset_sub_domain:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetSubDomain assetSubDomain) {
-        return super.exportXls(request, assetSubDomain, AssetSubDomain.class, "子域名");
+
+        //分sheet导出表格字段
+        return super.exportXlsSheet(request, assetSubDomain, AssetSubDomain.class, "子域名",null,50000);
+        // return super.exportXlsSheet(request, assetSubDomain, AssetSubDomain.class, "子域名");
     }
 
     /**
