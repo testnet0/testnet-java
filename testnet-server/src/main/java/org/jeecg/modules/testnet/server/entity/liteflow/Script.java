@@ -138,10 +138,4 @@ public class Script implements Serializable {
     @Excel(name = "版本检查命令", width = 15)
     @ApiModelProperty(value = "版本检查命令")
     private java.lang.String versionCheckCommand;
-    /**
-     * 版本更新命令
-     */
-    @Excel(name = "版本更新命令", width = 15)
-    @ApiModelProperty(value = "版本更新命令")
-    private java.lang.String updateCommand;
 }
