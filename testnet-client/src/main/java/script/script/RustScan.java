@@ -1,6 +1,6 @@
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import org.apache.commons.lang.StringUtils;
 import testnet.client.service.ILiteFlowMessageSendService;
@@ -22,13 +22,13 @@ import java.util.regex.Pattern;
  * command: '/testnet-client/tools/rustscan -a %s -p 80,443,22,21,23,25,53,110,143,161,389,445,587,3306,3389,8080,8443,53,137,139,445,993,995,1723,111,5900,5901,3128,8081,8082,9090,10000,10001 -g'
  * 结果处理类名: ipOrSubDomainToPortProcessor
  */
-public class RustScan implements JaninoCommonScriptBody {
+public class RustScan implements CommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
         // 获取的是chain初始化的参数
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         try {
-            ILiteFlowMessageSendService messageSendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+            ILiteFlowMessageSendService messageSendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
             messageSendService.setTaskId(taskExecuteMessage.getTaskId());
             JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
             JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());

@@ -1,28 +1,26 @@
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import org.apache.commons.lang.StringUtils;
 import testnet.client.service.ILiteFlowMessageSendService;
+import testnet.common.utils.ScriptUtil;
 import testnet.common.entity.liteflow.ClientToolVersion;
 import testnet.common.entity.liteflow.TaskExecuteMessage;
 import testnet.common.utils.CommandUtils;
-import testnet.common.utils.FileUtils;
 
-import java.io.IOException;
-import java.util.UUID;
-
-public class ToolsInstall implements JaninoCommonScriptBody {
+public class ToolsInstall implements CommonScriptBody {
 
     private final ILiteFlowMessageSendService sendService;
 
+
     public ToolsInstall() {
-        this.sendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+        this.sendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
     }
 
     @Override
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         sendService.setTaskId(taskExecuteMessage.getTaskId());
         JSONObject params = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
         if (params == null) {
@@ -30,20 +28,14 @@ public class ToolsInstall implements JaninoCommonScriptBody {
             return null;
         }
         String installCommand = params.getString("installCommand");
+        sendService.INFO("工具安装命令是：" + installCommand);
         String checkVersionCommand = params.getString("versionCheckCommand");
         try {
             ClientToolVersion clientToolVersion = new ClientToolVersion();
+            executeCommand(installCommand);
             String version = checkToolVersion(checkVersionCommand);
-            if (StringUtils.isBlank(version)) {
-                executeCommand(installCommand);
-                version = checkToolVersion(checkVersionCommand);
-                clientToolVersion.setToolVersion(version);
-                sendService.sendResult(clientToolVersion);
-            } else {
-                clientToolVersion.setToolVersion(version);
-                sendService.sendResult(clientToolVersion);
-                sendService.INFO("工具已存在，跳过安装。");
-            }
+            clientToolVersion.setToolVersion(version);
+            sendService.sendResult(clientToolVersion);
         } catch (Exception e) {
             sendService.ERROR("工具安装过程中发生错误：" + e.getMessage());
             throw new RuntimeException(e);
@@ -52,59 +44,34 @@ public class ToolsInstall implements JaninoCommonScriptBody {
         return null;
     }
 
-    private String checkToolVersion(String checkVersionCommand) {
-        String versionFileName = generateFileName();
-        FileUtils.createFileAndWrite(versionFileName, checkVersionCommand);
 
-        if (!FileUtils.fileExists(versionFileName)) {
-            sendService.ERROR("检查版本文件创建失败");
-            return "";
-        }
-        CommandUtils.CommandResult versionResult = null;
-        try {
-            versionResult = CommandUtils.executeCommand("bash " + versionFileName);
-            FileUtils.deleteFile(versionFileName);
-            sendService.INFO("开始检测工具版本" + "，命令是：" + checkVersionCommand);
+    private String checkToolVersion(String checkVersionCommand) {
+        CommandUtils.CommandResult versionResult = ScriptUtil.execToFile(checkVersionCommand);
+        if (versionResult == null) {
+            sendService.ERROR("文件创建失败!");
+        } else {
             if (versionResult.getExitCode() == 0) {
                 if (StringUtils.isNotBlank(versionResult.getOutput())) {
                     sendService.INFO("工具安装成功，版本是：" + versionResult.getOutput());
                     return versionResult.getOutput();
                 } else {
                     sendService.INFO("工具未安装");
-                    return "";
                 }
             } else {
                 sendService.ERROR("工具版本检查失败，状态码是：" + versionResult.getExitCode() + ",错误信息：" + versionResult.getOutput());
-                return "";
             }
-        } catch (Exception e) {
-            if (versionResult != null) {
-                sendService.ERROR("工具版本检查失败，错误信息：" + e.getMessage() + "输出信息：", versionResult.getOutput());
-            }
-            return "";
         }
+        return "";
     }
 
-    private void executeCommand(String command) throws IOException, InterruptedException {
-        String fileName = generateFileName();
-        FileUtils.createFileAndWrite(fileName, command);
-
-        if (!FileUtils.fileExists(fileName)) {
-            sendService.ERROR("文件创建失败：" + fileName);
-            return;
-        }
-        sendService.INFO("开始安装工具" + "，命令是：" + command);
-        CommandUtils.CommandResult result = CommandUtils.executeCommand("bash " + fileName);
-        FileUtils.deleteFile(fileName);
-
-        if (result.getExitCode() == 0) {
-            sendService.INFO("工具安装成功，开始检查版本");
+    private void executeCommand(String command) {
+        CommandUtils.CommandResult result = ScriptUtil.execToFile(command);
+        if (result == null) {
+            sendService.ERROR("安装工具文件创建失败!");
+        } else if (result.getExitCode() != 0) {
+            sendService.ERROR("工具安装失败，状态码是：" + result.getExitCode() + ",错误信息：" + result.getOutput());
         } else {
-            sendService.ERROR("工具安装失败,状态码是：" + result.getExitCode() + ",错误信息：" + result.getOutput());
+            sendService.INFO("工具安装成功,执行结果:" + result.getOutput());
         }
-    }
-
-    private String generateFileName() {
-        return UUID.randomUUID().toString() + ".sh";
     }
 }

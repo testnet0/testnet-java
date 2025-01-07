@@ -1,7 +1,7 @@
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import org.apache.commons.lang.StringUtils;
 import testnet.client.service.ILiteFlowMessageSendService;
@@ -28,14 +28,14 @@ import java.util.UUID;
  * regionName: ap-xxx
  * 结果处理类名: ipOrSubDomainOrPortToWebProcessor
  */
-public class Httpx implements JaninoCommonScriptBody {
+public class Httpx implements CommonScriptBody {
 
     private ILiteFlowMessageSendService messageSendService;
 
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         try {
-            messageSendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+            messageSendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
             messageSendService.setTaskId(taskExecuteMessage.getTaskId());
             messageSendService.INFO("开始httpx web探测...");
             JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
@@ -80,7 +80,7 @@ public class Httpx implements JaninoCommonScriptBody {
                     break;
             }
             for (String s : taskList.keySet()) {
-                executeTask(s, (String) taskList.get(s), config, resultPath);
+                executeTask(s, taskList.get(s), config, resultPath);
             }
         } catch (
                 Exception e) {

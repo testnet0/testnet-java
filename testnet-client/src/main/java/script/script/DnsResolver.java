@@ -1,6 +1,6 @@
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import org.apache.commons.lang.StringUtils;
 import org.xbill.DNS.*;
@@ -20,11 +20,11 @@ import java.util.concurrent.*;
  * 适用资产：子域名
  * 结果处理类名: assetUpdateProcessor
  */
-public class DnsResolver implements JaninoCommonScriptBody {
+public class DnsResolver implements CommonScriptBody {
 
     private ILiteFlowMessageSendService messageSendService;
 
-    public static boolean isPrivateIP(String ip) {
+    private boolean isPrivateIP(String ip) {
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
             byte[] address = inetAddress.getAddress();
@@ -168,7 +168,7 @@ public class DnsResolver implements JaninoCommonScriptBody {
         return new String[0];
     }
 
-    static class DNSResult {
+    private class DNSResult {
         private final String cname;
         private final String[] aRecords;
 

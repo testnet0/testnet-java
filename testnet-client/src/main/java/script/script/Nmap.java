@@ -1,6 +1,6 @@
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -27,13 +27,13 @@ import java.util.UUID;
  * command: 'nmap -T4 -sV -Pn %s -oX %s'
  * 结果处理类名: ipOrSubDomainToPortProcessor
  */
-public class Nmap implements JaninoCommonScriptBody {
+public class Nmap implements CommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
         // 获取的是chain初始化的参数
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         try {
-            ILiteFlowMessageSendService messageSendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+            ILiteFlowMessageSendService messageSendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
             messageSendService.setTaskId(taskExecuteMessage.getTaskId());
             JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
             JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());

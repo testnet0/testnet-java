@@ -2,7 +2,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import testnet.client.service.ILiteFlowMessageSendService;
 import testnet.common.dto.CompanyToDomainsDTO;
@@ -15,14 +15,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Zone implements JaninoCommonScriptBody {
+public class Zone implements CommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
         String key = config.getString("zone_key");
         JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
-        ILiteFlowMessageSendService sendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+        ILiteFlowMessageSendService sendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
         sendService.setTaskId(taskExecuteMessage.getTaskId());
         sendService.INFO("开始执行0.zone,参数是: {}", taskExecuteMessage.getTaskParams());
         String componentName = instanceParams.getString("companyName");

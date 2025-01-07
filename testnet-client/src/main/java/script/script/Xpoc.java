@@ -2,7 +2,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import testnet.client.service.ILiteFlowMessageSendService;
 import testnet.common.dto.IpOrWebOrSubDomainToVulDTO;
@@ -24,14 +24,14 @@ import java.util.UUID;
  * 结果处理类名: ipOrWebOrSubDomainToVulProcessor
  */
 
-public class Xpoc implements JaninoCommonScriptBody {
+public class Xpoc implements CommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
         JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
         try {
-            ILiteFlowMessageSendService sendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+            ILiteFlowMessageSendService sendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
             sendService.setTaskId(taskExecuteMessage.getTaskId());
             String resultPath = taskExecuteMessage.getResultPath() + "xpoc_" + UUID.randomUUID() + ".json";
             sendService.INFO("结果保存路径:{}", resultPath);

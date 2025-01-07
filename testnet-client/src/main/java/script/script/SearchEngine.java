@@ -1,17 +1,17 @@
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import testnet.client.service.ILiteFlowMessageSendService;
 import testnet.common.dto.SearchEngineImportDTO;
 import testnet.common.entity.liteflow.TaskExecuteMessage;
 
 
-public class SearchEngine implements JaninoCommonScriptBody {
+public class SearchEngine implements CommonScriptBody {
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         try {
-            ILiteFlowMessageSendService sendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+            ILiteFlowMessageSendService sendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
             sendService.setTaskId(taskExecuteMessage.getTaskId());
             JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
             SearchEngineImportDTO searchEngineImportDTO = new SearchEngineImportDTO();

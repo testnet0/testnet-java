@@ -1,7 +1,7 @@
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import org.apache.commons.lang.StringUtils;
 import testnet.client.service.ILiteFlowMessageSendService;
@@ -20,14 +20,14 @@ import java.util.regex.Pattern;
  * 结果处理类名: assetUpdateProcessor
  */
 
-public class TideFinger_Go implements JaninoCommonScriptBody {
+public class TideFinger_Go implements CommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
         JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
         try {
-            ILiteFlowMessageSendService sendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+            ILiteFlowMessageSendService sendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
             sendService.setTaskId(taskExecuteMessage.getTaskId());
             String command = config.getString("command");
             String asset = instanceParams.getString("webUrl");

@@ -2,7 +2,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import testnet.client.service.ILiteFlowMessageSendService;
 import testnet.common.dto.IpOrWebOrSubDomainToVulDTO;
@@ -24,13 +24,13 @@ import java.util.UUID;
  * 结果处理类名: ipOrWebOrSubDomainToVulProcessor
  */
 
-public class Afrog implements JaninoCommonScriptBody {
+public class Afrog implements CommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage =wrap.cmp.getRequestData();
         JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
         JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
-        ILiteFlowMessageSendService sendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+        ILiteFlowMessageSendService sendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
         try {
             sendService.setTaskId(taskExecuteMessage.getTaskId());
             String resultPath = taskExecuteMessage.getResultPath() + "afrog_" + UUID.randomUUID() + ".json";

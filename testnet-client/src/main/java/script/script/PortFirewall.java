@@ -1,6 +1,6 @@
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
-import com.yomahub.liteflow.script.body.JaninoCommonScriptBody;
+import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import testnet.client.service.ILiteFlowMessageSendService;
 import testnet.common.dto.AssetUpdateDTO;
@@ -25,7 +25,7 @@ import java.util.UUID;
  * 结果处理类名: assetUpdateProcessor
  * 原理：随机探测3个TCP端口，大于2个端口开放则说明可能存在防火墙
  */
-public class PortFirewall implements JaninoCommonScriptBody {
+public class PortFirewall implements CommonScriptBody {
 
     private static final int MIN_PORT = 20000;
     private static final int MAX_PORT = 60000;
@@ -34,9 +34,9 @@ public class PortFirewall implements JaninoCommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
         // 获取的是chain初始化的参数
-        TaskExecuteMessage taskExecuteMessage = (TaskExecuteMessage) wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         try {
-            messageSendService = (ILiteFlowMessageSendService) ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
+            messageSendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);
             messageSendService.setTaskId(taskExecuteMessage.getTaskId());
             JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
             JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
