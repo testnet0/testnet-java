@@ -50,7 +50,6 @@ public class ClientToolsServiceImpl extends ServiceImpl<ClientToolsMapper, Clien
             clientTool.setClientId(client.getId());
             clientTool.setScriptId(script.getId());
             clientTool.setInstallCommand(script.getInstallCommand());
-            clientTool.setUpdateCommand(script.getUpdateCommand());
             clientTool.setVersionCheckCommand(script.getVersionCheckCommand());
             clientTool.setStatus(false);
             clientTools.add(clientTool);

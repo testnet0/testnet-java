@@ -15,7 +15,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <spring-boot.version>2.7.17</spring-boot.version>
         <fasterxml.jackson.version>2.13.4.2</fasterxml.jackson.version>
-        <liteflow.version>2.12.3</liteflow.version>
+        <liteflow.version>2.12.4</liteflow.version>
         <mysql-connector-java.version>8.0.27</mysql-connector-java.version>
         <cos.api.version>5.6.155</cos.api.version>
         <testnet-common.version>1.0.0</testnet-common.version>
@@ -36,11 +36,6 @@
         <dependency>
             <groupId>com.yomahub</groupId>
             <artifactId>liteflow-spring-boot-starter</artifactId>
-            <version>${liteflow.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.yomahub</groupId>
-            <artifactId>liteflow-script-java</artifactId>
             <version>${liteflow.version}</version>
         </dependency>
         <dependency>

@@ -1,4 +1,5 @@
-import com.alibaba.fastjson.JSON;
+package script.script;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;

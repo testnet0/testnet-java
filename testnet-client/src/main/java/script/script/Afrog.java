@@ -1,3 +1,5 @@
+package script.script;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -27,7 +29,7 @@ import java.util.UUID;
 public class Afrog implements CommonScriptBody {
 
     public Void body(ScriptExecuteWrap wrap) {
-        TaskExecuteMessage taskExecuteMessage =wrap.cmp.getRequestData();
+        TaskExecuteMessage taskExecuteMessage = wrap.cmp.getRequestData();
         JSONObject instanceParams = JSONObject.parseObject(taskExecuteMessage.getTaskParams());
         JSONObject config = JSONObject.parseObject(taskExecuteMessage.getConfig());
         ILiteFlowMessageSendService sendService = ContextAwareHolder.loadContextAware().getBean(ILiteFlowMessageSendService.class);

@@ -1,3 +1,5 @@
+package script.script;
+
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
 import com.yomahub.liteflow.script.body.CommonScriptBody;
@@ -26,7 +28,7 @@ public class ICPApi2 implements CommonScriptBody {
             Thread.sleep(10000);
             String domain = instanceParams.getString("domain");
             // 调用新的 ICP 查询接口
-            HttpResponse response = HttpUtils.get("https://api.leafone.cn/api/icp?name="+domain);
+            HttpResponse response = HttpUtils.get("https://api.leafone.cn/api/icp?name=" + domain);
 
             if (response.getStatusCode() == 200) {
                 sendService.INFO("返回包: {}", response.getBody());

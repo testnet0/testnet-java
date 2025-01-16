@@ -123,7 +123,6 @@ public class VersionMessageListener implements StreamListener<String, ObjectReco
             clientTools.setScriptId(script.getId());
             clientTools.setStatus(false);
             clientTools.setInstallCommand(script.getInstallCommand());
-            clientTools.setUpdateCommand(script.getUpdateCommand());
             clientTools.setVersionCheckCommand(script.getVersionCheckCommand());
             clientToolsList.add(clientTools);
         }

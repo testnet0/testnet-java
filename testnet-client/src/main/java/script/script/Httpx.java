@@ -1,3 +1,5 @@
+package script.script;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
@@ -129,12 +131,13 @@ public class Httpx implements CommonScriptBody {
                         if (screenshot_path != null && screenshot_path_rel != null) {
                             ipOrSubDomainOrPortToWebDTO.setScreenshot(TencentCOSUtils.uploadTencentCOS(secretId, secretKey, bucketName, regionName, screenshot_path, screenshot_path_rel));
                         }
-                        String stored_response_path = resultJson.getString("stored_response_path");
-                        if (stored_response_path != null) {
-                            String path = UUID.randomUUID() + ".txt";
-                            messageSendService.INFO("Httpx返回包存储路径：{}", path);
-                            ipOrSubDomainOrPortToWebDTO.setResponseBody(TencentCOSUtils.uploadTencentCOS(secretId, secretKey, bucketName, regionName, stored_response_path, path));
-                        }
+                        // 不保存返回包
+//                        String stored_response_path = resultJson.getString("stored_response_path");
+//                        if (stored_response_path != null) {
+//                            String path = UUID.randomUUID() + ".txt";
+//                            messageSendService.INFO("Httpx返回包存储路径：{}", path);
+//                            ipOrSubDomainOrPortToWebDTO.setResponseBody(TencentCOSUtils.uploadTencentCOS(secretId, secretKey, bucketName, regionName, stored_response_path, path));
+//                        }
                     } else {
                         messageSendService.INFO("Httpx Web扫描执行完成,结果是:{}", resultJson);
                     }
