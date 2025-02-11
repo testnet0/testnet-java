@@ -11,5 +11,5 @@ import org.jeecg.modules.testnet.server.entity.asset.AssetSearchEngine;
  */
 public interface IAssetSearchEngineService extends IService<AssetSearchEngine> {
 
-    String getKey(String engine);
+    AssetSearchEngine getKey(String engine);
 }

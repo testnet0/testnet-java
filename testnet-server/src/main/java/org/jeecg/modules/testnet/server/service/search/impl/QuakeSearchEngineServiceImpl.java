@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.commons.lang3.StringUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.testnet.server.dto.AssetSearchDTO;
+import org.jeecg.modules.testnet.server.entity.asset.AssetSearchEngine;
 import org.jeecg.modules.testnet.server.service.search.ISearchEngineService;
 import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
 import org.slf4j.Logger;
@@ -25,9 +26,9 @@ public class QuakeSearchEngineServiceImpl implements ISearchEngineService {
     private static final Logger log = LoggerFactory.getLogger(QuakeSearchEngineServiceImpl.class);
 
     @Override
-    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, String key) {
+    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, AssetSearchEngine assetSearchEngine) {
         List<AssetSearchVO> assetSearchVOList = new ArrayList<>();
-        String quakeServiceUrl = "https://quake.360.net/api/v3/search/quake_service";
+        String quakeServiceUrl = assetSearchEngine.getEngineHost();
 
         try {
             JSONObject requestBody = new JSONObject();
@@ -51,7 +52,7 @@ public class QuakeSearchEngineServiceImpl implements ISearchEngineService {
                 requestBody.put("shortcuts", shortcutsList);
             }
             Map<String, String> headers = new HashMap<>();
-            headers.put("X-QuakeToken", key);
+            headers.put("X-QuakeToken", assetSearchEngine.getEngineToken());
             headers.put("Content-Type", "application/json");
 
             HttpResponse response = HttpUtils.post(quakeServiceUrl, headers, requestBody.toJSONString());

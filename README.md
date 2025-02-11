@@ -1,6 +1,6 @@
 TestNet 资产管理系统服务端及客户端
 ===============
-当前最新版本： 1.8.0（发布时间：2024-11-15）
+当前最新版本： 2.0（发布时间：2025-02-11）
 
 ## 开发环境搭建
 
@@ -19,6 +19,7 @@ IDE建议： IDEA (必须安装lombok插件 )
 
 - **修改配置文件**
     - 编辑 `jeecg-module-system/jeecg-system-start/src/main/resources/application-dev.yml` 文件，更新数据库和Redis的连接密码。
-
+- **编译项目**
+    - 在项目testnet-common目录下执行 `mvn package` 命令进行项目编译。
 - **启动项目**
     - 执行项目启动命令或通过IDE启动项目。

@@ -7,4 +7,25 @@
         FROM asset_vul
         where project_id = #{id};
     </select>
+
+    <delete id="delBySubDomainIds">
+        DELETE FROM asset_vul
+        WHERE asset_id IN
+        <foreach item="id" collection="subDomainId" open="(" separator="," close=")">#{id}</foreach>
+        AND asset_type = 'sub_domain';
+    </delete>
+
+    <delete id="delByIpIds">
+        DELETE FROM asset_vul
+        WHERE asset_id IN
+        <foreach item="id" collection="ipId" open="(" separator="," close=")">#{id}</foreach>
+        AND asset_type = 'ip';
+    </delete>
+
+    <delete id="delByWebIds">
+        DELETE FROM asset_vul
+        WHERE asset_id IN
+        <foreach item="id" collection="webId" open="(" separator="," close=")">#{id}</foreach>
+        AND asset_type = 'web';
+    </delete>
 </mapper>

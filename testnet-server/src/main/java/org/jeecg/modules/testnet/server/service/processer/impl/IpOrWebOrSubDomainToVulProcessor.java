@@ -18,13 +18,12 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
 import org.springframework.stereotype.Service;
 import testnet.common.dto.IpOrWebOrSubDomainToVulDTO;
-import testnet.common.entity.liteflow.LiteFlowResult;
+import testnet.grpc.ClientMessageProto.ResultMessage;
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -37,7 +36,7 @@ public class IpOrWebOrSubDomainToVulProcessor implements IAssetResultProcessorSe
 
 
     @Override
-    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
+    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, ResultMessage resultBase) {
         IpOrWebOrSubDomainToVulDTO ipOrWebOrSubDomainToVulDTO = JSONObject.parseObject(resultBase.getResult(), IpOrWebOrSubDomainToVulDTO.class);
         if (ipOrWebOrSubDomainToVulDTO != null && ipOrWebOrSubDomainToVulDTO.getAssetVulList() != null) {
             String instanceParams = liteFlowSubTask.getSubTaskParam();

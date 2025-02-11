@@ -70,15 +70,25 @@ public class AssetPort extends AssetBase implements Serializable {
     /**
      * Web资产
      */
-    @Excel(name = "Web资产", width = 15)
+    @Excel(name = "Web资产", width = 15, dicCode = "is_open")
+    @Dict(dicCode = "is_open")
     @ApiModelProperty(value = "Web资产")
     private java.lang.String isWeb;
 
     /**
      * 是否TLS
      */
-    @Excel(name = "是否TLS", width = 15)
+    @Excel(name = "是否TLS", width = 15, dicCode = "is_open")
+    @Dict(dicCode = "is_open")
     @ApiModelProperty(value = "是否TLS")
     private java.lang.String isTls;
+
+    /**
+     * 端口开放
+     */
+    @Excel(name = "端口开放", width = 15, dicCode = "is_open")
+    @Dict(dicCode = "is_open")
+    @ApiModelProperty(value = "端口开放")
+    private java.lang.String isOpen;
 
 }

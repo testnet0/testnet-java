@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jeecg.modules.testnet.server.dto.asset.AssetVulDTO;
 import org.jeecg.modules.testnet.server.entity.asset.*;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetIpMapper;
@@ -18,11 +19,9 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.AssetVulVO;
 import org.springframework.stereotype.Service;
-import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -135,20 +134,20 @@ public class AssetVulServiceImpl extends ServiceImpl<AssetVulMapper, AssetVul> i
         list.forEach(this::removeById);
     }
 
-    @Override
-    public boolean saveBatch(Collection<AssetVul> entityList) {
-        List<AssetVul> assetVulList = new ArrayList<>();
-        for (AssetVul assetVul : entityList) {
-            if (assetValidService.isValid(assetVul, AssetTypeEnums.VUL)) {
-                if (assetValidService.getUniqueAsset(assetVul, this, AssetTypeEnums.VUL) == null) {
-                    assetVulList.add(assetVul);
-                } else {
-                    log.info("漏洞:{} 重复,跳过", assetVul);
-                }
-            }
-        }
-        return super.saveBatch(assetVulList);
-    }
+//    @Override
+//    public boolean saveBatch(Collection<AssetVul> entityList) {
+//        List<AssetVul> assetVulList = new ArrayList<>();
+//        for (AssetVul assetVul : entityList) {
+//            if (assetValidService.isValid((AssetVulDTO) assetVul, AssetTypeEnums.VUL).isSuccess()) {
+//                if (assetValidService.getUniqueAsset((AssetVulDTO) assetVul, this, AssetTypeEnums.VUL) == null) {
+//                    assetVulList.add(assetVul);
+//                } else {
+//                    log.info("漏洞:{} 重复,跳过", assetVul);
+//                }
+//            }
+//        }
+//        return super.saveBatch(assetVulList);
+//    }
 
     @Override
     public List<AssetVul> list(Wrapper<AssetVul> queryWrapper) {
@@ -181,5 +180,15 @@ public class AssetVulServiceImpl extends ServiceImpl<AssetVulMapper, AssetVul> i
             }
         }
         return newAssetVulList;
+    }
+
+    public void changeVulStatus(String id, String vulStatus) {
+        if (StringUtils.isNotBlank(id)) {
+            AssetVul assetVul = getById(id);
+            if (assetVul != null) {
+                assetVul.setVulStatus(vulStatus);
+                updateById(assetVul);
+            }
+        }
     }
 }

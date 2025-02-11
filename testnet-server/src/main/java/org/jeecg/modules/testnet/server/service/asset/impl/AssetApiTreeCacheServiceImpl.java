@@ -18,8 +18,6 @@ import java.util.List;
 @Slf4j
 public class AssetApiTreeCacheServiceImpl extends ServiceImpl<AssetApiTreeMapper, AssetApiTree> {
 
-    @Resource
-    private AssetApiMapper assetApiMapper;
 
     @Cacheable(value = "asset:api_tree_id::cache", key = "#id")
     public AssetApiTree selectById(String id) {
@@ -33,8 +31,6 @@ public class AssetApiTreeCacheServiceImpl extends ServiceImpl<AssetApiTreeMapper
     @CacheEvict(value = "asset:api_tree_id::cache", key = "#id")
     public void deleteById(String id) {
         baseMapper.deleteById(id);
-//        assetApiMapper.delByAssetWebTreeId(id);
-//        assetApiMapper.delete(new QueryWrapper<AssetApi>().eq("asset_web_tree_id", id));
     }
 
     @CacheEvict(value = "asset:api_tree_id::cache", allEntries = true)

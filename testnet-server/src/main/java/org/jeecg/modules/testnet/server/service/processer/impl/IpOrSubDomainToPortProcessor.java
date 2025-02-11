@@ -10,17 +10,20 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.modules.testnet.server.dto.AssetIpDTO;
 import org.jeecg.modules.testnet.server.dto.AssetPortDTO;
 import org.jeecg.modules.testnet.server.dto.AssetSubDomainIpsDTO;
+import org.jeecg.modules.testnet.server.entity.asset.AssetBase;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
 import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
 import org.springframework.stereotype.Service;
 import testnet.common.dto.IpOrSubDomainToPortDTO;
-import testnet.common.entity.liteflow.LiteFlowResult;
+import testnet.grpc.ClientMessageProto.ResultMessage;
+
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
@@ -40,7 +43,7 @@ public class IpOrSubDomainToPortProcessor implements IAssetResultProcessorServic
     private ISysBaseAPI sysBaseAPI;
 
     @Override
-    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
+    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, ResultMessage resultBase) {
         IpOrSubDomainToPortDTO dto = JSONObject.parseObject(resultBase.getResult(), IpOrSubDomainToPortDTO.class);
         List<IpOrSubDomainToPortDTO.Port> portList = dto.getPortList();
         String projectId = JSONObject.parseObject(liteFlowSubTask.getSubTaskParam()).getString("projectId");
@@ -55,15 +58,17 @@ public class IpOrSubDomainToPortProcessor implements IAssetResultProcessorServic
                     assetSubDomainIpsDTO.setIps(port.getIp());
                     assetCommonOptionService.addOrUpdate(assetSubDomainIpsDTO, AssetTypeEnums.SUB_DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());
                 }
-                AssetIpDTO newAssetIp = new AssetIpDTO();
-                newAssetIp.setProjectId(projectId);
-                newAssetIp.setIp(port.getIp());
-                newAssetIp = assetCommonOptionService.addOrUpdate(newAssetIp, AssetTypeEnums.IP, liteFlowTask.getId(), liteFlowSubTask.getId());
-                if (newAssetIp != null) {
+                HashMap<String, String> fieldMap = new HashMap<>();
+                fieldMap.put("ip", port.getIp());
+                fieldMap.put("project_id", projectId);
+                Result<?> result = assetCommonOptionService.getByFieldAndAssetType(fieldMap, AssetTypeEnums.IP);
+                if (result.isSuccess() && result.getResult() != null) {
+                    AssetIpDTO assetIpDTO = (AssetIpDTO) result.getResult();
                     BeanUtil.copyProperties(port, assetPortDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-                    assetPortDTO.setProjectId(newAssetIp.getProjectId());
-                    assetPortDTO.setIp(newAssetIp.getId());
+                    assetPortDTO.setProjectId(assetIpDTO.getProjectId());
+                    assetPortDTO.setIp(assetIpDTO.getId());
                     assetPortDTO.setPort(port.getPort());
+                    assetPortDTO.setIsOpen("Y");
                     assetPortDTO.setSource(source);
                     assetPortDTO.setService(port.getService());
                     assetCommonOptionService.addOrUpdate(assetPortDTO, AssetTypeEnums.PORT, liteFlowTask.getId(), liteFlowSubTask.getId());

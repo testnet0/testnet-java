@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option java_package = "testnet.grpc";
+option java_outer_classname = "LiteFlowMessageProto";
+
+message FlowRequest {
+}
+
+message FlowResponse {
+  repeated ChainMessage chains = 1;
+  repeated ScriptMessage scripts = 2;
+}
+
+message ChainMessage {
+  string applicationName = 1;
+  string chainId = 2;
+  string route = 3;
+  string namespace = 4;
+  string body = 5;
+  bool enabled = 6;
+  string id = 7;
+}
+
+message ScriptMessage {
+  string applicationName = 1;
+  string nodeId = 2;
+  string type = 3;
+  string name = 4;
+  string language = 5;
+  string script = 6;
+  bool enabled = 7;
+  string id = 8;
+}
+
+message FlowHashesResponse {
+  map<string, string> chainHashes = 1; // chainId -> hash
+  map<string, string> scriptHashes = 2; // scriptId -> hash
+}
+
+message FlowByIdRequest {
+  string id = 1; // chainId 或 scriptId
+}
+
+service LiteFlowMessageService {
+  // 返回所有 chain 和 script 的哈希值
+  rpc GetFlowHashes (FlowRequest) returns (FlowHashesResponse);
+
+  // 根据 ID 拉取具体的 chain 内容
+  rpc GetChainById (FlowByIdRequest) returns (ChainMessage);
+
+  // 根据 ID 拉取具体的 script 内容
+  rpc GetScriptById (FlowByIdRequest) returns (ScriptMessage);
+}
+

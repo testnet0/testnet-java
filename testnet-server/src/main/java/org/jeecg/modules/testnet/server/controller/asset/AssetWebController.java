@@ -1,5 +1,7 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,6 +23,8 @@ import testnet.common.enums.AssetTypeEnums;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description: WEB服务
@@ -59,14 +63,6 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
         return Result.OK(assetCommonOptionService.page(assetWeb, pageNo, pageSize, req.getParameterMap(), AssetTypeEnums.WEB));
     }
 
-    @ApiOperation(value = "WEB服务-查询返回包", notes = "WEB服务-查询返回包")
-    @GetMapping(value = "/getWebBody")
-    public Result<AssetWebVO> getWebBody(@RequestParam(name = "id", required = true) String id) {
-        AssetWebVO assetWebVO = assetWebService.getWebBody(id);
-        return Result.OK(assetWebVO);
-    }
-
-
     /**
      * 添加
      *
@@ -77,13 +73,24 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     @ApiOperation(value = "Web-添加", notes = "Web-添加")
     @RequiresPermissions("testnet.server:asset_web:add")
     @PostMapping(value = "/add")
-    public Result<String> add(@RequestBody AssetWebDTO assetWebDTO) {
-        if (assetCommonOptionService.addAssetByType(assetWebDTO, AssetTypeEnums.WEB, true) != null) {
+    public Result<?> add(@RequestBody AssetWebDTO assetWebDTO) {
+        List<AssetWebDTO> assetWebList = new ArrayList<>();
+        for (String s : assetWebDTO.getWebUrl().split("\n")) {
+            // 创建一个新的AssetWebDTO对象
+            AssetWebDTO web = new AssetWebDTO();
+            BeanUtil.copyProperties(assetWebDTO, web);
+            web.setWebUrl(s.trim());
+            assetWebList.add(web);
+        }
+        Result<?> addResult = assetCommonOptionService.batchAdd(assetWebList, AssetTypeEnums.WEB);
+        if (addResult.getCode().equals(200)) {
             return Result.OK("添加成功!");
         } else {
-            return Result.error("添加失败，检查是否重复或缺少关键字段");
+            JSONObject jsonObject = (JSONObject) addResult.getResult();
+            return Result.OK(jsonObject.getString("errorMessage"));
         }
     }
+
 
     /**
      * 编辑
@@ -96,10 +103,12 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     @RequiresPermissions("testnet.server:asset_web:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetWebDTO assetWebDTO) {
-        if (assetCommonOptionService.updateAssetByType(assetWebDTO, AssetTypeEnums.WEB) != null) {
+        Result<?> editResult = assetCommonOptionService.updateAssetByType(assetWebDTO, AssetTypeEnums.WEB);
+        if (editResult.getCode().equals(200)) {
             return Result.OK("编辑成功!");
         } else {
-            return Result.error("编辑失败，检查是否重复或缺少关键字段");
+            JSONObject jsonObject = (JSONObject) editResult.getResult();
+            return Result.OK(jsonObject.getString("errorMessage"));
         }
     }
 
@@ -142,12 +151,8 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     //@AutoLog(value = "WEB服务-通过id查询")
     @ApiOperation(value = "WEB服务-通过id查询", notes = "WEB服务-通过id查询")
     @GetMapping(value = "/queryById")
-    public Result<AssetWeb> queryById(@RequestParam(name = "id", required = true) String id) {
-        AssetWeb assetWeb = assetCommonOptionService.getByIdAndAssetType(id, AssetTypeEnums.WEB);
-        if (assetWeb == null) {
-            return Result.error("未找到对应数据");
-        }
-        return Result.OK(assetWeb);
+    public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
+        return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.WEB);
     }
 
     /**
@@ -159,7 +164,7 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     @RequiresPermissions("testnet.server:asset_web:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetWeb assetWeb) {
-        return super.exportXlsSheet(request, assetWeb, AssetWeb.class, "WEB服务",null,50000);
+        return super.exportXlsSheet(request, assetWeb, AssetWeb.class, "WEB服务", null, 50000);
         // return super.exportXls(request, assetWeb, AssetWeb.class, "WEB服务");
     }
 
@@ -173,6 +178,6 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     @RequiresPermissions("testnet.server:asset_web:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return super.importExcel(request, response, AssetWeb.class);
+       return assetCommonOptionService.importExcel(request, response, AssetWebDTO.class, AssetTypeEnums.WEB);
     }
 }

@@ -1,0 +1,10 @@
+## ide
+**/.idea
+*.iml
+
+## backend
+autopoi/target
+**/logs
+
+## front
+**/*.lock

@@ -30,7 +30,8 @@ public class Constants {
 
     public static final String ES_WEB_TYPE = "web";
 
-    public static final String LITE_FLOW_CHAINS = "chains";
-    public static final String LITE_FLOW_SCRIPTS = "scripts";
+
+
+    public static final String TOKEN_HEADER = "Token";
 
 }

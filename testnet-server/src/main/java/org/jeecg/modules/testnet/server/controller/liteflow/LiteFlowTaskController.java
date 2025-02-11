@@ -1,5 +1,6 @@
 package org.jeecg.modules.testnet.server.controller.liteflow;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,7 +20,6 @@ import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowSubTaskService
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowTaskAssetService;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowTaskService;
 import org.jeecg.modules.testnet.server.vo.LiteFlowTaskPage;
-import org.jeecg.modules.testnet.server.vo.LiteflowInstanceLogVO;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
@@ -78,7 +78,7 @@ public class LiteFlowTaskController {
 
     @ApiOperation(value = "子任务表-分页列表查询", notes = "子任务表-分页列表查询")
     @GetMapping(value = "/subTaskList")
-    public Result<IPage<LiteFlowSubTask>> subTaskList(LiteFlowSubTask liteFlowSubTask, @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNo, @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize, HttpServletRequest req) {
+    public Result<IPage<LiteFlowSubTask>> subTaskList(LiteFlowSubTask liteFlowSubTask, @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo, @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize, HttpServletRequest req) {
         QueryWrapper<LiteFlowSubTask> queryWrapper = QueryGenerator.initQueryWrapper(liteFlowSubTask, req.getParameterMap());
         Page<LiteFlowSubTask> page = new Page<>(pageNo, pageSize);
         IPage<LiteFlowSubTask> pageList = liteFlowSubTaskService.page(page, queryWrapper);
@@ -233,17 +233,17 @@ public class LiteFlowTaskController {
     //@AutoLog(value = "工作流实例-通过ID查询日志")
     @ApiOperation(value = "工作流实例-通过ID查询日志", notes = "工作流实例-通过ID查询日志")
     @GetMapping(value = "/queryLogBySubTaskId")
-    public Result<IPage<LiteflowInstanceLogVO>> queryLogByPluginInstanceId(@RequestParam(name = "id") String id,
-                                                                           @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNo,
-                                                                           @RequestParam(name = "pageSize", defaultValue = "100") Integer pageSize) {
+    public Result<IPage<JSONObject>> queryLogByPluginInstanceId(@RequestParam(name = "id") String id,
+                                                                @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNo,
+                                                                @RequestParam(name = "pageSize", defaultValue = "100") Integer pageSize) {
         return Result.OK(liteFlowSubTaskService.getLogById(id, pageNo, pageSize));
     }
 
 
     @ApiOperation(value = "再次运行", notes = "再次运行")
     @GetMapping(value = "/executeAgain")
-    public Result<String> executeAgain(@RequestParam(name = "id", required = true) String id) {
-        liteFlowTaskService.executeAgain(id);
+    public Result<String> executeAgain(@RequestParam(name = "id", required = true) String id, @RequestParam(name = "failed", required = true) Boolean failed) {
+        liteFlowTaskService.executeAgain(id,failed);
         return Result.ok("再次运行成功！");
     }
 

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.testnet.server.dto.AssetSearchDTO;
+import org.jeecg.modules.testnet.server.entity.asset.AssetSearchEngine;
 import org.jeecg.modules.testnet.server.service.search.ISearchEngineService;
 import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
 import org.springframework.stereotype.Service;
@@ -24,17 +25,17 @@ import java.util.*;
 public class HunterSearchEngineServiceImpl implements ISearchEngineService {
 
     @Override
-    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, String key) {
+    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, AssetSearchEngine assetSearchEngine) {
         List<AssetSearchVO> assetSearchVOList = new ArrayList<>();
-        String baseUrl = "https://hunter.qianxin.com/openApi/search";
+        String baseUrl = assetSearchEngine.getEngineHost();
 
         // 构建完整的URL，包括查询参数
-        String hunterUrl = buildUrl(baseUrl, assetSearchDTO, key);
+        String hunterUrl = buildUrl(baseUrl, assetSearchDTO, assetSearchEngine.getEngineToken());
 
         try {
-            // 设置请求头（如果有需要的话）
+
             Map<String, String> headers = new HashMap<>();
-            headers.put("Content-Type", "application/json"); // 示例，根据实际需求设置请求头
+            headers.put("Content-Type", "application/json");
 
             // 发起GET请求
             HttpResponse response = HttpUtils.get(hunterUrl, headers);

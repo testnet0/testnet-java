@@ -1,5 +1,3 @@
-package script.script;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -60,6 +58,8 @@ public class Zone implements CommonScriptBody {
                 sendService.INFO("API剩余额度: {}", result.getJSONObject("today_api_search_count"));
                 domainList.addAll(processResult(result.getJSONArray("data")));
             }
+        } else {
+            sendService.ERROR("查询失败,返回结果: {}", result);
         }
         companyToDomainsDTO.setDomainList(domainList);
         sendService.sendResult(companyToDomainsDTO);

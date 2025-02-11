@@ -1,12 +1,9 @@
-package script.script;
-
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
 import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
 import org.apache.commons.lang.StringUtils;
 import org.xbill.DNS.*;
-import org.xbill.DNS.Record;
 import testnet.client.service.ILiteFlowMessageSendService;
 import testnet.common.dto.AssetUpdateDTO;
 import testnet.common.entity.liteflow.TaskExecuteMessage;

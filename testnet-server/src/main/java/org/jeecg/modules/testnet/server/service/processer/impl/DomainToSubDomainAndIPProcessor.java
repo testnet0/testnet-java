@@ -8,8 +8,10 @@ package org.jeecg.modules.testnet.server.service.processer.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.modules.testnet.server.dto.AssetSubDomainIpsDTO;
+import org.jeecg.modules.testnet.server.entity.asset.AssetBase;
 import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
@@ -17,7 +19,7 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
 import org.springframework.stereotype.Service;
 import testnet.common.dto.DomainToSubdomainsAndIpsDTO;
-import testnet.common.entity.liteflow.LiteFlowResult;
+import testnet.grpc.ClientMessageProto.ResultMessage;
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
@@ -35,10 +37,11 @@ public class DomainToSubDomainAndIPProcessor implements IAssetResultProcessorSer
     private ISysBaseAPI sysBaseAPI;
 
     @Override
-    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
+    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, ResultMessage resultBase) {
         DomainToSubdomainsAndIpsDTO domainToSubdomainAndIp = JSONObject.parseObject(resultBase.getResult(), DomainToSubdomainsAndIpsDTO.class);
-        AssetDomain assetDomain = assetCommonOptionService.getByIdAndAssetType(baseAssetId, AssetTypeEnums.DOMAIN);
-        if (assetDomain != null) {
+        Result<? extends AssetBase> result = assetCommonOptionService.getAssetDOByIdAndAssetType(baseAssetId, AssetTypeEnums.DOMAIN);
+        if (result.isSuccess() && result.getResult() != null) {
+            AssetDomain assetDomain = (AssetDomain) result.getResult();
             domainToSubdomainAndIp.getSubDomainList().forEach(subDomain -> {
                 AssetSubDomainIpsDTO oldSubDomainIpsDTO = getAssetSubDomainIpsDTO(subDomain, assetDomain);
                 assetCommonOptionService.addOrUpdate(oldSubDomainIpsDTO, AssetTypeEnums.SUB_DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());

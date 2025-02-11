@@ -62,4 +62,34 @@ public class PmsUtil {
         return saveDir + name + ".txt";
     }
 
+    public static String saveErrorTxtByList(List<String> msg) {
+        Date d = new Date();
+        String saveDir = "logs" + File.separator + DateUtils.yyyyMMdd.get().format(d) + File.separator;
+        String saveFullDir = uploadPath + File.separator + saveDir;
+
+        File saveFile = new File(saveFullDir);
+        if (!saveFile.exists()) {
+            saveFile.mkdirs();
+        }
+        String name = DateUtils.yyyymmddhhmmss.get().format(d) + Math.round(Math.random() * 10000);
+        String saveFilePath = saveFullDir + name + ".txt";
+        try {
+            //封装目的地
+            BufferedWriter bw = new BufferedWriter(new FileWriter(saveFilePath));
+            //遍历集合
+            for (String s : msg) {
+                //写数据
+                bw.write(s);
+                //bw.newLine();
+                bw.write("\r\n");
+            }
+            //释放资源
+            bw.flush();
+            bw.close();
+        } catch (Exception e) {
+            log.info("excel导入生成错误日志文件异常:" + e.getMessage());
+        }
+        return saveDir + name + ".txt";
+    }
+
 }

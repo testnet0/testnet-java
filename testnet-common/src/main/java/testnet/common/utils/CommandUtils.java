@@ -7,20 +7,14 @@
 package testnet.common.utils;
 
 import lombok.Getter;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.exec.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.time.Duration;
-import java.util.logging.Logger;
 
 
 public class CommandUtils {
-
-    private static final Logger log = Logger.getLogger(CommandUtils.class.getName());
-
 
     public static CommandResult executeCommand(String command) {
         return executeCommand(command, null, 0, 0);
@@ -40,24 +34,36 @@ public class CommandUtils {
 
     public static CommandResult executeCommand(String command, String workingDirectory, int timeoutInSeconds, int exitCode) {
         CommandLine cmdLine = CommandLine.parse(command);
-        DefaultExecutor executor = DefaultExecutor.builder().get();
+        DefaultExecutor executor;
+        if (workingDirectory != null) {
+            executor = DefaultExecutor.builder().setWorkingDirectory(new File(workingDirectory)).get();
+        } else {
+            executor = DefaultExecutor.builder().get();
+        }
         executor.setExitValue(exitCode);
         if (timeoutInSeconds > 0) {
             ExecuteWatchdog watchdog = ExecuteWatchdog.builder().setTimeout(Duration.ofSeconds(timeoutInSeconds)).get();
             executor.setWatchdog(watchdog);
         }
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+        PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream, errorStream);
         executor.setStreamHandler(streamHandler);
-        int exitValue = 0;
+        int exitValue;
         try {
             exitValue = executor.execute(cmdLine);
             return new CommandResult(exitValue, outputStream.toString());
+        } catch (ExecuteException e) {
+            return new CommandResult(e.getExitValue(), outputStream + "\n" + errorStream + "\n" + e.getMessage());
         } catch (Exception e) {
-            return new CommandResult(exitValue, outputStream.toString());
+            return new CommandResult(-1, outputStream + "\n" + errorStream + "\n" + e.getMessage());
         }
     }
 
+    public static void main(String[] args) {
+        CommandResult result = executeCommand("D: && pwd");
+        System.out.println(result.output);
+    }
 
     @Getter
     public static class CommandResult {
@@ -68,7 +74,6 @@ public class CommandUtils {
             this.exitCode = exitCode;
             this.output = output;
         }
-
     }
 }
 

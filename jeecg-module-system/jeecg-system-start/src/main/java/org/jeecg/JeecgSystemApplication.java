@@ -16,15 +16,16 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
 * 单体启动类
-* 报错提醒: 未集成mongo报错，可以打开启动类上面的注释 exclude={MongoAutoConfiguration.class}
 */
 @Slf4j
 @SpringBootApplication
 @ComponentScan(basePackages = {"testnet.common","org.jeecg"})
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 @EnableScheduling
 //@EnableAutoConfiguration(exclude={MongoAutoConfiguration.class})
 public class JeecgSystemApplication extends SpringBootServletInitializer {
@@ -35,7 +36,13 @@ public class JeecgSystemApplication extends SpringBootServletInitializer {
     }
 
     public static void main(String[] args) throws UnknownHostException {
-        ConfigurableApplicationContext application = SpringApplication.run(JeecgSystemApplication.class, args);
+        SpringApplication app = new SpringApplication(JeecgSystemApplication.class);
+        Map<String, Object> defaultProperties = new HashMap<>();
+        defaultProperties.put("management.health.elasticsearch.enabled", false);
+        app.setDefaultProperties(defaultProperties);
+        log.info("[JEECG] Elasticsearch Health Check Enabled: false" );
+
+        ConfigurableApplicationContext application = app.run(args);;
         Environment env = application.getEnvironment();
         String ip = InetAddress.getLocalHost().getHostAddress();
         String port = env.getProperty("server.port");

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.lucene.store.Directory;
 import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.common.es.JeecgElasticsearchTemplate;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
@@ -16,8 +17,10 @@ import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
 import org.jeecg.modules.testnet.server.mapper.liteflow.LiteFlowSubTaskMapper;
 import org.jeecg.modules.testnet.server.mapper.liteflow.LiteFlowTaskMapper;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowSubTaskService;
+import org.jeecg.modules.testnet.server.service.lucene.LuceneService;
 import org.jeecg.modules.testnet.server.vo.LiteflowInstanceLogVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import testnet.common.constan.Constants;
 import testnet.common.enums.LiteFlowStatusEnums;
@@ -38,7 +41,7 @@ import java.util.Map;
 public class LiteFlowSubTaskServiceImpl extends ServiceImpl<LiteFlowSubTaskMapper, LiteFlowSubTask> implements ILiteFlowSubTaskService {
 
     @Resource
-    private JeecgElasticsearchTemplate elasticsearchTemplate;
+    private LuceneService luceneService;
 
     @Autowired
     private LiteFlowSubTaskMapper liteFlowSubTaskMapper;
@@ -48,6 +51,10 @@ public class LiteFlowSubTaskServiceImpl extends ServiceImpl<LiteFlowSubTaskMappe
 
     @Resource
     private RedissonLockClient redissonLockClient;
+
+    @Autowired
+    @Qualifier("logDirectory")
+    private Directory logDirectory;
 
     @Override
     public List<LiteFlowSubTask> selectByMainId(String mainId) {
@@ -87,35 +94,8 @@ public class LiteFlowSubTaskServiceImpl extends ServiceImpl<LiteFlowSubTaskMappe
     }
 
     @Override
-    public IPage<LiteflowInstanceLogVO> getLogById(String id, Integer pageNo, Integer pageSize) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("taskId", id);
-        JSONObject match = new JSONObject();
-        match.put("match", jsonObject);
-        JSONObject finalJson = elasticsearchTemplate.buildQuery(null, match, (long) (pageNo - 1) * pageSize, pageSize);
-        JSONObject result = elasticsearchTemplate.search(Constants.ES_LOG_INDEX, Constants.ES_LOG_TYPE, finalJson);
-        List<LiteflowInstanceLogVO> liteflowInstanceLogVOList = new ArrayList<>();
-        IPage<LiteflowInstanceLogVO> page = new Page<>();
-        if (result != null && result.getJSONObject("hits") != null) {
-            JSONObject hits = result.getJSONObject("hits");
-            JSONArray jsonArray = hits.getJSONArray("hits");
-            page.setTotal(hits.getJSONObject("total").getInteger("value"));
-            for (int i = 0; i < jsonArray.size(); i++) {
-                JSONObject json = jsonArray.getJSONObject(i).getJSONObject("_source");
-                LiteflowInstanceLogVO liteflowInstanceLogVO = JSON.parseObject(json.toJSONString(), LiteflowInstanceLogVO.class);
-                liteflowInstanceLogVO.setMessage(Base64Decoder.decodeStr(liteflowInstanceLogVO.getMessage()));
-                liteflowInstanceLogVOList.add(liteflowInstanceLogVO);
-            }
-        }
-        liteflowInstanceLogVOList.sort((o1, o2) -> {
-            long timestamp1 = Long.parseLong(o1.getTimestamp());
-            long timestamp2 = Long.parseLong(o2.getTimestamp());
-            return Long.compare(timestamp1, timestamp2);
-        });
-        page.setCurrent(pageNo);
-        page.setSize(pageSize);
-        page.setRecords(liteflowInstanceLogVOList);
-        return page;
+    public IPage<JSONObject> getLogById(String id, Integer pageNo, Integer pageSize) {
+        return luceneService.searchLogsByTaskId(id, pageNo, pageSize);
     }
 
     @Override
@@ -131,19 +111,19 @@ public class LiteFlowSubTaskServiceImpl extends ServiceImpl<LiteFlowSubTaskMappe
                     map.put(liteFlowSubTask.getTaskId(), 1);
                 }
             }
-            updateBatchById(liteFlowSubTaskList);
-            map.forEach((k, v) -> {
-                // 更新主表未完成任务数量
-                if (redissonLockClient.tryLock(k, 10, 10)) {
-                    LiteFlowTask liteFlowTask = liteFlowTaskMapper.selectById(k);
-                    liteFlowTask.setUnFinishedChain(liteFlowSubTaskMapper.getUndoCountByTaskId(k));
-                    liteFlowTaskMapper.updateById(liteFlowTask);
-                    redissonLockClient.unlock(k);
-                } else {
-                    log.error("获取锁失败，更新主表未完成任务数量失败");
-                }
-            });
         }
+        updateBatchById(liteFlowSubTaskList);
+        map.forEach((k, v) -> {
+            // 更新主表未完成任务数量
+            if (redissonLockClient.tryLock(k, 10, 10)) {
+                LiteFlowTask liteFlowTask = liteFlowTaskMapper.selectById(k);
+                liteFlowTask.setUnFinishedChain(liteFlowSubTaskMapper.getUndoCountByTaskId(k));
+                liteFlowTaskMapper.updateById(liteFlowTask);
+                redissonLockClient.unlock(k);
+            } else {
+                log.error("获取锁失败，更新主表未完成任务数量失败");
+            }
+        });
     }
 
 

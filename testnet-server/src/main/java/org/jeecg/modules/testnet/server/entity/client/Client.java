@@ -81,4 +81,17 @@ public class Client implements Serializable {
      */
     @ApiModelProperty(value = "所属部门")
     private java.lang.String sysOrgCode;
+
+    /**
+     * CPU使用率
+     */
+    @ApiModelProperty(value = "CPU使用率")
+    private java.lang.Double cpuUsage;
+
+    @ApiModelProperty(value = "总内存")
+    private java.lang.Integer totalMemory;
+
+    @ApiModelProperty(value = "可用内存")
+    private java.lang.Integer freeMemory;
+
 }

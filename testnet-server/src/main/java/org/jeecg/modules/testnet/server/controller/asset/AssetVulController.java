@@ -1,5 +1,6 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -66,10 +67,12 @@ public class AssetVulController extends JeecgController<AssetVul, AssetVulServic
     @RequiresPermissions("testnet.server:asset_vul:add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody AssetVulDTO assetVul) {
-        if (assetCommonOptionService.addAssetByType(assetVul, AssetTypeEnums.VUL, true) != null) {
+        Result<?> addResult = assetCommonOptionService.addAssetByType(assetVul, AssetTypeEnums.VUL, true);
+        if (addResult.getCode().equals(200)) {
             return Result.OK("添加成功!");
         } else {
-            return Result.error("添加失败，检查是否重复或缺少关键字段");
+            JSONObject jsonObject = (JSONObject) addResult.getResult();
+            return Result.OK(jsonObject.getString("errorMessage"));
         }
     }
 
@@ -84,10 +87,12 @@ public class AssetVulController extends JeecgController<AssetVul, AssetVulServic
     @RequiresPermissions("testnet.server:asset_vul:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetVulDTO assetVul) {
-        if (assetCommonOptionService.updateAssetByType(assetVul, AssetTypeEnums.VUL) != null) {
+        Result<?> editResult = assetCommonOptionService.updateAssetByType(assetVul, AssetTypeEnums.VUL);
+        if (editResult.getCode().equals(200)) {
             return Result.OK("编辑成功!");
         } else {
-            return Result.error("编辑失败，检查是否重复或缺少关键字段");
+            JSONObject jsonObject = (JSONObject) editResult.getResult();
+            return Result.OK(jsonObject.getString("errorMessage"));
         }
     }
 
@@ -130,12 +135,8 @@ public class AssetVulController extends JeecgController<AssetVul, AssetVulServic
     //@AutoLog(value = "漏洞-通过id查询")
     @ApiOperation(value = "漏洞-通过id查询", notes = "漏洞-通过id查询")
     @GetMapping(value = "/queryById")
-    public Result<AssetVul> queryById(@RequestParam(name = "id", required = true) String id) {
-        AssetVul assetVul = assetCommonOptionService.getByIdAndAssetType(id, AssetTypeEnums.VUL);
-        if (assetVul == null) {
-            return Result.error("未找到对应数据");
-        }
-        return Result.OK(assetVul);
+    public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
+        return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.VUL);
     }
 
     /**
@@ -147,7 +148,7 @@ public class AssetVulController extends JeecgController<AssetVul, AssetVulServic
     @RequiresPermissions("testnet.server:asset_vul:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetVul assetVul) {
-        return super.exportXlsSheet(request, assetVul, AssetVul.class, "漏洞",null,50000);
+        return super.exportXlsSheet(request, assetVul, AssetVul.class, "漏洞", null, 50000);
         // return super.exportXls(request, assetVul, AssetVul.class, "漏洞");
     }
 
@@ -161,7 +162,7 @@ public class AssetVulController extends JeecgController<AssetVul, AssetVulServic
     @RequiresPermissions("testnet.server:asset_vul:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return super.importExcel(request, response, AssetVul.class);
+        return assetCommonOptionService.importExcel(request, response, AssetVulDTO.class, AssetTypeEnums.VUL);
     }
 
 }

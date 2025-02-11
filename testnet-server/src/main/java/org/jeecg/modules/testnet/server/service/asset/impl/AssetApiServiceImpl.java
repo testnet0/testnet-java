@@ -19,6 +19,7 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.AssetApiVO;
 import org.springframework.stereotype.Service;
 import testnet.common.enums.AssetTypeEnums;
+import testnet.common.utils.HashUtils;
 
 import javax.annotation.Resource;
 import java.net.MalformedURLException;
@@ -86,6 +87,7 @@ public class AssetApiServiceImpl extends ServiceImpl<AssetApiMapper, AssetApi> i
     @Override
     public boolean addAssetByType(AssetApiDTO assetApiDTO) {
         if (StringUtils.isNotBlank(assetApiDTO.getAbsolutePath())) {
+            assetApiDTO.setPathMd5(HashUtils.calculateMD5(assetApiDTO.getProjectId() + assetApiDTO.getAbsolutePath() + assetApiDTO.getHttpMethod()));
             try {
                 URL url = new URL(assetApiDTO.getAbsolutePath());
                 String absolutePath;
@@ -169,7 +171,7 @@ public class AssetApiServiceImpl extends ServiceImpl<AssetApiMapper, AssetApi> i
                     AssetApiDTO assetApiDTO = new AssetApiDTO();
                     BeanUtil.copyProperties(assetApi, assetApiDTO, CopyOptions.create().setIgnoreNullValue(true));
                     assetApiDTO.setAbsolutePath(assetApi.getAssetWebTreeId());
-                    if (assetValidService.isValid(assetApiDTO, AssetTypeEnums.API)) {
+                    if (assetValidService.isValid(assetApiDTO, AssetTypeEnums.API).isSuccess()) {
                         this.addAssetByType(assetApiDTO);
                     }
                 } else {

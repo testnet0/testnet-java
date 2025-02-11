@@ -22,7 +22,7 @@ public class AssetApi extends AssetBase implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 所属WEB
+     * 所属api树
      */
     @Excel(name = "API", width = 15, dictTable = "asset_api_tree", dicText = "absolute_path", dicCode = "id")
     @Dict(dictTable = "asset_api_tree", dicText = "absolute_path", dicCode = "id")
@@ -90,4 +90,11 @@ public class AssetApi extends AssetBase implements Serializable {
     @Excel(name = "状态码", width = 15)
     @ApiModelProperty(value = "状态码")
     private java.lang.Integer statusCode;
+
+    /**
+     * url_path计算MD5
+     */
+    @Excel(name = "MD5", width = 15)
+    @ApiModelProperty(value = "MD5")
+    private java.lang.String pathMd5;
 }
