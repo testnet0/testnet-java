@@ -1,5 +1,7 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,7 +16,6 @@ import org.jeecg.modules.testnet.server.entity.asset.AssetSubDomain;
 import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetIpSubdomainRelationService;
 import org.jeecg.modules.testnet.server.service.asset.impl.AssetSubDomainServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import testnet.common.enums.AssetTypeEnums;
@@ -22,6 +23,8 @@ import testnet.common.enums.AssetTypeEnums;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description: 子域名
@@ -66,13 +69,24 @@ public class AssetSubDomainController extends JeecgController<AssetSubDomain, As
     @ApiOperation(value = "子域名-添加", notes = "子域名-添加")
     @RequiresPermissions("testnet.server:asset_sub_domain:add")
     @PostMapping(value = "/add")
-    public Result<String> add(@RequestBody AssetSubDomainIpsDTO assetSubDomainIpsDTO) {
-        if (assetCommonOptionService.addAssetByType(assetSubDomainIpsDTO, AssetTypeEnums.SUB_DOMAIN, true) != null) {
+    public Result<?> add(@RequestBody AssetSubDomainIpsDTO assetSubDomainIpsDTO) {
+        List<AssetSubDomainIpsDTO> assetSubDomainList = new ArrayList<>();
+        for (String s : assetSubDomainIpsDTO.getSubDomain().split("\n")) {
+            // 创建一个新的AssetSubDomainIpsDTO对象
+            AssetSubDomainIpsDTO subDomain = new AssetSubDomainIpsDTO();
+            BeanUtil.copyProperties(assetSubDomainIpsDTO, subDomain);
+            subDomain.setSubDomain(s.trim());
+            assetSubDomainList.add(subDomain);
+        }
+        Result<?> addResult = assetCommonOptionService.batchAdd(assetSubDomainList, AssetTypeEnums.SUB_DOMAIN);
+        if (addResult.getCode().equals(200)) {
             return Result.OK("添加成功!");
         } else {
-            return Result.error("添加失败，检查是否重复或缺少关键字段");
+            JSONObject jsonObject = (JSONObject) addResult.getResult();
+            return Result.OK(jsonObject.getString("errorMessage"));
         }
     }
+
 
     /**
      * 编辑
@@ -86,10 +100,12 @@ public class AssetSubDomainController extends JeecgController<AssetSubDomain, As
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetSubDomainIpsDTO assetSubDomain) {
         assetIpSubdomainRelationService.delByAssetSubDomainId(assetSubDomain.getId());
-        if (assetCommonOptionService.updateAssetByType(assetSubDomain, AssetTypeEnums.SUB_DOMAIN) != null) {
+        Result<?> editResult = assetCommonOptionService.updateAssetByType(assetSubDomain, AssetTypeEnums.SUB_DOMAIN);
+        if (editResult.getCode().equals(200)) {
             return Result.OK("编辑成功!");
         } else {
-            return Result.error("编辑失败，检查是否重复或缺少关键字段");
+            JSONObject jsonObject = (JSONObject) editResult.getResult();
+            return Result.OK(jsonObject.getString("errorMessage"));
         }
     }
 
@@ -132,12 +148,8 @@ public class AssetSubDomainController extends JeecgController<AssetSubDomain, As
     //@AutoLog(value = "子域名-通过id查询")
     @ApiOperation(value = "子域名-通过id查询", notes = "子域名-通过id查询")
     @GetMapping(value = "/queryById")
-    public Result<AssetSubDomain> queryById(@RequestParam(name = "id", required = true) String id) {
-        AssetSubDomain assetSubDomain = assetCommonOptionService.getByIdAndAssetType(id, AssetTypeEnums.SUB_DOMAIN);
-        if (assetSubDomain == null) {
-            return Result.error("未找到对应数据");
-        }
-        return Result.OK(assetSubDomain);
+    public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
+        return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.SUB_DOMAIN);
     }
 
     /**
@@ -151,7 +163,7 @@ public class AssetSubDomainController extends JeecgController<AssetSubDomain, As
     public ModelAndView exportXls(HttpServletRequest request, AssetSubDomain assetSubDomain) {
 
         //分sheet导出表格字段
-        return super.exportXlsSheet(request, assetSubDomain, AssetSubDomain.class, "子域名",null,50000);
+        return super.exportXlsSheet(request, assetSubDomain, AssetSubDomain.class, "子域名", null, 50000);
         // return super.exportXlsSheet(request, assetSubDomain, AssetSubDomain.class, "子域名");
     }
 
@@ -165,7 +177,7 @@ public class AssetSubDomainController extends JeecgController<AssetSubDomain, As
     @RequiresPermissions("testnet.server:asset_sub_domain:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return super.importExcel(request, response, AssetSubDomain.class);
+        return assetCommonOptionService.importExcel(request, response, AssetSubDomainIpsDTO.class, AssetTypeEnums.SUB_DOMAIN);
     }
 
 }

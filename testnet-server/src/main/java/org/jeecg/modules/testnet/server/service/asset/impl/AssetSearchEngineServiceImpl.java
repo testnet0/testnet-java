@@ -17,9 +17,9 @@ import org.springframework.stereotype.Service;
 public class AssetSearchEngineServiceImpl extends ServiceImpl<AssetSearchEngineMapper, AssetSearchEngine> implements IAssetSearchEngineService {
 
     @Override
-    public String getKey(String engine) {
+    public AssetSearchEngine getKey(String engine) {
         LambdaQueryWrapper<AssetSearchEngine> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(AssetSearchEngine::getEngineName, engine);
-        return getOne(lambdaQueryWrapper).getEngineToken();
+        return getOne(lambdaQueryWrapper);
     }
 }

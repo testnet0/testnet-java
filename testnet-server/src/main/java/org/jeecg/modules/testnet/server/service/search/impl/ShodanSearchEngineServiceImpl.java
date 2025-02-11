@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.testnet.server.dto.AssetSearchDTO;
+import org.jeecg.modules.testnet.server.entity.asset.AssetSearchEngine;
 import org.jeecg.modules.testnet.server.service.search.ISearchEngineService;
 import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
 import org.springframework.stereotype.Service;
@@ -22,11 +23,11 @@ import java.util.List;
 public class ShodanSearchEngineServiceImpl implements ISearchEngineService {
 
     @Override
-    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, String key) {
+    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, AssetSearchEngine assetSearchEngine) {
         List<AssetSearchVO> assetSearchVOList = new ArrayList<>();
-        String shodanUrl = "https://api.shodan.io/shodan/host/search?key=%s&query=%s&page=%d&minify=true";
+        String shodanUrl = assetSearchEngine.getEngineHost();
         try {
-            HttpResponse response = HttpUtils.get(String.format(shodanUrl, key, assetSearchDTO.getKeyword(), assetSearchDTO.getPageNo()));
+            HttpResponse response = HttpUtils.get(String.format(shodanUrl, assetSearchEngine.getEngineToken(), assetSearchDTO.getKeyword(), assetSearchDTO.getPageNo()));
             if (response.getStatusCode() == 200) {
                 String body = response.getBody();
                 JSONObject jsonObject = JSONObject.parseObject(body);

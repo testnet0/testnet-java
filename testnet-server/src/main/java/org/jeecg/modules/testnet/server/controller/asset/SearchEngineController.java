@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 @Api(tags = "API")
 @RestController
@@ -42,6 +41,6 @@ public class SearchEngineController {
     @PostMapping(value = "/import")
     public Result<String> importBatch(@RequestBody AssetSearchImportDTO assetSearchImportDTO) {
         assetSearchService.importAsset(assetSearchImportDTO, "", "");
-        return Result.OK("导入成功！一键导入请去工作流管理-任务列表查看进度");
+        return Result.OK("导入成功！");
     }
 }

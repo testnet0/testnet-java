@@ -6,19 +6,19 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.modules.testnet.server.dto.asset.AssetDomainDTO;
+import org.apache.commons.lang3.StringUtils;
+import org.jeecg.modules.testnet.server.entity.asset.AssetCompany;
 import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
+import org.jeecg.modules.testnet.server.entity.asset.AssetIpSubDomainRelation;
+import org.jeecg.modules.testnet.server.mapper.asset.AssetCompanyMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetDomainMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetSubDomainMapper;
+import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
-import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.asset.AssetDomainVO;
 import org.springframework.stereotype.Service;
-import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -36,10 +36,13 @@ public class AssetDomainServiceImpl extends ServiceImpl<AssetDomainMapper, Asset
     private AssetSubDomainMapper assetSubDomainMapper;
 
     @Resource
-    private IAssetValidService assetValidService;
+    private AssetCompanyMapper assetCompanyMapper;
 
     @Resource
-    private AssetSubDomainServiceImpl assetSubDomainService;
+    private AssetWebMapper assetWebMapper;
+
+    @Resource
+    private AssetIpSubDomainRelationServiceImpl assetIpSubDomainRelationService;
 
     @Override
     public IPage<AssetDomain> page(IPage<AssetDomain> page, QueryWrapper<AssetDomain> queryWrapper, Map<String, String[]> parameterMap) {
@@ -51,47 +54,60 @@ public class AssetDomainServiceImpl extends ServiceImpl<AssetDomainMapper, Asset
         AssetDomainVO assetDomainVO = new AssetDomainVO();
         BeanUtil.copyProperties(record, assetDomainVO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
         assetDomainVO.setSubDomainNumber(assetSubDomainMapper.getSubDomainCountByDomain(record.getId()));
+        if (StringUtils.isNotBlank(record.getCompanyId())) {
+            AssetCompany assetCompany = assetCompanyMapper.selectById(record.getCompanyId());
+            if (assetCompany != null) {
+                assetDomainVO.setAssetCompanyLabel(assetCompany.getAssetLabel());
+            }
+        }
         return assetDomainVO;
     }
 
     @Override
-    public AssetDomainDTO convertDTO(AssetDomain asset) {
-        AssetDomainDTO assetDomainDTO = new AssetDomainDTO();
-        BeanUtil.copyProperties(asset, assetDomainDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-        return assetDomainDTO;
+    public AssetDomain convertDTO(AssetDomain asset) {
+        return asset;
     }
 
     @Override
     public boolean addAssetByType(AssetDomain asset) {
+        processCompany(asset);
         return save(asset);
     }
 
     @Override
     public boolean updateAssetByType(AssetDomain asset) {
+        processCompany(asset);
         return updateById(asset);
+    }
+
+    private void processCompany(AssetDomain assetDomain) {
+        if (StringUtils.isBlank(assetDomain.getCompanyId())) {
+            return;
+        }
+        AssetCompany assetCompany = assetCompanyMapper.getCompanyByIdORName(assetDomain.getCompanyId());
+        if (assetCompany == null) {
+            assetCompany = new AssetCompany();
+            assetCompany.setCompanyName(assetDomain.getCompanyId());
+            assetCompany.setSource(assetDomain.getSource());
+            assetCompany.setProjectId(assetDomain.getProjectId());
+            assetCompanyMapper.insert(assetCompany);
+        }
+        assetDomain.setCompanyId(assetCompany.getId());
     }
 
     @Override
     public void delRelation(List<String> list) {
         list.forEach(id -> {
-            List<String> subDomains = assetSubDomainMapper.getSubDomainIdsListByDomain(id);
-            assetSubDomainService.delRelation(subDomains);
-            removeById(id);
+            // 获取所有关联的子域名ID
+            List<String> subDomainIds = assetSubDomainMapper.getSubDomainIdsListByDomain(id);
+            // 删除每个子域名关联的IP和Web记录
+            subDomainIds.forEach(subDomainId -> {
+                assetIpSubDomainRelationService.delByAssetSubDomainId(subDomainId);
+                assetWebMapper.deleteBySubDomainId(subDomainId);
+            });
+            // 删除所有关联的子域名
+            assetSubDomainMapper.deleteByDomainId(id);
         });
-    }
-
-
-    public boolean saveBatch(Collection<AssetDomain> entityList) {
-        List<AssetDomain> assetDomainList = new ArrayList<>();
-        for (AssetDomain assetDomain : entityList) {
-            if (assetValidService.isValid(assetDomain, AssetTypeEnums.DOMAIN)) {
-                if (assetValidService.getUniqueAsset(assetDomain, this, AssetTypeEnums.DOMAIN) == null) {
-                    assetDomainList.add(assetDomain);
-                } else {
-                    log.info("主域名:{} 重复,跳过", assetDomain);
-                }
-            }
-        }
-        return super.saveBatch(assetDomainList);
+        this.removeBatchByIds(list);
     }
 }

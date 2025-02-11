@@ -17,7 +17,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: metrics,httptrace-new
+        include: metrics,jeecghttptrace
 
 spring:
   # flyway配置
@@ -48,6 +48,8 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   mail:
+    # 定时任务发送邮件
+    timeJobSend: false
     host: smtp.163.com
     username: jeecgos@163.com
     password: ??
@@ -161,7 +163,7 @@ spring:
           slow-sql-millis: 5000
       datasource:
         master:
-          url: jdbc:mysql://192.168.68.144:3306/jeecg-boot?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+          url: jdbc:mysql://127.0.0.1:3306/jeecg-boot?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
           username: root
           password: root
           driver-class-name: com.mysql.cj.jdbc.Driver
@@ -174,7 +176,7 @@ spring:
   #redis 配置
   redis:
     database: 0
-    host: 192.168.68.144
+    host: 127.0.0.1
     port: 6379
     password: ''
 #mybatis plus 设置
@@ -197,6 +199,13 @@ mybatis-plus:
 minidao:
   base-package: org.jeecg.modules.jmreport.*,org.jeecg.modules.drag.*
 jeecg:
+  # AI集成
+  ai-chat:
+    enabled: true
+    model: deepseek-chat
+    apiKey: ??
+    apiHost: https://api.deepseek.com
+    timeout: 60
   # 平台上线安全配置
   firewall:
     # 数据源安全 (开启后，Online报表和图表的数据源为必填)
@@ -226,12 +235,18 @@ jeecg:
     secretKey: ??
     endpoint: oss-cn-beijing.aliyuncs.com
     bucketName: jeecgdev
-  # ElasticSearch 6设置
-  elasticsearch:
-    cluster-name: jeecg-ES
-    userPass:
-    cluster-nodes: 192.168.68.144:9200
-    check-enabled: false
+    # 短信模板
+    sms-template:
+      # 签名
+      signature:
+      # 模板code
+      templateCode:
+        # 登录短信、忘记密码模板编码
+        SMS_175435174:
+        # 修改密码短信模板编码
+        SMS_465391221:
+        # 注册账号短信模板编码
+        SMS_175430166:
   # 在线预览文件服务器地址配置
   file-view-domain: http://fileview.jeecg.com
   # minio文件上传
@@ -263,30 +278,20 @@ jeecg:
     logRetentionDays: 30
   #分布式锁配置
   redisson:
-    address: 192.168.68.144:6379
+    address: 127.0.0.1:6379
     password:
     type: STANDALONE
     enabled: true
-  # ai-chat
-  ai-chat:
-    # 是否开启；必须。
-    enabled: false
-    # openAi接口秘钥，填写自己的apiKey；必须。
-    apiKey: "？？？？"
-    # openAi域名，有代理就填代理的域名。默认：openAI官方apiHost
-    apiHost: "https://api.openai.com"
-    # 超时时间单位:s。默认 60s
-    timeout: 60
-    # 本地代理地址
-#    proxy:
-#      host: "http://127.0.0.1"
-#      port: "7890"
   # 百度开放API配置
   baidu-api:
     app-id: ??
     api-key: ??
     secret-key: ??
-
+  # ElasticSearch 6设置
+  elasticsearch:
+    cluster-name: jeecg-ES
+    cluster-nodes: 127.0.0.1:9200
+    check-enabled: false
 #cas单点登录
 cas:
   prefixUrl: http://cas.example.org:8443/cas
@@ -333,3 +338,8 @@ justauth:
 testnet:
   api:
     token: 123456
+  grpc:
+    token: 123456
+lucene:
+  index:
+    path: lucene

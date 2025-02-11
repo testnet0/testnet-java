@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.jeecgframework.boot</groupId>
 		<artifactId>jeecg-boot-parent</artifactId>
-		<version>3.7.1</version>
+		<version>3.7.3</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>jeecg-boot-base-core</artifactId>
@@ -123,6 +123,12 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql-connector-java.version}</version>
 			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.protobuf</groupId>
+					<artifactId>protobuf-java</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<!--  sqlserver-->
 		<dependency>
@@ -222,7 +228,7 @@
 
 		<!-- AutoPoi Excel工具类-->
 		<dependency>
-			<groupId>org.jeecgframework</groupId>
+			<groupId>cn.testnet</groupId>
 			<artifactId>autopoi-web</artifactId>
 			<version>${autopoi-web.version}</version>
 			<exclusions>

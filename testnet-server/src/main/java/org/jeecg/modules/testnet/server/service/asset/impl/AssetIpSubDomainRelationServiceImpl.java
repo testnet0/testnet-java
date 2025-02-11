@@ -172,16 +172,17 @@ public class AssetIpSubDomainRelationServiceImpl extends ServiceImpl<AssetIpSubd
     @Override
     public AssetIpDTO getExtra(AssetIpDTO assetIpDTO) {
         if (StringUtils.isNotBlank(assetIpDTO.getIp())) {
-            IpInfo address = ip2regionService.search(assetIpDTO.getIp());
-            if (address != null) {
-                BeanUtil.copyProperties(address, assetIpDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
+            if (IpUtils.isIpv6(assetIpDTO.getIp())) {
+                assetIpDTO.setIsIpv6("Y");
+            } else {
+                assetIpDTO.setIsIpv6("N");
+                IpInfo address = ip2regionService.search(assetIpDTO.getIp());
+                if (address != null) {
+                    BeanUtil.copyProperties(address, assetIpDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
+                }
             }
         }
-        if (IpUtils.isIpv6(assetIpDTO.getIp())) {
-            assetIpDTO.setIsIpv6("Y");
-        } else {
-            assetIpDTO.setIsIpv6("N");
-        }
+
         if (IpUtils.isPrivateIP(assetIpDTO.getIp())) {
             assetIpDTO.setIsPublic("N");
         } else {
@@ -204,12 +205,33 @@ public class AssetIpSubDomainRelationServiceImpl extends ServiceImpl<AssetIpSubd
     public void addDomainRelation(AssetIpDTO asset) {
         AssetIpSubDomainRelation assetIpSubDomainRelation = new AssetIpSubDomainRelation();
         assetIpSubDomainRelation.setIpId(asset.getId());
-        if (StringUtils.isNotBlank(asset.getSubDomainIds())) {
-            String[] domains = asset.getSubDomainIds().split(",");
-            for (String subDomainId : domains) {
-                assetIpSubDomainRelation.setSubdomainId(subDomainId);
-                if (isNotExists(assetIpSubDomainRelation)) {
-                    save(assetIpSubDomainRelation);
+        if (StringUtils.isNotBlank(asset.getSubDomains())) {
+            String[] domains = asset.getSubDomains().split("\n"); // 按换行符分割子域名
+            for (String subdomain : domains) {
+                subdomain = subdomain.trim(); // 去除前后空格
+                if (StringUtils.isBlank(subdomain)) {
+                    continue;
+                }
+                // 查询子域名是否已存在
+                AssetSubDomain assetSubDomain = assetSubDomainMapper.selectBySubdomain(subdomain, asset.getProjectId());
+                AssetIpSubDomainRelation assetSubDomainRelation = new AssetIpSubDomainRelation();
+                assetSubDomainRelation.setIpId(asset.getId()); // 设置资产ID
+                if (assetSubDomain == null) {
+                    // 如果子域名不存在，创建新的子域名记录
+                    AssetSubDomain assetSubDomainDTO = new AssetSubDomain();
+                    assetSubDomainDTO.setSubDomain(subdomain);
+                    assetSubDomainDTO.setProjectId(asset.getProjectId());
+                    assetSubDomainDTO.setSource(asset.getSource());
+                    assetSubDomainMapper.insert(assetSubDomainDTO); // 插入子域名记录
+                    // 设置子域名关系
+                    assetSubDomainRelation.setSubdomainId(assetSubDomainDTO.getId());
+                    save(assetSubDomainRelation); // 保存关系
+                } else {
+                    // 如果子域名已存在，设置子域名关系
+                    assetSubDomainRelation.setSubdomainId(assetSubDomain.getId());
+                    if (isNotExists(assetSubDomainRelation)) { // 检查关系是否已存在
+                        save(assetSubDomainRelation); // 保存关系
+                    }
                 }
             }
         }

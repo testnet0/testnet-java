@@ -9,4 +9,12 @@
                  LEFT JOIN asset_ip_sub_domain as asds on asd.id = asds.subdomain_id
         where asds.ip_id = #{ipId}
     </select>
+
+    <select id="selectPageWithRelation" resultType="org.jeecg.modules.testnet.server.vo.asset.AssetSubDomainVO">
+        SELECT sd.* FROM asset_subdomain sd
+        JOIN asset_ip_subdomain_relation rel ON sd.id = rel.subdomain_id WHERE 1=1
+        <if test='ipId != null'>
+            AND rel.ip_id = #{ipId}
+        </if>
+    </select>
 </mapper>

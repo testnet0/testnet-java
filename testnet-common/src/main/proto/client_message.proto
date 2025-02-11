@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option java_package = "testnet.grpc";
+option java_outer_classname = "ClientMessageProto";
+
+// 日志消息
+message LogMessage {
+  string clientName = 1;    // 客户端名称
+  string taskId = 2;
+  string message = 3;
+  string level = 4;
+  string timestamp = 5;
+}
+
+// 任务状态消息
+message TaskStatusMessage {
+  string taskId = 1;
+  string taskStatus = 2;
+  string timestamp = 3;
+}
+
+// 节点状态消息
+message ClientStatusMessage {
+  string clientName = 1;    // 客户端名称
+  string clientVersion = 2; // 客户端版本
+  string timestamp = 3;
+  double cpuUsage = 4;          // CPU 使用率，0.0 到 1.0 之间，单位：百分比
+  int64 totalMemory = 5;      // 总内存，单位：字节
+  int64 freeMemory = 6;       // 空余内存，单位：字节
+}
+
+message ResultMessage {
+  string taskId = 1;
+  string result = 2;
+}
+
+
+
+message ClientResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+service ClientMessageService {
+  // 客户端上报节点状态
+  rpc ReportClientStatus(ClientStatusMessage) returns (ClientResponse);
+  // 客户端上报日志
+  rpc ReportLog(LogMessage) returns (ClientResponse);
+  // 客户端上报任务状态
+  rpc ReportTaskStatus(TaskStatusMessage) returns (ClientResponse);
+  // 客户端上报结果
+  rpc ReportResult(ResultMessage) returns (ClientResponse);
+}
+

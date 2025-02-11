@@ -29,8 +29,9 @@
     <select id="getPortsCountByIpId" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM asset_port ap
-        WHERE ap.ip = #{ipId};
+        WHERE ap.ip = #{ipId} AND is_open = 'Y';
     </select>
+
     <select id="getPortsByIpId" resultType="org.jeecg.modules.testnet.server.entity.asset.AssetPort">
         SELECT ap.*
         FROM asset_port ap

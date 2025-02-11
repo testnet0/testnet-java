@@ -7,8 +7,6 @@ import org.jeecg.modules.testnet.server.dto.AssetSearchImportDTO;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
 import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
 
-import java.util.List;
-
 public interface IAssetSearchService {
 
     Result<IPage<AssetSearchVO>> list(AssetSearchDTO assetSearchDTO);

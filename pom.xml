@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.jeecgframework.boot</groupId>
   <artifactId>jeecg-boot-parent</artifactId>
-  <version>3.7.1</version>
+  <version>3.7.3</version>
   <packaging>pom</packaging>
   <name>JEECG BOOT ${project.version}</name>
 
@@ -28,7 +28,7 @@
 	</parent>
 
 	<properties>
-		<jeecgboot.version>3.7.1</jeecgboot.version>
+		<jeecgboot.version>3.7.3</jeecgboot.version>
 		<java.version>1.8</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -53,14 +53,14 @@
 		<!-- 国产数据库驱动 -->
 		<kingbase8.version>9.0.0</kingbase8.version>
 		<dm8.version>8.1.1.49</dm8.version>
-		
+
+		<!-- 积木报表-->
+		<jimureport-spring-boot-starter.version>1.9.3</jimureport-spring-boot-starter.version>
 		<!-- 持久层 -->
 		<mybatis-plus.version>3.5.3.2</mybatis-plus.version>
 		<dynamic-datasource-spring-boot-starter.version>4.1.3</dynamic-datasource-spring-boot-starter.version>
 		<druid.version>1.2.22</druid.version>
 
-		<!-- 积木报表-->
-		<jimureport-spring-boot-starter.version>1.8.1</jimureport-spring-boot-starter.version>
 		<commons-io.version>2.11.0</commons-io.version>
 		<commons.version>2.6</commons.version>
 		<aliyun-java-sdk-dysmsapi.version>2.1.0</aliyun-java-sdk-dysmsapi.version>
@@ -79,6 +79,13 @@
 		<!-- Log4j2爆雷漏洞 -->
 		<log4j2.version>2.17.0</log4j2.version>
 		<logback.version>1.2.9</logback.version>
+		<!-- grpc -->
+		<grpc.springboot.version>2.15.0.RELEASE</grpc.springboot.version>
+		<protobuf-plugin.version>0.6.1</protobuf-plugin.version>
+		<grpc.version>1.58.0</grpc.version>
+		<protobuf.version>3.23.4</protobuf.version>
+		<!-- apache-Lucene -->
+		<lucene.version>8.11.4</lucene.version>
 	</properties>
 
 	<modules>
@@ -88,6 +95,8 @@
 		<module>testnet-common</module>
 		<module>testnet-client</module>
 		<module>testnet-server</module>
+		<module>autopoi</module>
+
     </modules>
 
 	<repositories>
@@ -409,29 +418,35 @@
 			<dependency>
 				<groupId>org.jeecgframework.jimureport</groupId>
 				<artifactId>jimureport-nosql-starter</artifactId>
-				<version>1.6.0</version>
-			</dependency>
-			<!-- 积木仪表盘-->
-			<dependency>
-				<groupId>org.jeecgframework.jimureport</groupId>
-				<artifactId>jimureport-dashboard-spring-boot-starter</artifactId>
-				<version>1.8.0-beta</version>
+				<version>${jimureport-spring-boot-starter.version}</version>
 				<exclusions>
 					<exclusion>
-						<artifactId>autopoi-web</artifactId>
-						<groupId>org.jeecgframework</groupId>
-					</exclusion>
-					<exclusion>
-						<groupId>org.jeecgframework.jimureport</groupId>
-						<artifactId>jimureport-spring-boot-starter</artifactId>
+						<groupId>org.apache.calcite</groupId>
+						<artifactId>calcite-elasticsearch</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
-			<!-- chatgpt -->
+			<!-- 积木BI大屏和仪表盘 -->
+			<dependency>
+				<groupId>org.jeecgframework.jimureport</groupId>
+				<artifactId>jimubi-spring-boot-starter</artifactId>
+				<version>${jimureport-spring-boot-starter.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.jeecgframework</groupId>
+						<artifactId>autopoi</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.jeecgframework</groupId>
+						<artifactId>autopoi-web</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<!-- AI集成 -->
 			<dependency>
 				<groupId>org.jeecgframework.boot</groupId>
 				<artifactId>jeecg-boot-starter-chatgpt</artifactId>
-				<version>${jeecgboot.version}</version>
+				<version>3.7.3</version>
 			</dependency>
 			<!--flyway 支持 mysql5.7+、MariaDB10.3.16-->
 			<!--mysql5.6，需要把版本号改成5.2.1-->
@@ -440,10 +455,54 @@
 				<artifactId>flyway-core</artifactId>
 				<version>7.15.0</version>
 			</dependency>
+			<dependency>
+				<groupId>net.devh</groupId>
+				<artifactId>grpc-server-spring-boot-starter</artifactId>
+				<version>${grpc.springboot.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.devh</groupId>
+				<artifactId>grpc-client-spring-boot-starter</artifactId>
+				<version>${grpc.springboot.version}</version>
+			</dependency>
+			<!-- grpc -->
+			<dependency>
+				<groupId>io.grpc</groupId>
+				<artifactId>grpc-stub</artifactId>
+				<version>${grpc.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.grpc</groupId>
+				<artifactId>grpc-protobuf</artifactId>
+				<version>${grpc.version}</version>
+			</dependency>
+			<!-- Apache Lucene -->
+			<dependency>
+				<groupId>org.apache.lucene</groupId>
+				<artifactId>lucene-core</artifactId>
+				<version>${lucene.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.lucene</groupId>
+				<artifactId>lucene-queryparser</artifactId>
+				<version>${lucene.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.lucene</groupId>
+				<artifactId>lucene-analyzers-common</artifactId>
+				<version>${lucene.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<build>
+		<extensions>
+			<extension>
+				<groupId>kr.motd.maven</groupId>
+				<artifactId>os-maven-plugin</artifactId>
+				<version>1.7.0</version>
+			</extension>
+		</extensions>
 		<plugins>
 			<!-- 指定JDK编译版本 -->
             <plugin>
@@ -475,9 +534,23 @@
                         <nonFilteredFileExtension>eot</nonFilteredFileExtension>
                         <nonFilteredFileExtension>ttf</nonFilteredFileExtension>
                         <nonFilteredFileExtension>svg</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>glb</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>wasm</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>ico</nonFilteredFileExtension>
                     </nonFilteredFileExtensions>
                 </configuration>
             </plugin>
+			<plugin>
+				<groupId>org.xolstice.maven.plugins</groupId>
+				<artifactId>protobuf-maven-plugin</artifactId>
+				<version>0.6.1</version>
+				<configuration>
+					<protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
+					</protocArtifact>
+					<pluginId>grpc-java</pluginId>
+					<pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
+				</configuration>
+			</plugin>
 		</plugins>
 		<resources>
 			<resource>

@@ -1,5 +1,6 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -65,11 +66,11 @@ public class AssetPortController extends JeecgController<AssetPort, AssetPortSer
     @RequiresPermissions("testnet.server:asset_port:add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody AssetPortDTO assetPortDTO) {
-        if (assetCommonOptionService.addAssetByType(assetPortDTO, AssetTypeEnums.PORT, true) != null) {
+        Result<?> addResult = assetCommonOptionService.addAssetByType(assetPortDTO, AssetTypeEnums.PORT, true);
+        if (addResult.getCode().equals(200)) {
             return Result.OK("添加成功!");
-        } else {
-            return Result.error("添加失败，检查是否重复或缺少关键字段");
         }
+        return Result.error(addResult.getCode(), addResult.getMessage());
     }
 
     /**
@@ -83,11 +84,11 @@ public class AssetPortController extends JeecgController<AssetPort, AssetPortSer
     @RequiresPermissions("testnet.server:asset_port:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetPortDTO assetPortDTO) {
-        if (assetCommonOptionService.updateAssetByType(assetPortDTO, AssetTypeEnums.PORT) != null) {
+        Result<?> editResult = assetCommonOptionService.updateAssetByType(assetPortDTO, AssetTypeEnums.PORT);
+        if (editResult.getCode().equals(200)) {
             return Result.OK("编辑成功!");
-        } else {
-            return Result.error("编辑失败，检查是否重复或缺少关键字段");
         }
+        return Result.error(editResult.getCode(), editResult.getMessage());
     }
 
     /**
@@ -129,12 +130,8 @@ public class AssetPortController extends JeecgController<AssetPort, AssetPortSer
     //@AutoLog(value = "端口-通过id查询")
     @ApiOperation(value = "端口-通过id查询", notes = "端口-通过id查询")
     @GetMapping(value = "/queryById")
-    public Result<AssetPort> queryById(@RequestParam(name = "id", required = true) String id) {
-        AssetPort assetPort = assetCommonOptionService.getByIdAndAssetType(id, AssetTypeEnums.PORT);
-        if (assetPort == null) {
-            return Result.error("未找到对应数据");
-        }
-        return Result.OK(assetPort);
+    public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
+        return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.PORT);
     }
 
     /**
@@ -146,7 +143,7 @@ public class AssetPortController extends JeecgController<AssetPort, AssetPortSer
     @RequiresPermissions("testnet.server:asset_port:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetPort assetPort) {
-        return super.exportXlsSheet(request, assetPort, AssetPort.class, "端口",null,500000);
+        return super.exportXlsSheet(request, assetPort, AssetPort.class, "端口", null, 500000);
         // return super.exportXls(request, assetPort, AssetPort.class, "端口");
     }
 
@@ -160,7 +157,7 @@ public class AssetPortController extends JeecgController<AssetPort, AssetPortSer
     @RequiresPermissions("testnet.server:asset_port:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return super.importExcel(request, response, AssetPort.class);
+       return assetCommonOptionService.importExcel(request, response, AssetPortDTO.class, AssetTypeEnums.PORT);
     }
 
 }

@@ -2,6 +2,7 @@ package org.jeecg.modules.testnet.server.service.search.impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.testnet.server.dto.AssetSearchDTO;
 import org.jeecg.modules.testnet.server.entity.asset.SearchEngineKeyword;
@@ -10,13 +11,10 @@ import org.jeecg.modules.testnet.server.service.search.ISearchEngineKeywordServi
 import org.jeecg.modules.testnet.server.vo.asset.SearchEngineKeywordVO;
 import org.springframework.stereotype.Service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @Description: 搜索引擎语法
@@ -26,6 +24,27 @@ import java.util.stream.Collectors;
  */
 @Service
 public class SearchEngineKeywordServiceImpl extends ServiceImpl<SearchEngineKeywordMapper, SearchEngineKeyword> implements ISearchEngineKeywordService {
+
+    /**
+     * 从输入字符串中提取最后的关键词，考虑 "&&", "||", 和 "and" 作为分隔符
+     *
+     * @param input 输入的查询字符串
+     * @return 最后一个关键词
+     */
+    public static String extractLastKeywordAfter(String input) {
+        // 定义正则表达式，匹配最后一个 "&&", "||", 或 "and" 后面的字符
+        String regex = ".*(?:&&|\\|\\||and|or)\\s*(.*)";  // 非捕获组匹配到最后一个分隔符
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
+
+        // 如果匹配成功，提取最后的关键词
+        if (matcher.matches()) {
+            return matcher.group(1).trim();  // 提取分隔符后的部分作为最后的关键词
+        }
+
+        // 如果没有分隔符，则返回整个输入
+        return input;
+    }
 
     public Result<List<SearchEngineKeywordVO>> autoComplete(AssetSearchDTO assetSearchDTO) {
         QueryWrapper<SearchEngineKeyword> queryWrapper = new QueryWrapper<>();
@@ -57,27 +76,6 @@ public class SearchEngineKeywordServiceImpl extends ServiceImpl<SearchEngineKeyw
             keywords.add(new SearchEngineKeywordVO("用户", userKeywords));
         }
         return Result.OK(keywords);
-    }
-
-    /**
-     * 从输入字符串中提取最后的关键词，考虑 "&&", "||", 和 "and" 作为分隔符
-     *
-     * @param input 输入的查询字符串
-     * @return 最后一个关键词
-     */
-    public static String extractLastKeywordAfter(String input) {
-        // 定义正则表达式，匹配最后一个 "&&", "||", 或 "and" 后面的字符
-        String regex = ".*(?:&&|\\|\\||and|or)\\s*(.*)";  // 非捕获组匹配到最后一个分隔符
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
-
-        // 如果匹配成功，提取最后的关键词
-        if (matcher.matches()) {
-            return matcher.group(1).trim();  // 提取分隔符后的部分作为最后的关键词
-        }
-
-        // 如果没有分隔符，则返回整个输入
-        return input;
     }
 
 }

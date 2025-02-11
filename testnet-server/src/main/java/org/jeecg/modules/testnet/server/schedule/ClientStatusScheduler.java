@@ -7,8 +7,6 @@
 package org.jeecg.modules.testnet.server.schedule;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.common.api.dto.message.MessageDTO;
-import org.jeecg.common.constant.enums.MessageTypeEnum;
 import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.modules.testnet.server.entity.client.Client;
 import org.jeecg.modules.testnet.server.service.client.IClientService;
@@ -33,7 +31,7 @@ public class ClientStatusScheduler {
     @Resource
     private ISysBaseAPI sysBaseApi;
 
-    @Scheduled(fixedRate = 600 * 1000L) // 每60秒执行一次
+    @Scheduled(fixedRate = 600 * 1000L, initialDelay = 60 * 1000L) // 每60秒执行一次
     public void clientVersion() {
         List<Client> clients = clientService.getAllOnlineClients();
         for (Client client : clients) {
@@ -49,7 +47,7 @@ public class ClientStatusScheduler {
                 client.setStatus("N"); // 更新状态为N
                 log.info("Client :{} is offline ", client.getClientName());
                 clientService.updateById(client);
-                clientService.clearCache(client.getClientName());
+                clientService.clearCache();
                 Map<String, Object> params = new HashMap<>();
                 params.put("clientName", client.getClientName());
                 sysBaseApi.sendWebHookeMessage("客户端离线通知", params, "client_status_notify");

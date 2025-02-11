@@ -21,6 +21,5 @@ public interface IClientConfigService extends IService<ClientConfig> {
 
     void addConfig(Chain chain);
 
-    List<ClientConfig> getClientFile(String clientId);
 
 }

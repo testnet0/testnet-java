@@ -8,7 +8,9 @@ package org.jeecg.modules.testnet.server.service.processer.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.api.ISysBaseAPI;
+import org.jeecg.modules.testnet.server.entity.asset.AssetBase;
 import org.jeecg.modules.testnet.server.entity.asset.AssetCompany;
 import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
@@ -17,7 +19,7 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
 import org.springframework.stereotype.Service;
 import testnet.common.dto.CompanyToDomainsDTO;
-import testnet.common.entity.liteflow.LiteFlowResult;
+import testnet.grpc.ClientMessageProto.ResultMessage;
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
@@ -29,16 +31,20 @@ import java.util.Map;
 public class CompanyToDomainProcessor implements IAssetResultProcessorService {
 
     @Resource
-    private IAssetCommonOptionService assetCommonOptionService;
+    private IAssetCommonOptionService assetCompanyCommonOptionService;
+
+    @Resource
+    private IAssetCommonOptionService assetDomainCommonOptionService;
 
     @Resource
     private ISysBaseAPI sysBaseAPI;
 
     @Override
-    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
+    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, ResultMessage resultBase) {
         CompanyToDomainsDTO domainToCompanyDTO = JSONObject.parseObject(resultBase.getResult(), CompanyToDomainsDTO.class);
-        AssetCompany assetCompany = assetCommonOptionService.getByIdAndAssetType(baseAssetId, AssetTypeEnums.COMPANY);
-        if (assetCompany != null) {
+        Result<? extends AssetBase> result = assetCompanyCommonOptionService.getAssetDOByIdAndAssetType(baseAssetId, AssetTypeEnums.COMPANY);
+        if (result.isSuccess() && result.getResult() != null) {
+            AssetCompany assetCompany = (AssetCompany) result.getResult();
             domainToCompanyDTO.getDomainList().forEach(domain -> {
                 AssetDomain assetDomain = new AssetDomain();
                 assetDomain.setDomain(domain.getDomain());
@@ -46,7 +52,7 @@ public class CompanyToDomainProcessor implements IAssetResultProcessorService {
                 assetDomain.setSource(source);
                 assetDomain.setCompanyId(baseAssetId);
                 assetDomain.setProjectId(assetCompany.getProjectId());
-                assetCommonOptionService.addOrUpdate(assetDomain, AssetTypeEnums.DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());
+                assetDomainCommonOptionService.addOrUpdate(assetDomain, AssetTypeEnums.DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());
             });
             Map<String, Object> params = new HashMap<>();
             params.put("taskName", liteFlowTask.getTaskName());

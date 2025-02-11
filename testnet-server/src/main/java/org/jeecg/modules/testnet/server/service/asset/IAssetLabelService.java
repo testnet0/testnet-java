@@ -16,4 +16,8 @@ public interface IAssetLabelService extends IService<AssetLabel> {
     void update(AssetLabel assetLabel);
 
     void delete(AssetLabel assetLabel);
+
+    AssetLabel getByLabelIdOrName(String s);
+
+    void cleanCache(String s);
 }

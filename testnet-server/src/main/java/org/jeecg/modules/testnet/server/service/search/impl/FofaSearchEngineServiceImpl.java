@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.testnet.server.dto.AssetSearchDTO;
+import org.jeecg.modules.testnet.server.entity.asset.AssetSearchEngine;
 import org.jeecg.modules.testnet.server.service.search.ISearchEngineService;
 import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,8 @@ import testnet.common.entity.HttpResponse;
 import testnet.common.utils.HttpUtils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -24,15 +27,15 @@ import java.util.List;
 @Slf4j
 public class FofaSearchEngineServiceImpl implements ISearchEngineService {
     @Override
-    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, String key) {
+    public Result<IPage<AssetSearchVO>> search(AssetSearchDTO assetSearchDTO, AssetSearchEngine assetSearchEngine) {
         List<AssetSearchVO> assetSearchVOList = new ArrayList<>();
         String fields = "ip,port,protocol,country_name,region,city,host,icp,title,banner,base_protocol";
-        String fofaUrl = "https://fofa.info/api/v1/search/all?key=%s&qbase64=%s&page=%d&size=%d&fields=%s";
+        String fofaUrl = assetSearchEngine.getEngineHost();
         if (assetSearchDTO.getFull() != null && assetSearchDTO.getFull()) {
             fofaUrl += "&full=true";
         }
         try {
-            HttpResponse response = HttpUtils.get(String.format(fofaUrl, key, base64UrlEncode(assetSearchDTO.getKeyword()), assetSearchDTO.getPageNo(), assetSearchDTO.getPageSize(), fields));
+            HttpResponse response = HttpUtils.get(String.format(fofaUrl, assetSearchEngine.getEngineToken(), base64UrlEncode(assetSearchDTO.getKeyword()), assetSearchDTO.getPageNo(), assetSearchDTO.getPageSize(), fields));
             if (response.getStatusCode() == 200) {
                 String body = response.getBody();
                 JSONObject jsonObject = JSONObject.parseObject(body);
@@ -86,7 +89,13 @@ public class FofaSearchEngineServiceImpl implements ISearchEngineService {
     }
 
     private String base64UrlEncode(String input) {
-        String encoded = Base64.getUrlEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
-        return encoded.replaceAll("=", "%3D");
+        String base64Encoded = Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+        String urlEncoded = null;
+        try {
+            urlEncoded = URLEncoder.encode(base64Encoded, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        return urlEncoded;
     }
 }

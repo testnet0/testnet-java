@@ -1,5 +1,3 @@
-package script.script;
-
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
 import com.yomahub.liteflow.script.body.CommonScriptBody;

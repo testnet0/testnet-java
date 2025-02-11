@@ -97,13 +97,8 @@ public class AssetLabelController extends JeecgController<AssetLabel, IAssetLabe
     @RequiresPermissions("testnet.server:asset_label:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
-        AssetLabel assetLabel = assetLabelService.getById(id);
-        if (assetLabel != null) {
-            assetLabelService.delete(assetLabel);
-            return Result.OK("删除成功!");
-        } else {
-            return Result.error("未找到对应数据！");
-        }
+        deleteLabel(id);
+        return Result.OK("删除成功!");
     }
 
     /**
@@ -118,8 +113,7 @@ public class AssetLabelController extends JeecgController<AssetLabel, IAssetLabe
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
         for (String id : ids.split(",")) {
-            AssetLabel assetLabel = assetLabelService.getById(id);
-            this.assetLabelService.delete(assetLabel);
+            deleteLabel(id);
         }
         return Result.OK("批量删除成功!");
     }
@@ -150,8 +144,8 @@ public class AssetLabelController extends JeecgController<AssetLabel, IAssetLabe
     @RequiresPermissions("testnet.server:asset_label:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetLabel assetLabel) {
-        return super.exportXlsSheet(request, assetLabel, AssetLabel.class, "资产标签",null,50000);
-       // return super.exportXls(request, assetLabel, AssetLabel.class, "资产标签");
+        return super.exportXlsSheet(request, assetLabel, AssetLabel.class, "资产标签", null, 50000);
+        // return super.exportXls(request, assetLabel, AssetLabel.class, "资产标签");
     }
 
     /**
@@ -167,4 +161,12 @@ public class AssetLabelController extends JeecgController<AssetLabel, IAssetLabe
         return super.importExcel(request, response, AssetLabel.class);
     }
 
+    private void deleteLabel(String id) {
+        AssetLabel assetLabel = assetLabelService.getById(id);
+        if (assetLabel != null) {
+            assetLabelService.removeById(assetLabel);
+            assetLabelService.cleanCache(assetLabel.getLabelName());
+            assetLabelService.cleanCache(assetLabel.getId());
+        }
+    }
 }

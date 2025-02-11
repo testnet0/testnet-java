@@ -12,17 +12,17 @@ import org.jeecg.modules.testnet.server.dto.AssetApiDTO;
 import org.jeecg.modules.testnet.server.dto.AssetIpDTO;
 import org.jeecg.modules.testnet.server.dto.AssetPortDTO;
 import org.jeecg.modules.testnet.server.dto.AssetSubDomainIpsDTO;
-import org.jeecg.modules.testnet.server.dto.asset.AssetDomainDTO;
 import org.jeecg.modules.testnet.server.dto.asset.AssetVulDTO;
 import org.jeecg.modules.testnet.server.dto.asset.AssetWebDTO;
 import org.jeecg.modules.testnet.server.entity.asset.AssetCompany;
+import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
 import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
 import org.springframework.stereotype.Service;
 import testnet.common.dto.AssetUpdateDTO;
-import testnet.common.entity.liteflow.LiteFlowResult;
+import testnet.grpc.ClientMessageProto.ResultMessage;
 import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
@@ -37,11 +37,11 @@ public class AssetUpdateProcessor implements IAssetResultProcessorService {
 
 
     @Override
-    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
+    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, ResultMessage resultBase) {
         AssetUpdateDTO assetUpdateDTO = JSONObject.parseObject(resultBase.getResult(), AssetUpdateDTO.class);
         switch (liteFlowTask.getAssetType()) {
             case "domain":
-                AssetDomainDTO newDomain = JSONObject.parseObject(assetUpdateDTO.getData(), AssetDomainDTO.class);
+                AssetDomain newDomain = JSONObject.parseObject(assetUpdateDTO.getData(), AssetDomain.class);
                 assetCommonOptionService.addOrUpdate(newDomain, AssetTypeEnums.DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());
                 break;
             case "sub_domain":

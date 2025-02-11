@@ -18,6 +18,9 @@ public class AssetSearchDTO {
     private Integer pageNo;
     private Integer pageSize;
 
+    // 大规模数据查询使用
+    private Integer next;
+
     // Fofa语法
     // 是否全量搜索 默认搜索一年内的数据，指定为true即可搜索全部数据
     private Boolean full;
@@ -42,4 +45,11 @@ public class AssetSearchDTO {
     // 对应web页面里的 过滤无效请求 排除蜜罐 排除CDN （最新值请从WEB的url里获取）
     private String shortcuts;
 
+    // 零零信安语法
+    // 	更新时间排序：升序（ASC）、降序（DESC）
+    private String timestampSort;
+    // 录入时间排序：升序（ASC）、降序（DESC）
+    private String exploreTimestampSort;
+    // 是否自动扣费
+    private Boolean zbPay;
 }

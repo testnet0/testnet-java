@@ -13,7 +13,7 @@ import org.jeecg.modules.testnet.server.service.log.ILogService;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
 import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
 import org.springframework.stereotype.Service;
-import testnet.common.entity.liteflow.LiteFlowResult;
+import testnet.grpc.ClientMessageProto.ResultMessage;
 
 import javax.annotation.Resource;
 
@@ -29,7 +29,7 @@ public class SearchEngineImportProcessor implements IAssetResultProcessorService
 
 
     @Override
-    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, LiteFlowResult resultBase) {
+    public void processAsset(String baseAssetId, String source, LiteFlowTask liteFlowTask, LiteFlowSubTask liteFlowSubTask, ResultMessage resultBase) {
         JSONObject param = JSONObject.parseObject(resultBase.getResult());
         JSONObject searchParam = JSONObject.parseObject(liteFlowTask.getSearchParam());
         AssetSearchDTO assetSearchDTO = JSONObject.parseObject(searchParam.getString("params"), AssetSearchDTO.class);
