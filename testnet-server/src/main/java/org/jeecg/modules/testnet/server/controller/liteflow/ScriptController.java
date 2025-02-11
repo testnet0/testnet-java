@@ -12,6 +12,7 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.testnet.server.entity.liteflow.Script;
+import org.jeecg.modules.testnet.server.service.client.IClientToolsService;
 import org.jeecg.modules.testnet.server.service.liteflow.IScriptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,9 @@ import javax.servlet.http.HttpServletResponse;
 public class ScriptController extends JeecgController<Script, IScriptService> {
     @Autowired
     private IScriptService scriptService;
+
+    @Resource
+    private IClientToolsService clientToolsService;
 
     /**
      * 分页列表查询
@@ -70,6 +74,9 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody Script script) {
         scriptService.saveScript(script);
+        if (script.getNeedInstall()) {
+            clientToolsService.addConfig(script);
+        }
         return Result.OK("添加成功！");
     }
 

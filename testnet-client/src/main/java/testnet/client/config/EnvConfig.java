@@ -7,9 +7,6 @@
 package testnet.client.config;
 
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -17,13 +14,10 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 @Component
-@Slf4j
 public class EnvConfig {
     @Resource
     private Environment env;
 
-    // 客户端版本号
-    @Getter
     @Value("${testnet.client.version}")
     private String clientVersion;
 
@@ -36,13 +30,16 @@ public class EnvConfig {
 
     // 客户端名称
     public String getClientName() {
-        String clientNameFromEnv = env.getProperty("TESTNET_CLIENT_NAME");
-        return StringUtils.isNotBlank(clientNameFromEnv) ? clientNameFromEnv : this.clientName;
+        return env.getProperty("testnet.client.name", clientName);
+    }
+
+    // 客户端版本号
+    public String getClientVersion() {
+        return env.getProperty("testnet.client.version", clientVersion);
     }
 
     public String getResultPath() {
-        String resultPath = env.getProperty("TESTNET_RESULT_PATH");
-        return StringUtils.isNotBlank(resultPath) ? resultPath : this.resultPath;
+        return env.getProperty("testnet.result.path", resultPath);
     }
 
 }

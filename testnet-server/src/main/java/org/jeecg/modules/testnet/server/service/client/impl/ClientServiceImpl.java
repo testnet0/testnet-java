@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.modules.testnet.server.entity.client.Client;
 import org.jeecg.modules.testnet.server.mapper.client.ClientConfigMapper;
 import org.jeecg.modules.testnet.server.mapper.client.ClientMapper;
+import org.jeecg.modules.testnet.server.mapper.client.ClientToolsMapper;
 import org.jeecg.modules.testnet.server.service.client.IClientService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,6 +23,8 @@ import java.util.List;
 @Service
 public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> implements IClientService {
 
+    @Resource
+    private ClientToolsMapper clientToolsMapper;
 
     @Resource
     private ClientConfigMapper clientConfigMapper;
@@ -42,8 +45,8 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     }
 
     @Override
-    @CacheEvict(value = "workflow:client:cache#600", allEntries = true)
-    public void clearCache() {
+    @CacheEvict(value = "workflow:client:cache#600", key = "#name")
+    public void clearCache(String name) {
 
     }
 
@@ -64,9 +67,9 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     @Override
     public void del(String ids) {
         for (String id : ids.split(",")) {
+            clientToolsMapper.delToolsByClientId(id);
             clientConfigMapper.delByClientId(id);
             removeById(id);
-            clearCache();
         }
     }
 }

@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.jeecg.common.aspect.annotation.Dict;
 import org.jeecgframework.poi.excel.annotation.Excel;
 
 import java.io.Serializable;
@@ -34,15 +33,13 @@ public class AssetIp extends AssetBase implements Serializable {
     /**
      * 公网
      */
-    @Excel(name = "公网", width = 15, dicCode = "is_open")
-    @Dict(dicCode = "is_open")
+    @Excel(name = "公网", width = 15)
     @ApiModelProperty(value = "公网")
     private java.lang.String isPublic;
     /**
      * ipv6
      */
-    @Excel(name = "ipv6", width = 15, dicCode = "is_open")
-    @Dict(dicCode = "is_open")
+    @Excel(name = "ipv6", width = 15)
     @ApiModelProperty(value = "ipv6")
     private java.lang.String isIpv6;
 

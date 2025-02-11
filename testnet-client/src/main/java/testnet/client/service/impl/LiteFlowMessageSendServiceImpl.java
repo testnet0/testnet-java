@@ -1,26 +1,27 @@
+/**
+ * @program: jeecg-boot
+ * @description:
+ * @author: TestNet
+ * @create: 2024-01-01
+ **/
 package testnet.client.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import testnet.client.config.EnvConfig;
 import testnet.client.service.ILiteFlowMessageSendService;
+import testnet.common.constan.Constants;
 import testnet.common.dto.ResultBase;
+import testnet.common.entity.liteflow.ClientStatus;
+import testnet.common.entity.liteflow.LiteFlowResult;
+import testnet.common.entity.liteflow.LogMessage;
+import testnet.common.entity.liteflow.VersionMessage;
 import testnet.common.enums.LiteFlowStatusEnums;
-import testnet.grpc.ClientMessageProto.ClientResponse;
-import testnet.grpc.ClientMessageProto.LogMessage;
-import testnet.grpc.ClientMessageProto.ResultMessage;
-import testnet.grpc.ClientMessageProto.TaskStatusMessage;
-import testnet.grpc.ClientMessageServiceGrpc;
+import testnet.common.service.IRedisStreamService;
 
 import javax.annotation.Resource;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -29,9 +30,33 @@ public class LiteFlowMessageSendServiceImpl implements ILiteFlowMessageSendServi
     private static final ThreadLocal<String> taskIdThreadLocal = new ThreadLocal<>();
     @Resource
     private EnvConfig envConfig;
+    @Resource
+    private IRedisStreamService redisStreamService;
 
-    @GrpcClient("myService")
-    private ClientMessageServiceGrpc.ClientMessageServiceBlockingStub clientMessageService;
+    private static String formatMessage(String message, Object... args) {
+        StringBuilder sb = new StringBuilder(message);
+        int placeholderIndex = 0;
+
+        // 确保占位符数量与参数数量相匹配
+        long placeholderCount = message.chars().filter(ch -> ch == '{').count();
+        if (placeholderCount != (long) args.length) {
+            log.error("The number of placeholders does not match the number of arguments.");
+            return message;
+        }
+
+        while (placeholderIndex < placeholderCount) {
+            int startIndex = sb.indexOf("{}", placeholderIndex);
+            if (startIndex == -1) break;  // 所有占位符已替换，退出循环
+
+            String replacement = args[placeholderIndex].toString();
+            sb.replace(startIndex, startIndex + 2, replacement);
+
+            placeholderIndex++;
+        }
+
+        return sb.toString();
+    }
+
 
     @Override
     public void setTaskId(String taskId) {
@@ -56,106 +81,66 @@ public class LiteFlowMessageSendServiceImpl implements ILiteFlowMessageSendServi
     @SneakyThrows
     public void sendLog(String level, String message, Object... args) {
         String formattedMessage = formatMessage(message, args);
-        LogMessage logMessage = LogMessage.newBuilder()
-                .setClientName(envConfig.getClientName())
-                .setTaskId(taskIdThreadLocal.get())
-                .setMessage(formattedMessage)
-                .setLevel(level)
-                .build();
-        sendLog(logMessage);
+        sendLog(level, formattedMessage);
     }
 
     @SneakyThrows
-    @Override
-    public <T> ClientResponse sendWithRetryAndFallback(String type, T data, Function<T, ClientResponse> sendFunction) {
-        int maxRetries = 3;
-        int retryCount = 0;
-        ClientResponse response = null;
-
-        while (retryCount < maxRetries) {
-            try {
-                response = sendFunction.apply(data);
-                if (response.getSuccess()) {
-                    return response;
-                } else {
-                    log.error("{} fail: {}", type, response.getMessage());
-                }
-            } catch (Exception e) {
-                log.error("{} fail (attempt {} of {}): {}", type, retryCount + 1, maxRetries, e.getMessage());
-            }
-
-            retryCount++;
-            if (retryCount < maxRetries) {
-                try {
-                    Thread.sleep(60 * 1000L); // Wait for 1 minute before retrying
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    log.error("Retry interrupted: {}", ie.getMessage());
-                    break;
-                }
-            }
+    public void sendLog(String level, String message) {
+        LogMessage logMessage = new LogMessage();
+        logMessage.setTaskId(taskIdThreadLocal.get());
+        logMessage.setMessage(message);
+        logMessage.setLevel(level);
+        logMessage.setClientName(envConfig.getClientName());
+        logMessage.setClientVersion(envConfig.getClientVersion());
+        String recordId = redisStreamService.addObject(Constants.STREAM_KEY_LOG, logMessage);
+        if (recordId == null) {
+            log.info("Error sending event: {}", logMessage);
+            return;
         }
-
-        // If all retries fail, save to SQLite
-        log.error("Failed to {} after {} attempts. Saving to SQLite database.", type, maxRetries);
-        saveToSQLite(type, data);
-        return response; // Return the last response (even if it's null or failed)
     }
 
     @SneakyThrows
-    private <T> void saveToSQLite(String type, T data) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        try {
-            // Connect to SQLite database
-            connection = DriverManager.getConnection("jdbc:sqlite:fallback.db");
-            String sql = "INSERT INTO fallback_data (type, data) VALUES (?, ?)";
-
-            // Prepare the SQL statement
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, type);
-            preparedStatement.setString(2, JSONObject.toJSONString(data));
-
-            // Execute the SQL statement
-            preparedStatement.executeUpdate();
-            log.info("Data saved to SQLite database: type={}, data={}", type, data);
-        } catch (SQLException e) {
-            log.error("Failed to save data to SQLite database: {}", e.getMessage());
-        } finally {
-            // Close resources
-            if (preparedStatement != null) {
-                preparedStatement.close();
-            }
-            if (connection != null) {
-                connection.close();
-            }
+    public void sendStatus(String status) {
+        ClientStatus clientStatus = new ClientStatus();
+        clientStatus.setStatus(status);
+        clientStatus.setTaskId(taskIdThreadLocal.get());
+        clientStatus.setClientName(envConfig.getClientName());
+        clientStatus.setClientVersion(envConfig.getClientVersion());
+        String recordId = redisStreamService.addObject(Constants.STREAM_KEY_STATUS, clientStatus);
+        if (recordId == null) {
+            log.info("Error sending status: {}", clientStatus);
+            return;
         }
-    }
-
-    public ClientResponse sendLog(LogMessage logMessage) {
-        return sendWithRetryAndFallback("reportLog", logMessage, clientMessageService::reportLog);
-    }
-
-    public ClientResponse sendStatus(String status) {
-        TaskStatusMessage clientStatus = TaskStatusMessage.newBuilder()
-                .setTaskId(taskIdThreadLocal.get())
-                .setTaskStatus(status)
-                .build();
-        return sendWithRetryAndFallback("reportTaskStatus", clientStatus, clientMessageService::reportTaskStatus);
+        log.info("Status send to server success！MessageId:{}", recordId);
     }
 
     @Override
-    public <T extends ResultBase> ClientResponse sendResult(T result) {
-        ResultMessage liteFlowResult = ResultMessage.newBuilder()
-                .setTaskId(taskIdThreadLocal.get())
-                .setResult(JSONObject.toJSONString(result))
-                .build();
-        return sendWithRetryAndFallback("reportResult", liteFlowResult, clientMessageService::reportResult);
+    public <T extends ResultBase> void sendResult(T result) {
+        LiteFlowResult liteFlowResult = new LiteFlowResult();
+        liteFlowResult.setTaskId(taskIdThreadLocal.get());
+        liteFlowResult.setClientName(envConfig.getClientName());
+        liteFlowResult.setResult(JSONObject.toJSONString(result));
+        liteFlowResult.setClientVersion(envConfig.getClientVersion());
+        String recordId = redisStreamService.addObject(Constants.STREAM_KEY_RESULT, liteFlowResult);
+        if (recordId == null) {
+            log.info("Error sending result: {}", result);
+            return;
+        }
+        log.info("Result send to server success！MessageId:{}", recordId);
     }
 
-    public <T extends ResultBase> ClientResponse sendResult(ResultMessage result) {
-        return sendWithRetryAndFallback("reportResult", result, clientMessageService::reportResult);
+    @Override
+    @SneakyThrows
+    public void sendVersion() {
+        VersionMessage versionMessage = new VersionMessage();
+        versionMessage.setClientName(envConfig.getClientName());
+        versionMessage.setClientVersion(envConfig.getClientVersion());
+        String recordId = redisStreamService.addObject(Constants.STREAM_KEY_VERSION, versionMessage);
+        if (recordId == null) {
+            log.info("Error sending version: {}", versionMessage);
+            return;
+        }
+        log.trace("Version send to server success！MessageId:{}", recordId);
     }
 
     @Override
@@ -173,36 +158,4 @@ public class LiteFlowMessageSendServiceImpl implements ILiteFlowMessageSendServi
         sendStatus(LiteFlowStatusEnums.SUCCEED.name());
     }
 
-    private static String formatMessage(String message, Object... args) {
-        if (message == null) {
-            log.error("Message is null.");
-            return null;
-        }
-
-        // 统计占位符数量
-        long placeholderCount = message.chars().filter(ch -> ch == '{').count();
-        if (placeholderCount != args.length) {
-            log.error("The number of placeholders does not match the number of arguments.");
-            return message;
-        }
-
-        StringBuilder sb = new StringBuilder(message);
-        int placeholderIndex = 0;
-        int offset = 0; // 用于记录替换后的偏移量
-
-        while (placeholderIndex < args.length) {
-            int startIndex = sb.indexOf("{}", offset);
-            if (startIndex == -1) break; // 所有占位符已替换，退出循环
-
-            // 替换占位符
-            String replacement = args[placeholderIndex] != null ? args[placeholderIndex].toString() : "null";
-            sb.replace(startIndex, startIndex + 2, replacement);
-
-            // 更新偏移量
-            offset = startIndex + replacement.length();
-            placeholderIndex++;
-        }
-
-        return sb.toString();
-    }
 }

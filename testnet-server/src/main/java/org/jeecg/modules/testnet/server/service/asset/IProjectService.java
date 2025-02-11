@@ -1,7 +1,12 @@
 package org.jeecg.modules.testnet.server.service.asset;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.testnet.server.entity.asset.Project;
+import org.jeecg.modules.testnet.server.vo.ProjectVO;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
 
 /**
  * @Description: 项目
@@ -11,8 +16,9 @@ import org.jeecg.modules.testnet.server.entity.asset.Project;
  */
 public interface IProjectService extends IService<Project> {
 
-    Project getByProjectIdOrName(String projectIdOrName);
+    IPage<ProjectVO> listByProject(Project project, HttpServletRequest req, Integer pageNo, Integer pageSize);
 
+    void delById(String ids);
 
-    void cleanCache(String projectIdOrName);
+    long getCount(Date time);
 }

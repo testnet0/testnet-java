@@ -98,6 +98,12 @@ public class ClientTools implements Serializable {
     private java.lang.String version;
 
     /**
+     * 自动安装
+     */
+    @Excel(name = "自动安装", width = 15)
+    @ApiModelProperty(value = "自动安装")
+    private Boolean autoInstall;
+    /**
      * 安装命令
      */
     @Excel(name = "安装命令", width = 15)
@@ -109,5 +115,10 @@ public class ClientTools implements Serializable {
     @Excel(name = "版本检查命令", width = 15)
     @ApiModelProperty(value = "版本检查命令")
     private java.lang.String versionCheckCommand;
-
+    /**
+     * 版本更新命令
+     */
+    @Excel(name = "版本更新命令", width = 15)
+    @ApiModelProperty(value = "版本更新命令")
+    private java.lang.String updateCommand;
 }

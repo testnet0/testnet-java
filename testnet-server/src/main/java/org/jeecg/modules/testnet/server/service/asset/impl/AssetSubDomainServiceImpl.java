@@ -5,24 +5,21 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.jeecg.modules.testnet.server.dto.AssetSubDomainIpsDTO;
-import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
 import org.jeecg.modules.testnet.server.entity.asset.AssetSubDomain;
-import org.jeecg.modules.testnet.server.mapper.asset.AssetDomainMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetSubDomainMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetVulMapper;
-import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetIpSubdomainRelationService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
+import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.asset.AssetSubDomainVO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import testnet.common.utils.DomainUtils;
+import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -39,24 +36,20 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
 
     @Resource
     private IAssetIpSubdomainRelationService assetIpSubdomainRelationService;
+    @Resource
+    private IAssetValidService assetValidService;
 
     @Resource
-    private AssetWebMapper assetWebMapper;
-
-    @Resource
-    private AssetDomainMapper assetDomainMapper;
+    private AssetWebServiceImpl assetWebService;
 
     @Resource
     private AssetVulMapper assetVulMapper;
 
-
     @Override
     public IPage<AssetSubDomain> page(IPage<AssetSubDomain> page, QueryWrapper<AssetSubDomain> queryWrapper, Map<String, String[]> parameterMap) {
-        if (parameterMap != null && parameterMap.containsKey("ip")) {
-            queryWrapper.inSql("id", "SELECT aisd.subdomain_id FROM asset_ip_sub_domain aisd LEFT JOIN asset_ip ai ON ai.id = aisd.ip_id WHERE ai.ip LIKE '%" + parameterMap.get("ip")[0] + "%'");
-        }
-        if (parameterMap != null && parameterMap.containsKey("domain")) {
-            queryWrapper.inSql("domain_id", "select id from asset_domain where domain like '%" + parameterMap.get("domain")[0] + "%'");
+        if (parameterMap != null && parameterMap.containsKey("ip_id")) {
+            String ipId = parameterMap.get("ip_id")[0];
+            queryWrapper.in("id", assetIpSubdomainRelationService.getSubDomainIdsByIpId(ipId));
         }
         return super.page(page, queryWrapper);
     }
@@ -66,11 +59,7 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
         AssetSubDomainVO assetSubDomainVO = new AssetSubDomainVO();
         BeanUtils.copyProperties(record, assetSubDomainVO);
         assetSubDomainVO.setIpList(assetIpSubdomainRelationService.getAssetIpBySubDomainId(record.getId()));
-        assetSubDomainVO.setAssetWebVOList(assetWebMapper.getWebBySubDomainId(record.getId()));
-        AssetDomain assetDomain = assetDomainMapper.selectById(record.getDomainId());
-        if (assetDomain != null) {
-            assetSubDomainVO.setDomainLabel(assetDomain.getAssetLabel());
-        }
+        assetSubDomainVO.setAssetWebVOList(assetWebService.getWebBySubDomainId(record.getId()));
         return assetSubDomainVO;
     }
 
@@ -84,24 +73,9 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
 
     @Override
     public boolean addAssetByType(AssetSubDomainIpsDTO asset) {
-        String subDomain = asset.getSubDomain();
-        String topDomain = DomainUtils.getTopDomain(subDomain);
-        if (StringUtils.isNotEmpty(topDomain)) {
-            AssetDomain existingDomain = assetDomainMapper.selectOne(new QueryWrapper<AssetDomain>().eq("domain", topDomain));
-            if (existingDomain == null) {
-                existingDomain = new AssetDomain();
-                existingDomain.setDomain(topDomain);
-                existingDomain.setProjectId(asset.getProjectId());
-                existingDomain.setSource(asset.getSource());
-                assetDomainMapper.insert(existingDomain);
-            }
-            asset.setDomainId(existingDomain.getId());
-            save(asset);
-            assetIpSubdomainRelationService.addDomainRelation(asset);
-            return true;
-        } else {
-            return false;
-        }
+        save(asset);
+        assetIpSubdomainRelationService.addDomainRelation(asset);
+        return true;
     }
 
     @Override
@@ -114,11 +88,28 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
     public void delRelation(List<String> list) {
         list.forEach(id -> {
             assetIpSubdomainRelationService.delByAssetSubDomainId(id);
+            List<String> assetWebList = assetWebService.getWebIdBySubDomainId(id);
+            assetWebService.delRelation(assetWebList);
+            assetVulMapper.delBySubDomainId(id);
+            removeById(id);
         });
-        assetWebMapper.deleteBySubDomainIds(list);
-        assetVulMapper.delBySubDomainIds(list);
     }
 
+    @Override
+    public boolean saveBatch(Collection<AssetSubDomain> entityList) {
+        List<AssetSubDomain> assetSubDomainList = new ArrayList<>();
+        for (AssetSubDomain assetSubDomain : entityList) {
+            if (assetValidService.isValid(assetSubDomain, AssetTypeEnums.SUB_DOMAIN)) {
+                if (assetValidService.getUniqueAsset(assetSubDomain, this, AssetTypeEnums.SUB_DOMAIN) == null) {
+                    assetSubDomainList.add(assetSubDomain);
+                } else {
+                    log.info("子域名:{} 重复，跳过", assetSubDomain);
+                }
+            }
+        }
+        return super.saveBatch(assetSubDomainList);
+
+    }
 
     @Override
     public List<AssetSubDomain> list(Wrapper<AssetSubDomain> queryWrapper) {
@@ -132,10 +123,5 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
             }
         }
         return newAssetSubDomainList;
-    }
-
-    @Cacheable(value = "asset:domain:cache", key = "#domain + ':' + #projectId", unless = "#result == null")
-    public AssetSubDomain selectBySubdomain(String domain, String projectId) {
-        return this.getBaseMapper().selectBySubdomain(domain, projectId);
     }
 }

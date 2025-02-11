@@ -1,12 +1,14 @@
 package org.jeecg.modules.testnet.server.service.asset.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.common.api.vo.Result;
+import org.apache.commons.lang.StringUtils;
 import org.jeecg.common.util.ReflectHelper;
 import org.jeecg.modules.testnet.server.entity.asset.AssetBase;
 import org.jeecg.modules.testnet.server.entity.asset.AssetBlackList;
 import org.jeecg.modules.testnet.server.service.asset.IAssetBlackListService;
+import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.springframework.stereotype.Service;
 import testnet.common.enums.AssetTypeEnums;
@@ -35,25 +37,24 @@ public class AssetValidServiceImpl implements IAssetValidService {
      * @param assetType 资产类型
      * @return true:合法 false:非法
      */
-    @Override
-    public <T extends AssetBase> Result<T> isValid(T asset, AssetTypeEnums assetType) {
+    public <T extends AssetBase> boolean isValid(T asset, AssetTypeEnums assetType) {
         String fieldNames = getValidFieldName(assetType);
         for (String fieldName : fieldNames.split(",")) {
             Object fieldValue = ReflectHelper.getFieldVal(fieldName, asset);
             if (fieldValue == null) {
                 log.error("校验失败，资产类型：{} , 字段：{} 值为空！", assetType, fieldName);
-                return Result.error("校验失败, 字段：" + fieldName + " 为空！");
+                return false;
             }
             if (fieldValue.equals(String.class)) {
                 if (fieldValue.toString().isEmpty()) {
                     log.error("校验失败，资产类型：{} , 字段：{}为空字符！", assetType, fieldName);
-                    return Result.error("校验失败, 字段：" + fieldName + " 为空字符！");
+                    return false;
                 }
             }
             if (fieldValue.equals(Integer.class)) {
                 if (fieldValue.toString().equals("0")) {
                     log.error("校验失败，资产类型：{}, 字段：{} 值为0！", assetType, fieldName);
-                    return Result.error("校验失败, 字段：" + fieldName + " 值为0！");
+                    return false;
                 }
             }
             List<AssetBlackList> assetBlackList = assetBlackListService.getBlackList(assetType.getCode());
@@ -61,7 +62,7 @@ public class AssetValidServiceImpl implements IAssetValidService {
                 if (blackList.getBlacklistType().equals("keyword")) {
                     if (fieldValue.toString().contains(blackList.getKeyword())) {
                         log.error("{} ：{} 命中黑名单", assetType, fieldValue);
-                        return Result.error("校验失败, 字段：" + fieldValue + " 命中关键字黑名单:" + blackList.getKeyword());
+                        return false;
                     }
                 } else {
                     // 通过正则匹配
@@ -69,12 +70,31 @@ public class AssetValidServiceImpl implements IAssetValidService {
                     Matcher matcher = pattern.matcher(fieldValue.toString());
                     if (matcher.find()) {
                         log.error("{} ：{} 命中黑名单", assetType, fieldValue);
-                        return Result.error("校验失败, 字段：" + fieldValue + " 命中正则黑名单:" + blackList.getKeyword());
+                        return false;
                     }
                 }
             }
         }
-        return Result.OK();
+        return true;
+    }
+
+
+    @Override
+    public <T extends AssetBase> T getUniqueAsset(T asset, IAssetService<T, ? extends AssetBase, ? extends AssetBase> assetService, AssetTypeEnums assetType) {
+        QueryWrapper<T> queryWrapper = new QueryWrapper<>();
+        if (StringUtils.isNotBlank(asset.getId())) {
+            queryWrapper.ne("id", asset.getId());
+        }
+        Map<String, String> duplicateCheckFieldNames = getUniqueCheckFieldName(assetType);
+        duplicateCheckFieldNames.forEach((k, v) -> {
+            Object fieldValue = ReflectHelper.getFieldVal(v, asset);
+            if (fieldValue != null) {
+                queryWrapper.eq(k, fieldValue);
+            } else {
+                queryWrapper.eq(k, "");
+            }
+        });
+        return assetService.getOne(queryWrapper);
     }
 
 
@@ -92,13 +112,13 @@ public class AssetValidServiceImpl implements IAssetValidService {
             case "domain":
                 return "domain,projectId";
             case "sub_domain":
-                return "subDomain,projectId";
+                return "subDomain,domainId,projectId";
             case "ip":
                 return "ip,projectId";
             case "port":
                 return "ip,port,projectId";
             case "web":
-                return "webUrl,projectId";
+                return "portId,projectId";
             case "vul":
                 return "vulName,severity,vulStatus,assetId,assetType";
             case "api":
@@ -147,7 +167,10 @@ public class AssetValidServiceImpl implements IAssetValidService {
                 map.put("project_id", "projectId");
                 break;
             case "api":
-                map.put("path_md5", "pathMd5");
+                map.put("absolute_path", "absolutePath");
+                map.put("http_method", "httpMethod");
+                map.put("project_id", "projectId");
+                map.put("request_body", "requestBody");
                 break;
         }
         return map;
@@ -155,7 +178,7 @@ public class AssetValidServiceImpl implements IAssetValidService {
 
     @SneakyThrows
     @Override
-    public <D extends AssetBase> String getShaKey(D asset, AssetTypeEnums assetType) {
+    public <T extends AssetBase> String getShaKey(T asset, AssetTypeEnums assetType) {
         StringBuilder sb = new StringBuilder();
         for (String fieldName : getValidFieldName(assetType).split(",")) {
             Object fieldValue = ReflectHelper.getFieldVal(fieldName, asset);

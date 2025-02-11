@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import testnet.common.enums.AssetTypeEnums;
-import testnet.common.utils.HashUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -56,12 +55,10 @@ public class AssetApiController extends JeecgController<AssetApi, AssetApiServic
     @RequiresPermissions("testnet.server:asset_api:add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody AssetApiDTO assetApiDTO) {
-        assetApiDTO.setPathMd5(HashUtils.calculateMD5(assetApiDTO.getProjectId() + assetApiDTO.getAbsolutePath() + assetApiDTO.getHttpMethod()));
-        Result<?> result = assetCommonOptionService.addAssetByType(assetApiDTO, AssetTypeEnums.API, true);
-        if (result.isSuccess()) {
-            return Result.OK("添加成功!");
+        if (assetCommonOptionService.addAssetByType(assetApiDTO, AssetTypeEnums.API, false) != null) {
+            return Result.OK("添加成功！");
         } else {
-            return Result.error(result.getMessage());
+            return Result.error("添加失败");
         }
     }
 
@@ -77,11 +74,10 @@ public class AssetApiController extends JeecgController<AssetApi, AssetApiServic
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetApiDTO assetApiDTO) {
         assetApiDTO.setAbsolutePath(assetApiDTO.getAssetWebTreeId());
-        Result<?> result = assetCommonOptionService.updateAssetByType(assetApiDTO, AssetTypeEnums.API, false);
-        if (result.isSuccess()) {
+        if (assetCommonOptionService.updateAssetByType(assetApiDTO, AssetTypeEnums.API, false) != null) {
             return Result.OK("编辑成功!");
         } else {
-            return Result.error(result.getMessage());
+            return Result.error("编辑失败");
         }
     }
 
@@ -128,7 +124,7 @@ public class AssetApiController extends JeecgController<AssetApi, AssetApiServic
     @RequiresPermissions("testnet.server:asset_api:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetApi assetApi) {
-        return super.exportXlsSheet(request, assetApi, AssetApi.class, "API", null, 50000);
+        return super.exportXlsSheet(request, assetApi, AssetApi.class, "API",null,50000);
         // return super.exportXls(request, assetApi, AssetApi.class, "API");
     }
 
@@ -142,6 +138,6 @@ public class AssetApiController extends JeecgController<AssetApi, AssetApiServic
     @RequiresPermissions("testnet.server:asset_api:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return assetCommonOptionService.importExcel(request, response, AssetApiDTO.class, AssetTypeEnums.API);
+        return super.importExcel(request, response, AssetApi.class);
     }
 }

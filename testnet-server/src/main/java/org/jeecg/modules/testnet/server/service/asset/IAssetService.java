@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.Map;
 
 
-public interface IAssetService<D extends AssetBase, V extends AssetBase, T extends AssetBase> extends IService<D> {
+public interface IAssetService<A extends AssetBase, V extends AssetBase, D extends AssetBase> extends IService<A> {
 
-    IPage<D> page(IPage<D> page, QueryWrapper<D> queryWrapper, Map<String, String[]> parameterMap);
+    IPage<A> page(IPage<A> page, QueryWrapper<A> queryWrapper, Map<String, String[]> parameterMap);
 
-    V convertVO(D record);
+    V convertVO(A record);
 
-    T convertDTO(D asset);
+    D convertDTO(A asset);
 
-    boolean addAssetByType(T asset);
+    boolean addAssetByType(D asset);
 
-    boolean updateAssetByType(T asset);
+    boolean updateAssetByType(D asset);
 
     void delRelation(List<String> list);
 

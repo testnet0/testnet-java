@@ -13,5 +13,5 @@ import org.jeecg.modules.testnet.server.entity.asset.AssetIp;
 @Getter
 @Setter
 public class AssetIpDTO extends AssetIp {
-    private String subDomains;
+    private String subDomainIds;
 }

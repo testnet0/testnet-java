@@ -10,8 +10,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-
 
 /**
  * @Description: 资产标签
@@ -23,8 +21,6 @@ import javax.annotation.Resource;
 @Slf4j
 public class AssetLabelServiceImpl extends ServiceImpl<AssetLabelMapper, AssetLabel> implements IAssetLabelService {
 
-    @Resource
-    private AssetLabelMapper assetLabelMapper;
 
     @Override
     @Cacheable(value = "asset:label:cache", key = "#labelName", unless = "#result == null ")
@@ -46,16 +42,5 @@ public class AssetLabelServiceImpl extends ServiceImpl<AssetLabelMapper, AssetLa
         removeById(assetLabel.getId());
     }
 
-    @Override
-    @Cacheable(value = "asset:label:cache", key = "#s")
-    public AssetLabel getByLabelIdOrName(String s) {
-        return assetLabelMapper.getByLabelIdOrName(s);
-    }
-
-    @CacheEvict(value = "asset:label:cache", key = "#s")
-    @Override
-    public void cleanCache(String s) {
-
-    }
 
 }

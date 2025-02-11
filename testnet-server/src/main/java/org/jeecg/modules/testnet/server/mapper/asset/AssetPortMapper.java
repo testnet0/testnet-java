@@ -2,7 +2,6 @@ package org.jeecg.modules.testnet.server.mapper.asset;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.jeecg.modules.testnet.server.entity.asset.AssetPort;
 
@@ -31,10 +30,4 @@ public interface AssetPortMapper extends BaseMapper<AssetPort> {
 
     @Delete("DELETE FROM asset_port WHERE ip = #{id}")
     void delByIpId(String id);
-
-    @Select("SELECT * FROM asset_port WHERE ip = #{ipId} AND port = #{port}")
-    AssetPort getPortByIpIdAndPort(@Param("ipId") String ipId, @Param("port") Integer port);
-
-    @Delete("DELETE FROM asset_port WHERE id IN (#{portIds})")
-    void delByPortIds(List<String> portIds);
 }

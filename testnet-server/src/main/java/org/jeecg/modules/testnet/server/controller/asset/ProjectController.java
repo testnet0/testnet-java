@@ -1,10 +1,6 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -12,21 +8,15 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.base.controller.JeecgController;
-import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.testnet.server.entity.asset.Project;
-import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.asset.IProjectService;
 import org.jeecg.modules.testnet.server.vo.ProjectVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-import testnet.common.enums.AssetTypeEnums;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @Description: 项目
@@ -41,9 +31,6 @@ import java.util.List;
 public class ProjectController extends JeecgController<Project, IProjectService> {
     @Autowired
     private IProjectService projectService;
-
-    @Resource
-    private IAssetCommonOptionService assetCommonOptionService;
 
     /**
      * 分页列表查询
@@ -61,27 +48,8 @@ public class ProjectController extends JeecgController<Project, IProjectService>
                                                   @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                                   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                                   HttpServletRequest req) {
-        QueryWrapper<Project> queryWrapper = QueryGenerator.initQueryWrapper(project, req.getParameterMap());
-        Page<Project> page = new Page<Project>(pageNo, pageSize);
-        IPage<Project> pageList = projectService.page(page, queryWrapper);
-        List<ProjectVO> projectVOList = new ArrayList<>();
-        pageList.getRecords().forEach(record -> {
-            ProjectVO projectVO = new ProjectVO();
-            BeanUtil.copyProperties(record, projectVO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-            projectVO.setAssetIPCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.IP));
-            projectVO.setAssetDomainCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.DOMAIN));
-            projectVO.setAssetSubDomainCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.SUB_DOMAIN));
-            projectVO.setAssetCompanyCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.COMPANY));
-            projectVO.setAssetPortCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.PORT));
-            projectVO.setAssetApiCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.API));
-            projectVO.setAssetWebCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.WEB));
-            projectVO.setAssetVulCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.VUL));
-            projectVOList.add(projectVO);
-        });
-        IPage<ProjectVO> pageVOList = new Page<>();
-        BeanUtil.copyProperties(pageList, pageVOList, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-        pageVOList.setRecords(projectVOList);
-        return Result.OK(pageVOList);
+        IPage<ProjectVO> pageList = projectService.listByProject(project, req, pageNo, pageSize);
+        return Result.OK(pageList);
     }
 
     /**
@@ -125,7 +93,7 @@ public class ProjectController extends JeecgController<Project, IProjectService>
     @RequiresPermissions("testnet.server:project:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
-        delByProjectId(id);
+        projectService.delById(id);
         return Result.OK("删除成功!");
     }
 
@@ -140,22 +108,8 @@ public class ProjectController extends JeecgController<Project, IProjectService>
     @RequiresPermissions("testnet.server:project:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
-        for (String id : ids.split(",")) {
-            delByProjectId(id);
-        }
+        projectService.delById(ids);
         return Result.OK("批量删除成功!");
-    }
-
-    private void delByProjectId(String id) {
-        Project project = projectService.getById(id);
-        if (project != null) {
-            projectService.removeById(id);
-            projectService.cleanCache(project.getId());
-            projectService.cleanCache(project.getProjectName());
-            for (AssetTypeEnums value : AssetTypeEnums.values()) {
-                assetCommonOptionService.delAssetByProjectId(id, value);
-            }
-        }
     }
 
     /**
@@ -184,7 +138,7 @@ public class ProjectController extends JeecgController<Project, IProjectService>
     @RequiresPermissions("testnet.server:project:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, Project project) {
-        return super.exportXlsSheet(request, project, Project.class, "项目", null, 50000);
+        return super.exportXlsSheet(request, project, Project.class, "项目",null,50000);
         // return super.exportXls(request, project, Project.class, "项目");
     }
 

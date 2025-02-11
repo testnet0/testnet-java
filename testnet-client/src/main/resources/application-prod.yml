@@ -1,12 +1,17 @@
-testnet:
-  client:
-    name: ${CLIENT_NAME}
-grpc:
-  client:
-    GLOBAL:
-      negotiation-type: tls
-      security:
-        authority-override: localhost
-        trust-cert-collection: selfsigned.crt
-      enable-keep-alive: true
-      address: ${GRPC_ADDRESS}
+liteflow:
+  rule-source-ext-data-map:
+    url: ${MYSQL_URL}
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: root
+    password: ${MYSQL_PASSWORD}
+spring:
+  datasource:
+    url: ${MYSQL_URL}
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: root
+    password: ${MYSQL_PASSWORD}
+  redis:
+    database: 0
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    password: ${REDIS_PASSWORD}

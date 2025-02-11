@@ -51,10 +51,10 @@ public interface ILiteFlowTaskService extends IService<LiteFlowTask> {
 
     List<LiteFlowTask> getUndoList();
 
-    <T> LiteFlowTask getBySubTaskId(String id);
+    LiteFlowTask getBySubTaskId(String id);
 
 
-    <T extends AssetBase> void executeAgain(String id,Boolean failed);
+    <T extends AssetBase> void executeAgain(String id);
 
     Result<String> edit(LiteFlowTask liteFlowTask);
 

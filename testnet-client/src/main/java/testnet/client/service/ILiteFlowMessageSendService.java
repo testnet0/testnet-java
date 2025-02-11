@@ -7,9 +7,6 @@
 package testnet.client.service;
 
 import testnet.common.dto.ResultBase;
-import testnet.grpc.ClientMessageProto;
-
-import java.util.function.Function;
 
 public interface ILiteFlowMessageSendService {
 
@@ -21,14 +18,15 @@ public interface ILiteFlowMessageSendService {
 
     void ERROR(String message, Object... args);
 
+    void sendVersion();
+
     void RUNNING();
 
     void FAILED();
 
     void SUCCESS();
 
-    <T> ClientMessageProto.ClientResponse sendWithRetryAndFallback(String type, T data, Function<T, ClientMessageProto.ClientResponse> sendFunction);
 
-    <T extends ResultBase> ClientMessageProto.ClientResponse sendResult(T result);
+    <T extends ResultBase> void sendResult(T result);
 
 }

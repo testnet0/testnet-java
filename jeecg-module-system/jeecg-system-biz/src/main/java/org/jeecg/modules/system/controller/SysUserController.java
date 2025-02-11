@@ -748,10 +748,7 @@ public class SysUserController {
         if(oConvertUtils.isEmpty(depId)){
             LoginUser user = (LoginUser) SecurityUtils.getSubject().getPrincipal();
             int userIdentity = user.getUserIdentity() != null?user.getUserIdentity():CommonConstant.USER_IDENTITY_1;
-            //update-begin---author:chenrui ---date:20250107  for：[QQYUN-10775]验证码可以复用 #7674------------
-            if(oConvertUtils.isNotEmpty(userIdentity) && userIdentity == CommonConstant.USER_IDENTITY_2
-                    && oConvertUtils.isNotEmpty(user.getDepartIds())) {
-            //update-end---author:chenrui ---date:20250107  for：[QQYUN-10775]验证码可以复用 #7674------------
+            if(oConvertUtils.isNotEmpty(userIdentity) && userIdentity == CommonConstant.USER_IDENTITY_2 ){
                 subDepids = sysDepartService.getMySubDepIdsByDepId(user.getDepartIds());
             }
         }else{
@@ -1122,54 +1119,54 @@ public class SysUserController {
 	/**
 	 * 用户更改密码
 	 */
-//	@GetMapping("/passwordChange")
-//	public Result<SysUser> passwordChange(@RequestParam(name="username")String username,
-//										  @RequestParam(name="password")String password,
-//			                              @RequestParam(name="smscode")String smscode,
-//			                              @RequestParam(name="phone") String phone) {
-//        Result<SysUser> result = new Result<SysUser>();
-//        if(oConvertUtils.isEmpty(username) || oConvertUtils.isEmpty(password) || oConvertUtils.isEmpty(smscode)  || oConvertUtils.isEmpty(phone) ) {
-//            result.setMessage("重置密码失败！");
-//            result.setSuccess(false);
-//            return result;
-//        }
-//
-//        SysUser sysUser=new SysUser();
-//        //update-begin-author:taoyan date:2022-9-13 for: VUEN-2245 【漏洞】发现新漏洞待处理20220906
-//        String redisKey = CommonConstant.PHONE_REDIS_KEY_PRE+phone;
-//        Object object= redisUtil.get(redisKey);
-//        //update-end-author:taoyan date:2022-9-13 for: VUEN-2245 【漏洞】发现新漏洞待处理20220906
-//        if(null==object) {
-//        	result.setMessage("短信验证码失效！");
-//            result.setSuccess(false);
-//            return result;
-//        }
-//        if(!smscode.equals(object.toString())) {
-//        	result.setMessage("短信验证码不匹配！");
-//            result.setSuccess(false);
-//            return result;
-//        }
-//        sysUser = this.sysUserService.getOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername,username).eq(SysUser::getPhone,phone));
-//        if (sysUser == null) {
-//            result.setMessage("当前登录用户和绑定的手机号不匹配，无法修改密码！");
-//            result.setSuccess(false);
-//            return result;
-//        } else {
-//            String salt = oConvertUtils.randomGen(8);
-//            sysUser.setSalt(salt);
-//            String passwordEncode = PasswordUtil.encrypt(sysUser.getUsername(), password, salt);
-//            sysUser.setPassword(passwordEncode);
-//            this.sysUserService.updateById(sysUser);
-//            //update-begin---author:wangshuai ---date:20220316  for：[VUEN-234]密码重置添加敏感日志------------
-//            baseCommonService.addLog("重置 "+username+" 的密码，操作人： " +sysUser.getUsername() ,CommonConstant.LOG_TYPE_2, 2);
-//            //update-end---author:wangshuai ---date:20220316  for：[VUEN-234]密码重置添加敏感日志------------
-//            result.setSuccess(true);
-//            result.setMessage("密码重置完成！");
-//            //修改完密码后清空redis
-//            redisUtil.removeAll(redisKey);
-//            return result;
-//        }
-//    }
+	@GetMapping("/passwordChange")
+	public Result<SysUser> passwordChange(@RequestParam(name="username")String username,
+										  @RequestParam(name="password")String password,
+			                              @RequestParam(name="smscode")String smscode,
+			                              @RequestParam(name="phone") String phone) {
+        Result<SysUser> result = new Result<SysUser>();
+        if(oConvertUtils.isEmpty(username) || oConvertUtils.isEmpty(password) || oConvertUtils.isEmpty(smscode)  || oConvertUtils.isEmpty(phone) ) {
+            result.setMessage("重置密码失败！");
+            result.setSuccess(false);
+            return result;
+        }
+
+        SysUser sysUser=new SysUser();
+        //update-begin-author:taoyan date:2022-9-13 for: VUEN-2245 【漏洞】发现新漏洞待处理20220906
+        String redisKey = CommonConstant.PHONE_REDIS_KEY_PRE+phone;
+        Object object= redisUtil.get(redisKey);
+        //update-end-author:taoyan date:2022-9-13 for: VUEN-2245 【漏洞】发现新漏洞待处理20220906
+        if(null==object) {
+        	result.setMessage("短信验证码失效！");
+            result.setSuccess(false);
+            return result;
+        }
+        if(!smscode.equals(object.toString())) {
+        	result.setMessage("短信验证码不匹配！");
+            result.setSuccess(false);
+            return result;
+        }
+        sysUser = this.sysUserService.getOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername,username).eq(SysUser::getPhone,phone));
+        if (sysUser == null) {
+            result.setMessage("当前登录用户和绑定的手机号不匹配，无法修改密码！");
+            result.setSuccess(false);
+            return result;
+        } else {
+            String salt = oConvertUtils.randomGen(8);
+            sysUser.setSalt(salt);
+            String passwordEncode = PasswordUtil.encrypt(sysUser.getUsername(), password, salt);
+            sysUser.setPassword(passwordEncode);
+            this.sysUserService.updateById(sysUser);
+            //update-begin---author:wangshuai ---date:20220316  for：[VUEN-234]密码重置添加敏感日志------------
+            baseCommonService.addLog("重置 "+username+" 的密码，操作人： " +sysUser.getUsername() ,CommonConstant.LOG_TYPE_2, 2);
+            //update-end---author:wangshuai ---date:20220316  for：[VUEN-234]密码重置添加敏感日志------------
+            result.setSuccess(true);
+            result.setMessage("密码重置完成！");
+            //修改完密码后清空redis
+            redisUtil.removeAll(redisKey);
+            return result;
+        }
+    }
 	
 
 	/**
@@ -1279,6 +1276,12 @@ public class SysUserController {
             updateUser.setUpdateBy(JwtUtil.getUserNameByToken(request));
             updateUser.setUpdateTime(new Date());
             sysUserService.revertLogicDeleted(Arrays.asList(userIds.split(",")), updateUser);
+            // 用户变更，触发同步工作流
+            List<String> userNameList = sysUserService.userIdToUsername(Arrays.asList(userIds.split(",")));
+            if (!userNameList.isEmpty()) {
+                String joinedString = String.join(",", userNameList);
+            }
+           
         }
         return Result.ok("还原成功");
     }
@@ -1846,58 +1849,5 @@ public class SysUserController {
     @RequestMapping(value = "/importAppUser", method = RequestMethod.POST)
     public Result<?> importAppUser(HttpServletRequest request, HttpServletResponse response)throws IOException {
         return sysUserService.importAppUser(request);
-    }
-
-    /**
-     * 更改手机号（敲敲云个人设置专用）
-     *
-     * @param json
-     * @param request
-     */
-    @PutMapping("/changePhone")
-    public Result<String> changePhone(@RequestBody JSONObject json, HttpServletRequest request){
-        //获取登录用户名
-        String username = JwtUtil.getUserNameByToken(request);
-        sysUserService.changePhone(json,username);
-        return Result.ok("修改手机号成功！");
-    }
-    
-    /**
-     * 发送短信验证码接口(修改手机号)
-     *
-     * @param jsonObject
-     * @return
-     */
-    @PostMapping(value = "/sendChangePhoneSms")
-    public Result<String> sendChangePhoneSms(@RequestBody JSONObject jsonObject, HttpServletRequest request) {
-        //获取登录用户名
-        String username = JwtUtil.getUserNameByToken(request);
-        String ipAddress = IpUtils.getIpAddr(request);
-        sysUserService.sendChangePhoneSms(jsonObject, username, ipAddress);
-        return Result.ok("发送验证码成功！");
-    }
-
-    /**
-     * 发送注销用户手机号验证密码[敲敲云专用]
-     *
-     * @param jsonObject
-     * @return
-     */
-    @PostMapping(value = "/sendLogOffPhoneSms")
-    public Result<String> sendLogOffPhoneSms(@RequestBody JSONObject jsonObject, HttpServletRequest request) {
-        Result<String> result = new Result<>();
-        //获取登录用户名
-        String username = JwtUtil.getUserNameByToken(request);
-        String name = jsonObject.getString("username");
-        if (oConvertUtils.isEmpty(name) || !name.equals(username)) {
-            result.setSuccess(false);
-            result.setMessage("发送验证码失败，用户不匹配！");
-            return result;
-        }
-        String ipAddress = IpUtils.getIpAddr(request);
-        sysUserService.sendLogOffPhoneSms(jsonObject, username, ipAddress);
-        result.setSuccess(true);
-        result.setMessage("发送验证码成功！");
-        return result;
     }
 }

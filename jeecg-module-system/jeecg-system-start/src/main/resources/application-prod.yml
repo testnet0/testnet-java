@@ -17,7 +17,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: metrics,jeecghttptrace
+        include: metrics,httptrace-new
 
 spring:
   # flyway配置
@@ -48,8 +48,6 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   mail:
-    # 定时任务发送邮件
-    timeJobSend: false
     host: smtp.163.com
     username: jeecgos@163.com
     password: ??
@@ -199,13 +197,6 @@ mybatis-plus:
 minidao:
   base-package: org.jeecg.modules.jmreport.*,org.jeecg.modules.drag.*
 jeecg:
-  # AI集成
-  ai-chat:
-    enabled: ${AI_ENABLE}
-    model: ${AI_MODEL}
-    apiKey: ${AI_API_KEY}
-    apiHost: ${AI_API_HOST}
-    timeout: 60
   # 平台上线安全配置
   firewall:
     # 数据源安全 (开启后，Online报表和图表的数据源为必填)
@@ -230,30 +221,27 @@ jeecg:
   shiro:
     excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/bigscreen/category/**,/bigscreen/visual/**,/bigscreen/map/**,/jmreport/bigscreen2/**,/api/getUserInfo
   #阿里云oss存储和大鱼短信秘钥配置
+  ai-chat:
+    # 是否开启；必须。
+    enabled: ${GPT_ENABLE}
+    # openAi接口秘钥，填写自己的apiKey；必须。
+    apiKey: ${GPT_KEY}
+    # openAi域名，有代理就填代理的域名。默认：openAI官方apiHost
+    apiHost: ${GPT_HOST}
+    # 超时时间单位:s。默认 60s
+    timeout: 60
   oss:
     accessKey: ??
     secretKey: ??
     endpoint: oss-cn-beijing.aliyuncs.com
     bucketName: jeecgdev
     staticDomain: https://static.jeecg.com
-    # 短信模板
-    sms-template:
-      # 签名
-      signature:
-      # 模板code
-      templateCode:
-        # 登录短信、忘记密码模板编码
-        SMS_175435174:
-        # 修改密码短信模板编码
-        SMS_465391221:
-        # 注册账号短信模板编码
-        SMS_175430166:
   # ElasticSearch 设置
   elasticsearch:
     cluster-name: jeecg-ES
-    userPass: ??
-    cluster-nodes: 127.0.0.1:9200
-    check-enabled: false
+    cluster-nodes: ${ES_HOST}
+    userPass: ${ES_PASSWORD}  # 用户名:密码，为空则表示不需要用户名密码登录，如：elastic:elastic
+    check-enabled: true
   # 在线预览文件服务器地址配置
   file-view-domain: http://fileview.jeecg.com
   # minio文件上传
@@ -339,10 +327,5 @@ justauth:
     prefix: 'demo::'
     timeout: 1h
 testnet:
-  api:
+  security:
     token: ${API_TOKEN}
-  grpc:
-    token: ${GRPC_TOKEN}
-lucene:
-  index:
-    path: /testnet-server/lucene

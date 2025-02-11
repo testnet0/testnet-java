@@ -35,6 +35,7 @@ public class ClientConfigServiceImpl extends ServiceImpl<ClientConfigMapper, Cli
         LambdaQueryWrapper<ClientConfig> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ClientConfig::getClientId, clientId);
         queryWrapper.eq(ClientConfig::getChainId, chainId);
+        queryWrapper.eq(ClientConfig::getConfigFile, "N");
         return getOne(queryWrapper);
     }
 
@@ -55,8 +56,17 @@ public class ClientConfigServiceImpl extends ServiceImpl<ClientConfigMapper, Cli
             clientConfig.setMaxThreads(4);
             clientConfig.setClientId(client.getId());
             clientConfig.setChainId(chain.getId());
+            clientConfig.setConfigFile("N");
             clientConfig.setConfig(chain.getConfig());
             save(clientConfig);
         });
+    }
+
+    @Override
+    public List<ClientConfig> getClientFile(String clientId) {
+        LambdaQueryWrapper<ClientConfig> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ClientConfig::getClientId, clientId);
+        queryWrapper.eq(ClientConfig::getConfigFile, "Y");
+        return list(queryWrapper);
     }
 }

@@ -1,7 +1,5 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,8 +19,6 @@ import testnet.common.enums.AssetTypeEnums;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @Description: 公司
@@ -65,21 +61,11 @@ public class AssetCompanyController extends JeecgController<AssetCompany, AssetC
     @ApiOperation(value = "公司-添加", notes = "公司-添加")
     @RequiresPermissions("testnet.server:asset_company:add")
     @PostMapping(value = "/add")
-    public Result<?> add(@RequestBody AssetCompany assetCompany) {
-        List<AssetCompany> assetCompanyList = new ArrayList<>();
-        for (String s : assetCompany.getCompanyName().split("\n")) {
-            // 创建一个新的AssetCompany对象
-            AssetCompany company = new AssetCompany();
-            BeanUtil.copyProperties(assetCompany, company);
-            company.setCompanyName(s.trim());
-            assetCompanyList.add(company);
-        }
-        Result<?> addResult = assetCommonOptionService.batchAdd(assetCompanyList, AssetTypeEnums.COMPANY);
-        if (addResult.getCode().equals(200)) {
+    public Result<String> add(@RequestBody AssetCompany assetCompany) {
+        if (assetCommonOptionService.addAssetByType(assetCompany, AssetTypeEnums.COMPANY) != null) {
             return Result.OK("添加成功!");
         } else {
-            JSONObject jsonObject = (JSONObject) addResult.getResult();
-            return Result.OK(jsonObject.getString("errorMessage"));
+            return Result.error("添加失败，检查是否重复或缺少关键字段");
         }
     }
 
@@ -94,12 +80,10 @@ public class AssetCompanyController extends JeecgController<AssetCompany, AssetC
     @RequiresPermissions("testnet.server:asset_company:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetCompany assetCompany) {
-        Result<?> editResult = assetCommonOptionService.updateAssetByType(assetCompany, AssetTypeEnums.COMPANY);
-        if (editResult.getCode().equals(200)) {
+        if (assetCommonOptionService.updateAssetByType(assetCompany, AssetTypeEnums.COMPANY) != null) {
             return Result.OK("编辑成功!");
         } else {
-            JSONObject jsonObject = (JSONObject) editResult.getResult();
-            return Result.OK(jsonObject.getString("errorMessage"));
+            return Result.error("编辑失败，检查是否重复或缺少关键字段");
         }
     }
 
@@ -143,8 +127,12 @@ public class AssetCompanyController extends JeecgController<AssetCompany, AssetC
     //@AutoLog(value = "公司-通过id查询")
     @ApiOperation(value = "公司-通过id查询", notes = "公司-通过id查询")
     @GetMapping(value = "/queryById")
-    public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
-        return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.COMPANY);
+    public Result<AssetCompany> queryById(@RequestParam(name = "id", required = true) String id) {
+        AssetCompany assetCompany = assetCommonOptionService.getByIdAndAssetType(id, AssetTypeEnums.COMPANY);
+        if (assetCompany == null) {
+            return Result.error("未找到对应数据");
+        }
+        return Result.OK(assetCompany);
     }
 
     /**
@@ -156,7 +144,7 @@ public class AssetCompanyController extends JeecgController<AssetCompany, AssetC
     @RequiresPermissions("testnet.server:asset_company:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetCompany assetCompany) {
-        return super.exportXlsSheet(request, assetCompany, AssetCompany.class, "公司", null, 50000);
+        return super.exportXlsSheet(request, assetCompany, AssetCompany.class, "公司",null,50000);
         // return super.exportXls(request, assetCompany, AssetCompany.class, "公司");
     }
 
@@ -170,7 +158,7 @@ public class AssetCompanyController extends JeecgController<AssetCompany, AssetC
     @RequiresPermissions("testnet.server:asset_company:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return assetCommonOptionService.importExcel(request, response, AssetCompany.class, AssetTypeEnums.COMPANY);
+        return super.importExcel(request, response, AssetCompany.class);
     }
 
 }

@@ -106,7 +106,9 @@ public class ApiController {
             } else {
                 if (apiAddVO.getAssetList() != null && !apiAddVO.getAssetList().isEmpty()) {
                     List<T> assetObjects = apiAddVO.getAssetList().toJavaList(assetClass);
-                    assetObjects.forEach(assetObject -> assetCommonOptionService.addOrUpdate(assetObject, assetTypeEnums));
+                    assetObjects.forEach(assetObject -> {
+                        assetCommonOptionService.addOrUpdate(assetObject, assetTypeEnums);
+                    });
                 }
                 return Result.OK("添加成功");
             }
@@ -127,20 +129,6 @@ public class ApiController {
             return Result.OK("任务执行成功，请去工作流管理-任务列表查看任务状态");
         } else {
             return Result.error(403, "token错误");
-        }
-    }
-
-    @IgnoreAuth
-    @PostMapping(value = "/delete")
-    public <T extends AssetBase> Result<IPage<? extends AssetBase>> delAssetByApi(@RequestBody ApiListVO apiListVO) {
-        if (apiListVO.getToken() != null && apiListVO.getToken().equals(token)) {
-            JSONArray ids = apiListVO.getParams().getJSONArray("ids");
-            for (Object id : ids) {
-                assetCommonOptionService.delByIdAndAssetType(id.toString(), AssetTypeEnums.fromCode(apiListVO.getAssetType()));
-            }
-            return Result.OK("删除成功！");
-        } else {
-            return Result.error("token错误");
         }
     }
 

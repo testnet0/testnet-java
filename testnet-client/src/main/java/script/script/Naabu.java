@@ -1,14 +1,13 @@
+package script.script;
+
 import com.alibaba.fastjson.JSONObject;
 import com.yomahub.liteflow.script.ScriptExecuteWrap;
 import com.yomahub.liteflow.script.body.CommonScriptBody;
 import com.yomahub.liteflow.spi.holder.ContextAwareHolder;
-import org.apache.commons.lang3.StringUtils;
 import testnet.client.service.ILiteFlowMessageSendService;
-import testnet.common.dto.AssetUpdateDTO;
 import testnet.common.dto.IpOrSubDomainToPortDTO;
 import testnet.common.entity.liteflow.TaskExecuteMessage;
 import testnet.common.utils.CommandUtils;
-import testnet.common.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -42,59 +41,36 @@ public class Naabu implements CommonScriptBody {
             switch (taskExecuteMessage.getAssetType()) {
                 case "ip":
                     asset = instanceParams.getString("ip");
-                    command = String.format(command, asset, resultPath);
                     break;
                 case "sub_domain":
                     asset = instanceParams.getString("subDomain");
-                    command = String.format(command, asset, resultPath);
                     break;
-                case "port":
-                    asset = instanceParams.getString("ip_dictText") + ":" + instanceParams.getString("port");
-                    command = String.format(command, instanceParams.getString("ip_dictText"), resultPath, instanceParams.getString("port"));
             }
+            command = String.format(command, asset, resultPath);
             messageSendService.INFO("开始执行Nabbu端口扫描,命令是:{}", command);
             CommandUtils.CommandResult result = CommandUtils.executeCommand(command);
             if (result.getExitCode() == 0) {
-                if (taskExecuteMessage.getAssetType().equals("port")) {
-                    String readFile = FileUtils.readFile(resultPath);
-                    messageSendService.INFO("Nabbu端口扫描执行结果:{}", readFile);
-                    AssetUpdateDTO assetUpdateDTO = new AssetUpdateDTO();
-                    if (StringUtils.isNotBlank(readFile)) {
-                        instanceParams.put("isOpen", "Y");
-                    } else {
-                        instanceParams.put("isOpen", "N");
+                BufferedReader reader = new BufferedReader(new FileReader(Paths.get(resultPath).toFile()));
+                String line;
+                IpOrSubDomainToPortDTO dto = new IpOrSubDomainToPortDTO();
+                List<IpOrSubDomainToPortDTO.Port> portList = new ArrayList<>();
+                while ((line = reader.readLine()) != null) {
+                    // 处理每一行内容
+                    JSONObject jsonObject = JSONObject.parseObject(line);
+                    messageSendService.INFO("Nabbu端口扫描执行结果:{}", jsonObject);
+                    if (jsonObject != null) {
+                        IpOrSubDomainToPortDTO.Port port = new IpOrSubDomainToPortDTO.Port();
+                        port.setPort(jsonObject.getInteger("port"));
+                        port.setProtocol(jsonObject.getString("protocol"));
+                        port.setIp(jsonObject.getString("ip"));
+                        port.setHost(jsonObject.getString("host"));
+                        portList.add(port);
                     }
-                    assetUpdateDTO.setData(instanceParams.toString());
-                    messageSendService.sendResult(assetUpdateDTO);
-                } else {
-                    BufferedReader reader = new BufferedReader(new FileReader(Paths.get(resultPath).toFile()));
-                    String line;
-                    IpOrSubDomainToPortDTO dto = new IpOrSubDomainToPortDTO();
-                    List<IpOrSubDomainToPortDTO.Port> portList = new ArrayList<>();
-                    while ((line = reader.readLine()) != null) {
-                        // 处理每一行内容
-                        JSONObject jsonObject = JSONObject.parseObject(line);
-                        messageSendService.INFO("Nabbu端口扫描执行结果:{}", jsonObject);
-                        if (jsonObject != null) {
-                            IpOrSubDomainToPortDTO.Port port = new IpOrSubDomainToPortDTO.Port();
-                            port.setPort(jsonObject.getInteger("port"));
-                            port.setProtocol(jsonObject.getString("protocol"));
-                            port.setIp(jsonObject.getString("ip"));
-                            port.setHost(jsonObject.getString("host"));
-                            portList.add(port);
-                        }
-                    }
-                    dto.setPortList(portList);
-                    messageSendService.sendResult(dto);
                 }
+                dto.setPortList(portList);
+                messageSendService.sendResult(dto);
             } else if (result.getExitCode() == 1) {
                 messageSendService.INFO("资产: {} 端口扫描完成，没有端口开放", asset);
-                if (taskExecuteMessage.getAssetType().equals("port")) {
-                    AssetUpdateDTO assetUpdateDTO = new AssetUpdateDTO();
-                    instanceParams.put("isOpen", "N");
-                    assetUpdateDTO.setData(instanceParams.toString());
-                    messageSendService.sendResult(assetUpdateDTO);
-                }
             } else {
                 messageSendService.ERROR("Nabbu端口扫描执行失败,错误信息是:{}", result.getExitCode());
             }

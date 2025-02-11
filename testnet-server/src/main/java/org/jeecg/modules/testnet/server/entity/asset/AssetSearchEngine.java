@@ -77,11 +77,4 @@ public class AssetSearchEngine implements Serializable {
     @Excel(name = "引擎Token", width = 15)
     @ApiModelProperty(value = "引擎Token")
     private java.lang.String engineToken;
-
-    /**
-     * 引擎Host地址
-     */
-    @Excel(name = "引擎Host地址", width = 15)
-    @ApiModelProperty(value = "引擎Host地址")
-    private java.lang.String engineHost;
 }

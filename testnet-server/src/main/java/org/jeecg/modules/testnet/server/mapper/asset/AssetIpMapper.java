@@ -15,7 +15,7 @@ import java.util.List;
 public interface AssetIpMapper extends BaseMapper<AssetIp> {
 
 
-    AssetIp selectByIp(String ip, String projectId);
+    AssetIp selectByIp(String ip,String projectId);
 
     long getPortCountBySubDomainId(String domainId);
 

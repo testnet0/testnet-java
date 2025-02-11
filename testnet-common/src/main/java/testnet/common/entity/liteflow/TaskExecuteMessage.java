@@ -7,8 +7,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class TaskExecuteMessage {
-    private String taskId;
+public class TaskExecuteMessage extends LiteFlowBase {
     private String assetType;
     private String chainName;
     private String config;

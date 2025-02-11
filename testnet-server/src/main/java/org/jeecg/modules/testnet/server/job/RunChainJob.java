@@ -23,7 +23,7 @@ public class RunChainJob implements Job {
     private ILiteFlowTaskService liteFlowTaskService;
 
     @Override
-    public void execute(JobExecutionContext jobExecutionContext) {
+    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         // 获取JobDetail
         JobDetail jobDetail = jobExecutionContext.getJobDetail();
         // 获取JobDataMap
@@ -31,7 +31,7 @@ public class RunChainJob implements Job {
         String id = jobDataMap.getString("parameter");
         if (StringUtils.isNotBlank(id)) {
             log.info("开始执行任务，参数:{}", id);
-            liteFlowTaskService.executeAgain(id, false);
+            liteFlowTaskService.executeAgain(id);
         }
     }
 

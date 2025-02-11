@@ -17,7 +17,7 @@ public interface IClientService extends IService<Client> {
 
     List<Client> getAllOnlineClients();
 
-    void clearCache();
+    void clearCache(String name);
 
     long getOnlineClientsCount();
 

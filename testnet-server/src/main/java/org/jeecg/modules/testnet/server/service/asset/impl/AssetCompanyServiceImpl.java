@@ -1,20 +1,19 @@
 package org.jeecg.modules.testnet.server.service.asset.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.testnet.server.entity.asset.AssetCompany;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetCompanyMapper;
-import org.jeecg.modules.testnet.server.mapper.asset.AssetDomainMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
-import org.jeecg.modules.testnet.server.vo.asset.AssetCompanyVO;
 import org.springframework.stereotype.Service;
+import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -26,10 +25,10 @@ import java.util.Map;
  */
 @Service
 @Slf4j
-public class AssetCompanyServiceImpl extends ServiceImpl<AssetCompanyMapper, AssetCompany> implements IAssetService<AssetCompany, AssetCompanyVO, AssetCompany> {
+public class AssetCompanyServiceImpl extends ServiceImpl<AssetCompanyMapper, AssetCompany> implements IAssetService<AssetCompany, AssetCompany, AssetCompany> {
 
     @Resource
-    private AssetDomainMapper assetDomainMapper;
+    private IAssetValidService assetValidService;
 
     @Override
     public IPage<AssetCompany> page(IPage<AssetCompany> page, QueryWrapper<AssetCompany> queryWrapper, Map<String, String[]> parameterMap) {
@@ -37,10 +36,8 @@ public class AssetCompanyServiceImpl extends ServiceImpl<AssetCompanyMapper, Ass
     }
 
     @Override
-    public AssetCompanyVO convertVO(AssetCompany record) {
-        AssetCompanyVO assetCompanyVO = new AssetCompanyVO();
-        BeanUtil.copyProperties(record, assetCompanyVO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-        return assetCompanyVO;
+    public AssetCompany convertVO(AssetCompany record) {
+        return record;
     }
 
     @Override
@@ -60,11 +57,21 @@ public class AssetCompanyServiceImpl extends ServiceImpl<AssetCompanyMapper, Ass
 
     @Override
     public void delRelation(List<String> list) {
-        list.forEach(id -> {
-            // 删除域名和公司关联
-            assetDomainMapper.removeCompanyRelation(id);
-        });
-        this.removeBatchByIds(list);
+        list.forEach(this::removeById);
     }
 
+    @Override
+    public boolean saveBatch(Collection<AssetCompany> entityList) {
+        List<AssetCompany> assetCompanyList = new ArrayList<>();
+        for (AssetCompany assetCompany : entityList) {
+            if (assetValidService.isValid(assetCompany, AssetTypeEnums.COMPANY)) {
+                if (assetValidService.getUniqueAsset(assetCompany, this, AssetTypeEnums.COMPANY) == null) {
+                    assetCompanyList.add(assetCompany);
+                } else {
+                    log.info("公司:{} 重复,跳过", assetCompany);
+                }
+            }
+        }
+        return super.saveBatch(assetCompanyList);
+    }
 }

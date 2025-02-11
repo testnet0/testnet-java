@@ -1,6 +1,5 @@
 package org.jeecg.common.system.base.controller;
 
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,7 +10,6 @@ import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.vo.LoginUser;
-import org.jeecg.common.util.PmsUtil;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.config.JeecgBaseConfig;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
@@ -29,7 +27,6 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -41,15 +38,12 @@ import java.util.*;
  */
 @Slf4j
 public class JeecgController<T, S extends IService<T>> {
-    /**
-     * issues/2933 JeecgController注入service时改用protected修饰，能避免重复引用service
-     */
+    /**issues/2933 JeecgController注入service时改用protected修饰，能避免重复引用service*/
     @Autowired
     protected S service;
     @Resource
     private JeecgBaseConfig jeecgBaseConfig;
-
-
+    
     /**
      * 导出excel
      *
@@ -64,7 +58,7 @@ public class JeecgController<T, S extends IService<T>> {
         String selections = request.getParameter("selections");
         if (oConvertUtils.isNotEmpty(selections)) {
             List<String> selectionList = Arrays.asList(selections.split(","));
-            queryWrapper.in("id", selectionList);
+            queryWrapper.in("id",selectionList);
         }
         // Step.2 获取导出数据
         List<T> exportList = service.list(queryWrapper);
@@ -75,67 +69,66 @@ public class JeecgController<T, S extends IService<T>> {
         mv.addObject(NormalExcelConstants.FILE_NAME, title);
         mv.addObject(NormalExcelConstants.CLASS, clazz);
         //update-begin--Author:liusq  Date:20210126 for：图片导出报错，ImageBasePath未设置--------------------
-        ExportParams exportParams = new ExportParams(title + "报表", "导出人:" + sysUser.getRealname(), title);
+        ExportParams exportParams=new ExportParams(title + "报表", "导出人:" + sysUser.getRealname(), title);
         exportParams.setImageBasePath(jeecgBaseConfig.getPath().getUpload());
         //update-end--Author:liusq  Date:20210126 for：图片导出报错，ImageBasePath未设置----------------------
-        mv.addObject(NormalExcelConstants.PARAMS, exportParams);
+        mv.addObject(NormalExcelConstants.PARAMS,exportParams);
         mv.addObject(NormalExcelConstants.DATA_LIST, exportList);
         return mv;
     }
-
     /**
      * 根据每页sheet数量导出多sheet
      *
      * @param request
-     * @param object       实体类
-     * @param clazz        实体类class
-     * @param title        标题
+     * @param object 实体类
+     * @param clazz 实体类class
+     * @param title 标题
      * @param exportFields 导出字段自定义
-     * @param pageNum      每个sheet的数据条数
+     * @param pageNum 每个sheet的数据条数
      * @param request
      */
-    protected ModelAndView exportXlsSheet(HttpServletRequest request, T object, Class<T> clazz, String title, String exportFields, Integer pageNum) {
+    protected ModelAndView exportXlsSheet(HttpServletRequest request, T object, Class<T> clazz, String title,String exportFields,Integer pageNum) {
         // Step.1 组装查询条件
         QueryWrapper<T> queryWrapper = QueryGenerator.initQueryWrapper(object, request.getParameterMap());
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         // Step.2 计算分页sheet数据
         double total = service.count();
-        int count = (int) Math.ceil(total / pageNum);
+        int count = (int)Math.ceil(total/pageNum);
         //update-begin-author:liusq---date:20220629--for: 多sheet导出根据选择导出写法调整 ---
         // Step.3  过滤选中数据
         String selections = request.getParameter("selections");
         if (oConvertUtils.isNotEmpty(selections)) {
             List<String> selectionList = Arrays.asList(selections.split(","));
-            queryWrapper.in("id", selectionList);
+            queryWrapper.in("id",selectionList);
         }
         //update-end-author:liusq---date:20220629--for: 多sheet导出根据选择导出写法调整 ---
         // Step.4 多sheet处理
         List<Map<String, Object>> listMap = new ArrayList<Map<String, Object>>();
-        for (int i = 1; i <= count; i++) {
+        for (int i = 1; i <=count ; i++) {
             Page<T> page = new Page<T>(i, pageNum);
             IPage<T> pageList = service.page(page, queryWrapper);
             List<T> exportList = pageList.getRecords();
             Map<String, Object> map = new HashMap<>(5);
-            ExportParams exportParams = new ExportParams(title + "报表", "导出人:" + sysUser.getRealname(), title + i, jeecgBaseConfig.getPath().getUpload());
+            ExportParams exportParams=new ExportParams(title + "报表", "导出人:" + sysUser.getRealname(), title+i,jeecgBaseConfig.getPath().getUpload());
             exportParams.setType(ExcelType.XSSF);
             //map.put("title",exportParams);
             //表格Title
-            map.put(NormalExcelConstants.PARAMS, exportParams);
+            map.put(NormalExcelConstants.PARAMS,exportParams);
             //表格对应实体
-            map.put(NormalExcelConstants.CLASS, clazz);
+            map.put(NormalExcelConstants.CLASS,clazz);
             //数据集合
             map.put(NormalExcelConstants.DATA_LIST, exportList);
             listMap.add(map);
         }
-        if (listMap.isEmpty()) {
+        if(listMap.isEmpty()){
             Map<String, Object> map = new HashMap<>(5);
-            ExportParams exportParams = new ExportParams(title + "报表", "导出人:" + sysUser.getRealname(), title, jeecgBaseConfig.getPath().getUpload());
+            ExportParams exportParams=new ExportParams(title + "报表", "导出人:" + sysUser.getRealname(), title,jeecgBaseConfig.getPath().getUpload());
             exportParams.setType(ExcelType.XSSF);
             //map.put("title",exportParams);
             //表格Title
-            map.put(NormalExcelConstants.PARAMS, exportParams);
+            map.put(NormalExcelConstants.PARAMS,exportParams);
             //表格对应实体
-            map.put(NormalExcelConstants.CLASS, clazz);
+            map.put(NormalExcelConstants.CLASS,clazz);
             List<T> exportList = new ArrayList<>();
             map.put(NormalExcelConstants.DATA_LIST, exportList);
             listMap.add(map);
@@ -154,9 +147,9 @@ public class JeecgController<T, S extends IService<T>> {
      *
      * @param request
      */
-    protected ModelAndView exportXls(HttpServletRequest request, T object, Class<T> clazz, String title, String exportFields) {
-        ModelAndView mv = this.exportXls(request, object, clazz, title);
-        mv.addObject(NormalExcelConstants.EXPORT_FIELDS, exportFields);
+    protected ModelAndView exportXls(HttpServletRequest request, T object, Class<T> clazz, String title,String exportFields) {
+        ModelAndView mv = this.exportXls(request,object,clazz,title);
+        mv.addObject(NormalExcelConstants.EXPORT_FIELDS,exportFields);
         return mv;
     }
 
@@ -205,9 +198,9 @@ public class JeecgController<T, S extends IService<T>> {
                 //update-begin-author:taoyan date:20211124 for: 导入数据重复增加提示
                 String msg = e.getMessage();
                 log.error(msg, e);
-                if (msg != null && msg.indexOf("Duplicate entry") >= 0) {
+                if(msg!=null && msg.indexOf("Duplicate entry")>=0){
                     return Result.error("文件导入失败:有重复数据！");
-                } else {
+                }else{
                     return Result.error("文件导入失败:" + e.getMessage());
                 }
                 //update-end-author:taoyan date:20211124 for: 导入数据重复增加提示

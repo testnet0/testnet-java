@@ -199,10 +199,10 @@ public class QueryGenerator {
 					//update-end---author:chenrui ---date:20240527  for：[TV360X-378]增加自定义字段查询规则功能------------
 					value = replaceValue(rule,value);
 					// add -begin 添加判断为字符串时设为全模糊查询
-					if( (rule==null || QueryRuleEnum.EQ.equals(rule)) && "class java.lang.String".equals(type)) {
-						 // 可以设置左右模糊或全模糊，因人而异
-						rule = QueryRuleEnum.LIKE;
-					}
+					//if( (rule==null || QueryRuleEnum.EQ.equals(rule)) && "class java.lang.String".equals(type)) {
+						// 可以设置左右模糊或全模糊，因人而异
+						//rule = QueryRuleEnum.LIKE;
+					//}
 					// add -end 添加判断为字符串时设为全模糊查询
 					addEasyQuery(queryWrapper, column, rule, value);
 				}
@@ -354,7 +354,7 @@ public class QueryGenerator {
 				List<QueryCondition> filterConditions = conditions.stream().filter(
 						rule -> oConvertUtils.isNotEmpty(rule.getField())
 								&& oConvertUtils.isNotEmpty(rule.getRule())
-								&& (rule.getRule().contains("empty") || oConvertUtils.isNotEmpty(rule.getVal()))
+								&& oConvertUtils.isNotEmpty(rule.getVal())
 				).collect(Collectors.toList());
 				if (filterConditions.size() == 0) {
 					return;
@@ -367,7 +367,7 @@ public class QueryGenerator {
                         QueryCondition rule = filterConditions.get(i);
                         if (oConvertUtils.isNotEmpty(rule.getField())
                                 && oConvertUtils.isNotEmpty(rule.getRule())
-                                && (rule.getRule().contains("empty") || oConvertUtils.isNotEmpty(rule.getVal()))) {
+                                && oConvertUtils.isNotEmpty(rule.getVal())) {
 
                             log.debug("SuperQuery ==> " + rule.toString());
 
@@ -654,7 +654,7 @@ public class QueryGenerator {
 	 * @param value        查询条件值
 	 */
 	public static void addEasyQuery(QueryWrapper<?> queryWrapper, String name, QueryRuleEnum rule, Object value) {
-		if (name==null || rule == null|| (!rule.getCondition().contains("empty") && (value == null || oConvertUtils.isEmpty(value)))) {
+		if (name==null || value == null || rule == null || oConvertUtils.isEmpty(value)) {
 			return;
 		}
 		name = oConvertUtils.camelToUnderline(name);
@@ -733,12 +733,6 @@ public class QueryGenerator {
 				}
 			});
 			break;
-		case EMPTY:
-			queryWrapper.isNull(name);
-			break;
-		case NOT_EMPTY:
-			queryWrapper.isNotNull(name);
-			break;
 		//update-end---author:chenrui ---date:20240527  for：[TV360X-378]下拉多框根据条件查询不出来:增加自定义字段查询规则功能------------
 		default:
 			log.info("--查询规则未匹配到---");
@@ -813,9 +807,7 @@ public class QueryGenerator {
 					addEasyQuery(queryWrapper, name, rule, DateUtils.str2Date(dateStr,DateUtils.datetimeFormat.get()));
 				}
 			}else {
-				//update-begin---author:chenrui ---date:20241125  for：[issues/7481]多租户模式下 数据权限使用变量：#{tenant_id} 报错------------
-				addEasyQuery(queryWrapper, name, rule, NumberUtils.parseNumber(converRuleValue(dataRule.getRuleValue()), propertyType));
-				//update-end---author:chenrui ---date:20241125  for：[issues/7481]多租户模式下 数据权限使用变量：#{tenant_id} 报错------------
+				addEasyQuery(queryWrapper, name, rule, NumberUtils.parseNumber(dataRule.getRuleValue(), propertyType));
 			}
 		}
 	}
@@ -869,9 +861,7 @@ public class QueryGenerator {
 			return null;
 		}
 		Set<String> varParams = new HashSet<String>();
-		//update-begin---author:chenrui ---date:20250108  for：[QQYUN-10785]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
-		String regex = "#\\{\\[*\\w+]*}";
-		//update-end---author:chenrui ---date:20250108  for：[QQYUN-10785]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
+		String regex = "\\#\\{\\w+\\}";
 		
 		Pattern p = Pattern.compile(regex);
 		Matcher m = p.matcher(sql);

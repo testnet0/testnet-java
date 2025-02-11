@@ -9,7 +9,6 @@ import com.unfbx.chatgpt.entity.chat.Message;
 import com.unfbx.chatgpt.exception.BaseException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.jeecg.chatgpt.prop.AiChatProperties;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.exception.JeecgBootException;
 import org.jeecg.common.system.vo.LoginUser;
@@ -59,11 +58,6 @@ public class ChatServiceImpl implements ChatService {
 
     private OpenAiStreamClient openAiStreamClient = null;
 
-    /**
-     * ai聊天配置
-     * for [QQYUN-10943]【AI 重要】jeecg-boot-starter-chatgpt 支持deepseek等国产模型
-     */
-    private AiChatProperties aiChatProperties;
     //update-begin---author:chenrui ---date:20240131  for：[QQYUN-8212]fix 没有配置启动报错------------
 
     /**
@@ -72,17 +66,17 @@ public class ChatServiceImpl implements ChatService {
      * @author chenrui
      * @date 2024/2/3 23:08
      */
-    private void ensureClient(){
+    private OpenAiStreamClient ensureClient(){
         if (null == this.openAiStreamClient){
             //update-begin---author:chenrui ---date:20240625  for：[TV360X-1570]给于更友好的提示，提示未配置ai------------
             try {
                 this.openAiStreamClient = SpringContextUtils.getBean(OpenAiStreamClient.class);
-                this.aiChatProperties = SpringContextUtils.getBean(AiChatProperties.class);
             } catch (Exception ignored) {
                 sendErrorMsg("如果您想使用AI助手，请先设置相应配置!");
             }
             //update-end---author:chenrui ---date:20240625  for：[TV360X-1570]给于更友好的提示，提示未配置ai------------
         }
+        return this.openAiStreamClient;
     }
     //update-end---author:chenrui ---date:20240131  for：[QQYUN-8212]fix 没有配置启动报错------------
 
@@ -144,7 +138,6 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public void sendMessage(String topicId, String message) {
-        ensureClient();
         String uid = getUserId();
         if (StrUtil.isBlank(message)) {
             log.info("参数异常，message为null");
@@ -171,21 +164,18 @@ public class ChatServiceImpl implements ChatService {
             throw new JeecgBootException("聊天消息推送失败uid:[{}],没有创建连接，请重试。~");
         }
         //update-begin---author:chenrui ---date:20240625  for：[TV360X-1570]给于更友好的提示，提示未配置ai------------
-        if (null != openAiStreamClient) {
+        OpenAiStreamClient client = ensureClient();
+        if (null != client) {
             OpenAISSEEventSourceListener openAIEventSourceListener = new OpenAISSEEventSourceListener(topicId, sseEmitter);
-            List<Message> finalMsgHistory = msgHistory;
-            openAIEventSourceListener.onDone(respMessage -> {
-                Message tempMessage = Message.builder().content(respMessage).role(Message.Role.ASSISTANT).build();
-                finalMsgHistory.add(tempMessage);
-                redisTemplate.opsForHash().put(cacheKey, CACHE_KEY_MSG_CONTEXT, JSONUtil.toJsonStr(finalMsgHistory));
-            });
             ChatCompletion completion = ChatCompletion
                     .builder()
                     .messages(msgHistory)
-                    .model(aiChatProperties.getModel())
+                    .model(ChatCompletion.Model.GPT_3_5_TURBO.getName())
                     .build();
-            openAiStreamClient.streamChatCompletion(completion, openAIEventSourceListener);
+            client.streamChatCompletion(completion, openAIEventSourceListener);
+            redisTemplate.opsForHash().put(cacheKey, CACHE_KEY_MSG_CONTEXT, JSONUtil.toJsonStr(msgHistory));
             //update-end---author:chenrui ---date:20240223  for：[QQYUN-8225]聊天记录保存------------
+            Result.ok(completion.tokens());
         }
         //update-end---author:chenrui ---date:20240625  for：[TV360X-1570]给于更友好的提示，提示未配置ai------------
     }

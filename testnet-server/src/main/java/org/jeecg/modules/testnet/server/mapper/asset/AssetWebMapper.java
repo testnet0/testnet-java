@@ -1,7 +1,6 @@
 package org.jeecg.modules.testnet.server.mapper.asset;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Select;
 import org.jeecg.modules.testnet.server.entity.asset.AssetWeb;
 
@@ -23,20 +22,9 @@ public interface AssetWebMapper extends BaseMapper<AssetWeb> {
 
     List<String> findWebByPortId(String id);
 
-
+    @Select("SELECT * FROM asset_web WHERE domain = #{subDomainId}")
     List<AssetWeb> getWebBySubDomainId(String subDomainId);
 
-
+    @Select("SELECT id FROM asset_web WHERE domain = #{subDomainId}")
     List<String> getWebIdBySubDomainId(String subDomainId);
-
-
-    void delRelation(List<String> assetWebList);
-
-
-    void deleteBySubDomainId(String subDomainId);
-
-
-    void deleteByPortId(List<String> portId);
-
-    void deleteBySubDomainIds(List<String> list);
 }

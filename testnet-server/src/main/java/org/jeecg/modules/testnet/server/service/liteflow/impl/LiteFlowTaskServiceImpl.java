@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.constant.CommonConstant;
 import org.jeecg.modules.quartz.entity.QuartzJob;
@@ -59,10 +58,6 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
 
     @Resource
     private IQuartzJobService quartzJobService;
-
-    @Resource
-    private RedissonLockClient redissonLockClient;
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -125,7 +120,7 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
 
     @Override
     @Async
-    public void executeAgain(String id, Boolean failed) {
+    public <T extends AssetBase> void executeAgain(String id) {
         LiteFlowTask liteFlowTask = liteFlowTaskMapper.selectById(id);
         if (liteFlowTask != null) {
             // 空间引擎导入需要单独处理
@@ -145,10 +140,7 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
                         List<String> assetList = assetCommonOptionService.queryByAssetType(liteFlowTask.getSearchParam(), liteFlowTask.getAssetType());
                         if (assetList != null && !assetList.isEmpty()) {
                             liteFlowTask.setUnFinishedChain(assetList.size());
-                            // 加锁 防止并发出现数量错误
-                            if (redissonLockClient.tryLock(id, 10, 10)) {
-                                liteFlowTaskMapper.updateById(liteFlowTask);
-                            }
+                            liteFlowTaskMapper.updateById(liteFlowTask);
                             List<LiteFlowSubTask> subTaskList = new ArrayList<>();
                             assetList.forEach(asset -> {
                                 LiteFlowSubTask subTask = new LiteFlowSubTask();
@@ -164,17 +156,9 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
                         LambdaQueryWrapper<LiteFlowSubTask> queryWrapper = new LambdaQueryWrapper<>();
                         queryWrapper.eq(LiteFlowSubTask::getTaskId, id);
                         queryWrapper.eq(LiteFlowSubTask::getVersion, version);
-                        if (failed) {
-                            queryWrapper.eq(LiteFlowSubTask::getTaskStatus, LiteFlowStatusEnums.FAILED.name());
-                        }
                         List<LiteFlowSubTask> liteFlowSubTasks = liteFlowSubTaskMapper.selectList(queryWrapper);
                         liteFlowTask.setUnFinishedChain(liteFlowSubTasks.size());
-                        // 加锁 防止并发出现数量错误
-                        if (!liteFlowSubTasks.isEmpty()) {
-                            if (redissonLockClient.tryLock(id, 10, 10)) {
-                                liteFlowTaskMapper.updateById(liteFlowTask);
-                            }
-                        }
+                        liteFlowTaskMapper.updateById(liteFlowTask);
                         List<LiteFlowSubTask> newLiteFlowSubTasks = new ArrayList<>();
                         liteFlowSubTasks.forEach(liteFlowSubTask -> {
                             LiteFlowSubTask newLiteFlowSubTask = new LiteFlowSubTask();
@@ -185,9 +169,9 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
                                 JSONObject jsonObject = JSONObject.parseObject(liteFlowSubTask.getSubTaskParam());
                                 Map<String, String> map = new HashMap<>();
                                 map.put("id", jsonObject.getString("id"));
-                                Result<? extends AssetBase> asset = assetCommonOptionService.getDTOByFieldAndAssetType(map, AssetTypeEnums.fromCode(liteFlowTask.getAssetType()));
+                                T asset = assetCommonOptionService.getDTOByFieldAndAssetType(map, AssetTypeEnums.fromCode(liteFlowTask.getAssetType()));
                                 if (asset != null) {
-                                    newLiteFlowSubTask.setSubTaskParam(JSONObject.toJSONString(asset.getResult()));
+                                    newLiteFlowSubTask.setSubTaskParam(JSONObject.toJSONString(asset));
                                     newLiteFlowSubTasks.add(newLiteFlowSubTask);
                                 }
                             } else {
@@ -261,9 +245,7 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
             liteFlowSubTaskService.updateBatchById(liteFlowSubTaskList);
             LiteFlowTask liteFlowTask = getById(id);
             liteFlowTask.setUnFinishedChain(0);
-            if (redissonLockClient.tryLock(id, 10, 10)) {
-                liteFlowTaskMapper.updateById(liteFlowTask);
-            }
+            updateById(liteFlowTask);
             return Result.ok("停止成功！");
         } else {
             return Result.error("没有准备中的任务！");

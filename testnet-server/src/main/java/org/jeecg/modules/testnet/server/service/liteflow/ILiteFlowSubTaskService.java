@@ -1,6 +1,5 @@
 package org.jeecg.modules.testnet.server.service.liteflow;
 
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
@@ -34,7 +33,7 @@ public interface ILiteFlowSubTaskService extends IService<LiteFlowSubTask> {
 
     long getCount();
 
-    IPage<JSONObject> getLogById(String id, Integer pageNo, Integer pageSize);
+    IPage<LiteflowInstanceLogVO> getLogById(String id, Integer pageNo, Integer pageSize);
 
     void cancelSubTask(String id);
 

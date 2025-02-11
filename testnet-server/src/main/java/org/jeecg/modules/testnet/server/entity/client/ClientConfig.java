@@ -87,6 +87,13 @@ public class ClientConfig implements Serializable {
     private String chainId;
 
     /**
+     * 是否配置文件
+     */
+    @Excel(name = "是否配置文件", width = 15)
+    @ApiModelProperty(value = "是否配置文件")
+    private java.lang.String configFile;
+
+    /**
      * 配置文件路径
      */
     @Excel(name = "配置文件路径", width = 15)

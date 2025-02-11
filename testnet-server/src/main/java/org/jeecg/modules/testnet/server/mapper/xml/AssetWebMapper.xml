@@ -25,42 +25,4 @@
         FROM asset_web
         WHERE port_id = #{portId}
     </select>
-
-
-    <select id="getWebBySubDomainId" resultType="org.jeecg.modules.testnet.server.entity.asset.AssetWeb">
-        SELECT *
-        FROM asset_web
-        WHERE domain = #{subDomainId}
-    </select>
-
-    <select id="getWebIdBySubDomainId" resultType="java.lang.String">
-        SELECT id
-        FROM asset_web
-        WHERE domain = #{subDomainId}
-    </select>
-
-    <delete id="delRelation">
-        DELETE FROM asset_web
-        WHERE id IN
-        <foreach item="id" collection="assetWebList" open="(" separator="," close=")">#{id}</foreach>
-    </delete>
-
-    <delete id="deleteBySubDomainId">
-        DELETE
-        FROM asset_web
-        WHERE domain = #{subDomainId}
-    </delete>
-
-    <delete id="deleteByPortId">
-        DELETE FROM asset_web
-        WHERE port_id IN
-        <foreach item="id" collection="portId" open="(" separator="," close=")">#{id}</foreach>
-    </delete>
-
-    <delete id="deleteBySubDomainIds">
-        DELETE FROM asset_web
-        WHERE domain IN
-        <foreach item="id" collection="list" open="(" separator="," close=")">#{id}</foreach>
-    </delete>
-
 </mapper>

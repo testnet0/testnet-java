@@ -1614,31 +1614,25 @@ public class SysBaseApiImpl implements ISysBaseAPI {
                 throw new JeecgBootException("发送消息失败,消息内容为空！");
             }
 
-		//update-end-author:taoyan date:2022-7-9 for: 将模板解析代码移至消息发送, 而不是调用的地方
-		if(MessageTypeEnum.XT.getType().equals(messageType)){
-			if (message.isMarkdown()) {
-				// 系统消息要解析Markdown
-				message.setContent(HTMLUtils.parseMarkdown(message.getContent()));
-			}
-			systemSendMsgHandle.sendMessage(message);
-		}else if(MessageTypeEnum.YJ.getType().equals(messageType)){
-			if (message.isMarkdown()) {
-				// 邮件消息要解析Markdown
-				message.setContent(HTMLUtils.parseMarkdown(message.getContent()));
-			}
-			//update-begin---author:wangshuai---date:2024-11-20---for:【QQYUN-8523】敲敲云发邮件通知，不稳定---
-			if(message.getIsTimeJob() != null && message.getIsTimeJob()){
-				emailSendMsgHandle.sendEmailMessage(message);
-			}else{
-				emailSendMsgHandle.sendMessage(message);
-			}
-			//update-end---author:wangshuai---date:2024-11-20---for:【QQYUN-8523】敲敲云发邮件通知，不稳定---
-		}else if(MessageTypeEnum.DD.getType().equals(messageType)){
-			ddSendMsgHandle.sendMessage(message);
-		}else if(MessageTypeEnum.QYWX.getType().equals(messageType)){
-			qywxSendMsgHandle.sendMessage(message);
-		}
-	}
+            //update-end-author:taoyan date:2022-7-9 for: 将模板解析代码移至消息发送, 而不是调用的地方
+            if (MessageTypeEnum.XT.getType().equals(messageType)) {
+                if (message.isMarkdown()) {
+                    // 系统消息要解析Markdown
+                    message.setContent(HTMLUtils.parseMarkdown(message.getContent()));
+                }
+                systemSendMsgHandle.sendMessage(message);
+            } else if (MessageTypeEnum.YJ.getType().equals(messageType)) {
+                if (message.isMarkdown()) {
+                    // 邮件消息要解析Markdown
+                    message.setContent(HTMLUtils.parseMarkdown(message.getContent()));
+                }
+                emailSendMsgHandle.sendMessage(message);
+            } else if (MessageTypeEnum.DD.getType().equals(messageType)) {
+                ddSendMsgHandle.sendMessage(message);
+            } else if (MessageTypeEnum.QYWX.getType().equals(messageType)) {
+                qywxSendMsgHandle.sendMessage(message);
+            }
+        }
     }
 
     private String formatWebHookMessage(MessageConfig messageConfig, MessageDTO messageDTO) {

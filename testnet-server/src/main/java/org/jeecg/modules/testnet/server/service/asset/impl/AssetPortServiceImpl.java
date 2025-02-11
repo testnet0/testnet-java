@@ -11,15 +11,16 @@ import org.jeecg.modules.testnet.server.entity.asset.AssetIp;
 import org.jeecg.modules.testnet.server.entity.asset.AssetPort;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetIpMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetPortMapper;
-import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetIpSubdomainRelationService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.asset.AssetPortVO;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import testnet.common.enums.AssetTypeEnums;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -35,10 +36,11 @@ public class AssetPortServiceImpl extends ServiceImpl<AssetPortMapper, AssetPort
 
     @Resource
     private IAssetIpSubdomainRelationService assetIpSubdomainRelationService;
-
+    @Resource
+    private IAssetValidService assetValidService;
 
     @Resource
-    private AssetWebMapper assetWebMapper;
+    private AssetWebServiceImpl assetWebService;
 
     @Resource
     private AssetIpMapper assetIpMapper;
@@ -46,12 +48,6 @@ public class AssetPortServiceImpl extends ServiceImpl<AssetPortMapper, AssetPort
 
     @Override
     public IPage<AssetPort> page(IPage<AssetPort> page, QueryWrapper<AssetPort> queryWrapper, Map<String, String[]> parameterMap) {
-        if (parameterMap != null && parameterMap.containsKey("subdomain")) {
-            queryWrapper.inSql("ip", "SELECT aisd.ip_id FROM asset_ip_sub_domain aisd LEFT JOIN asset_sub_domain asd ON asd.id = aisd.subdomain_id WHERE asd.sub_domain LIKE '%" + parameterMap.get("subdomain")[0] + "%'");
-        }
-        if (parameterMap != null && parameterMap.containsKey("ips")) {
-            queryWrapper.inSql("ip", "select id from asset_ip where ip like '%" + parameterMap.get("ips")[0] + "%'");
-        }
         return super.page(page, queryWrapper);
     }
 
@@ -90,12 +86,26 @@ public class AssetPortServiceImpl extends ServiceImpl<AssetPortMapper, AssetPort
 
     @Override
     public void delRelation(List<String> list) {
-        assetWebMapper.deleteByPortId(list);
+        list.forEach(id -> {
+            List<String> assetWebIds = assetWebService.getByPortId(id);
+            assetWebService.delRelation(assetWebIds);
+            removeById(id);
+        });
     }
 
-    @Cacheable(value = "asset:port:cache", key = "#id + ':' + #port", unless = "#result == null")
-    public AssetPort getPortByIpIdAndPort(String id, int port) {
-        return getOne(new QueryWrapper<AssetPort>().eq("ip", id).eq("port", port));
+    @Override
+    public boolean saveBatch(Collection<AssetPort> entityList) {
+        List<AssetPort> assetPortList = new ArrayList<>();
+        for (AssetPort assetPort : entityList) {
+            if (assetValidService.isValid(assetPort, AssetTypeEnums.PORT)) {
+                if (assetValidService.getUniqueAsset(assetPort, this, AssetTypeEnums.PORT) == null) {
+                    assetPortList.add(assetPort);
+                } else {
+                    log.info("端口:{} 重复，跳过", assetPort);
+                }
+            }
+        }
+        return super.saveBatch(assetPortList);
     }
 
 }

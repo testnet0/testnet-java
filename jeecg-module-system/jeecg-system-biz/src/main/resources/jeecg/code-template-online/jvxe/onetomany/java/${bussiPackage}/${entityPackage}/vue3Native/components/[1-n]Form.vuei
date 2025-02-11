@@ -22,7 +22,6 @@
 <#assign need_editor = false>
 <#assign need_checkbox = false>
 <#assign need_range_number = false>
-<#assign is_like = false>
 <#assign form_span = 24>
 <#if tableVo.fieldRowNum==2>
   <#assign form_span = 12>
@@ -180,6 +179,11 @@
     }
   });
 </script>
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+  .antd-modal-form {
+    max-height: 340px;
+    overflow: auto;
+  }
+</style>
 </#if>
 </#list>

@@ -64,7 +64,7 @@ public class AssetWeb extends AssetBase implements Serializable {
     /**
      * response header hash
      */
-    @Excel(name = "headerMd5", width = 15)
+    @Excel(name = "bodyMd5", width = 15)
     @ApiModelProperty(value = "header_md5")
     private java.lang.String headerMd5;
 

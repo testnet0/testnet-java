@@ -81,7 +81,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService {
-
+	
 	@Autowired
 	private SysUserMapper userMapper;
 	@Autowired
@@ -124,7 +124,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	private ISysThirdAccountService sysThirdAccountService;
 	@Autowired
 	private RedisUtil redisUtil;
-
+	
 	@Override
 	public Result<IPage<SysUser>> queryPageList(HttpServletRequest req, QueryWrapper<SysUser> queryWrapper, Integer pageSize, Integer pageNo) {
 		Result<IPage<SysUser>> result = new Result<IPage<SysUser>>();
@@ -172,7 +172,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 //			}
 //		}
 		//update-end---author:wangshuai---date:2024-03-08---for:【QQYUN-8110】在线通讯录支持设置权限(只能看分配的技术支持)---
-
+		
 		//TODO 外部模拟登陆临时账号，列表不显示
 		queryWrapper.ne("username", "_reserve_user_external");
 		Page<SysUser> page = new Page<SysUser>(pageNo, pageSize);
@@ -195,7 +195,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 				}
 				Integer posTenantId = null;
 				if (MybatisPlusSaasConfig.OPEN_SYSTEM_TENANT_CONTROL) {
-					posTenantId = oConvertUtils.getInt(TenantContext.getTenant(), 0);;
+					posTenantId = oConvertUtils.getInt(TenantContext.getTenant(), 0);;		
 				}
 				//查询用户职位关系表(获取租户下面的)
 				//update-begin---author:wangshuai---date:2023-11-15---for:【QQYUN-7028】用户职务保存后未回显---
@@ -203,7 +203,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 				//update-end---author:wangshuai---date:2023-11-15---for:【QQYUN-7028】用户职务保存后未回显---
 				//update-end---author:wangshuai ---date:20230228  for：[QQYUN-4354]加入更多字段：当前加入时间应该取当前租户的/职位也是当前租户下的------------
 				item.setPost(CommonUtils.getSplitText(positionList,SymbolConstant.COMMA));
-
+				
 				//update-begin---author:wangshuai---date:2023-10-08---for:【QQYUN-6668】钉钉部门和用户同步，我怎么知道哪些用户是双向绑定成功的---
 				//是否根据租户隔离(敲敲云用户列表专用，用于展示是否同步钉钉)
 				if (MybatisPlusSaasConfig.OPEN_SYSTEM_TENANT_CONTROL) {
@@ -293,8 +293,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		}
 		return sysUser;
 	}
-
-
+	
+	
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public void addUserWithRole(SysUser user, String roles) {
@@ -382,7 +382,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		log.info("-------通过数据库读取用户拥有的角色Rules------username： " + username + ",Roles size: " + (roles == null ? 0 : roles.size()));
 		return new HashSet<>(roles);
 	}
-
+	
 	/**
 	 * 通过用户名获取用户角色集合
 	 * @param userId 用户ID
@@ -450,7 +450,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			info.setSysUserName(sysUser.getRealname());
 			info.setSysOrgCode(sysUser.getOrgCode());
 		}
-
+		
 		//多部门支持in查询
 		List<SysDepart> list = sysDepartMapper.queryUserDeparts(sysUser.getId());
 		List<String> sysMultiOrgCode = new ArrayList<String>();
@@ -466,7 +466,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			}
 		}
 		info.setSysMultiOrgCode(sysMultiOrgCode);
-
+		
 		return info;
 	}
 
@@ -703,7 +703,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 		//6. 删除租户用户中间表的数据
 		line += userTenantMapper.delete(new LambdaQueryWrapper<SysUserTenant>().in(SysUserTenant::getUserId,userIds));
-
+		
 		return line != 0;
 	}
 
@@ -750,7 +750,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 				sysUserRoleMapper.insert(userRole);
 			}
 		}
-
+		
 		//step.3 保存所属部门
 		if(oConvertUtils.isNotEmpty(selectedDeparts)) {
 			String[] arr = selectedDeparts.split(",");
@@ -977,7 +977,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 relation.setUserId(userId);
                 relation.setTenantId(Integer.valueOf(tenantId));
                 relation.setStatus(CommonConstant.STATUS_1);
-
+                
 				LambdaQueryWrapper sysUserTenantQueryWrapper = new LambdaQueryWrapper<SysUserTenant>()
 						.eq(SysUserTenant::getUserId, userId)
 						.eq(SysUserTenant::getTenantId,Integer.valueOf(tenantId));
@@ -1031,7 +1031,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 				//找到新的租户id与原来的租户id不同之处，进行删除
 				String[] relTenantIdArray = relTenantIds.split(SymbolConstant.COMMA);
 				List<String> relTenantIdList = Arrays.asList(relTenantIdArray);
-
+				
 				List<Integer> deleteTenantIdList = oldTenantIds.stream().filter(item -> !relTenantIdList.contains(item.toString())).collect(Collectors.toList());
 				for (Integer tenantId : deleteTenantIdList) {
 					this.deleteTenantByUserId(userId, tenantId);
@@ -1102,9 +1102,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 					.in(SysUserDepart::getUserId, idList)
 					.in(SysUserDepart::getDepId, departIdList);
 			sysUserDepartMapper.delete(query);
-
+			
 			String[] arr = selecteddeparts.split(",");
-
+			
 			//再新增
 			for (String deaprtId : arr) {
 				for(String userId: idList){
@@ -1236,7 +1236,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 					this.removeDepartmentManager(departChargeUserIdList,departChargeUsers,departId);
 				}
 			//update-end---author:wangshuai ---date:20230303  for：部门负责人不能被删除------------
-
+				
 			}
 		}
 	}
@@ -1263,7 +1263,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		}
     	return result;
 	}
-
+	
 	/**
 	 * 变更父级部门 修改编码
 	 * @param parentId
@@ -1343,7 +1343,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			getParentDepart(temp, orgName, orgId);
 		}
 	}
-
+	
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	@CacheEvict(value={CacheConstant.SYS_USERS_CACHE}, allEntries=true)
@@ -1408,7 +1408,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		}
 		long endTime1 = System.currentTimeMillis();
 		System.out.println("修改部门角色用时：" + (endTime1 - startTime) + "ms");
-
+		
 		if (departList.size() > 0) {
 			//删除用户下的部门
 			sysUserDepartMapper.deleteUserDepart(user.getId(), tenantId);
@@ -1862,7 +1862,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 * @param userId
 	 * @param tenantId
 	 * @param invitedUsername 被邀请人的账号
-	 * @param tenantName 租户名称
+	 * @param tenantName 租户名称 
 	 */
 	private void addUserTenant(String userId, Integer tenantId, String invitedUsername, String tenantName) {
 		SysUserTenant userTenant = new SysUserTenant();
@@ -1888,7 +1888,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		//update-end---author:wangshuai ---date:20230710  for：【QQYUN-5731】导入用户时，没有提醒------------
 	}
 	//======================================= end 用户与部门 用户列表导入 =========================================
-
+	
 	@Override
 	public void checkUserAdminRejectDel(String userIds) {
 		LambdaQueryWrapper<SysUser> query = new LambdaQueryWrapper<>();
@@ -1978,60 +1978,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			}
 		}
 		//step4 发送短信验证码
-		String redisKey = CommonConstant.CHANGE_PHONE_REDIS_KEY_PRE+phone;
-		this.sendPhoneSms(phone, ipAddress,redisKey);
-	}
-
-	@Override
-	public void sendLogOffPhoneSms(JSONObject jsonObject, String username, String ipAddress) {
-		String phone = jsonObject.getString("phone");
-		//通过用户名查询数据库中的手机号
-		SysUser userByNameAndPhone = userMapper.getUserByNameAndPhone(phone, username);
-		if (null == userByNameAndPhone) {
-			throw new JeecgBootException("当前用户手机号不匹配，无法修改！");
-		}
-		String code = CommonConstant.LOG_OFF_PHONE_REDIS_KEY_PRE + phone;
-		this.sendPhoneSms(phone, ipAddress, code);
-	}
-
-	@Override
-	@Transactional(rollbackFor = Exception.class)
-	public void userLogOff(JSONObject jsonObject, String username) {
-		String phone = jsonObject.getString("phone");
-		String smsCode = jsonObject.getString("smscode");
-		//通过用户名查询数据库中的手机号
-		SysUser userByNameAndPhone = userMapper.getUserByNameAndPhone(phone, username);
-		if (null == userByNameAndPhone) {
-			throw new JeecgBootException("当前用户手机号不匹配，无法注销！");
-		}
-		String code = CommonConstant.LOG_OFF_PHONE_REDIS_KEY_PRE + phone;
-		Object redisSmdCode = redisUtil.get(code);
-		if (null == redisSmdCode) {
-			throw new JeecgBootException("验证码失效，无法注销！");
-		}
-		if (!redisSmdCode.toString().equals(smsCode)) {
-			throw new JeecgBootException("验证码不匹配，无法注销！");
-		}
-		this.deleteUser(userByNameAndPhone.getId());
-		redisUtil.removeAll(code);
-		redisUtil.removeAll(CacheConstant.SYS_USERS_CACHE + phone);
-	}
-
-	@Override
-	public void randomPassword(String password) {
-		SysUser testnet = getUserByName("TestNet");
-		testnet.setPassword(password);
-		changePassword(testnet);
-		SysUser admin = getUserByName("admin");
-		admin.setPassword(password);
-		changePassword(admin);
+		this.sendPhoneSms(phone, ipAddress);
 	}
 
 	/**
 	 * 发送短信验证码
 	 * @param phone
 	 */
-	private void sendPhoneSms(String phone, String clientIp,String redisKey) {
+	private void sendPhoneSms(String phone, String clientIp) {
+		String redisKey = CommonConstant.CHANGE_PHONE_REDIS_KEY_PRE+phone;
 		Object object = redisUtil.get(redisKey);
 
 		if (object != null) {

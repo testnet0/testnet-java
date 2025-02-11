@@ -1,7 +1,5 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,8 +19,6 @@ import testnet.common.enums.AssetTypeEnums;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @Description: 主域名
@@ -66,23 +62,13 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
     @ApiOperation(value = "主域名-添加", notes = "主域名-添加")
     @RequiresPermissions("testnet.server:asset_domain:add")
     @PostMapping(value = "/add")
-    public Result<?> add(@RequestBody AssetDomain assetDomain) {
-        List<AssetDomain> assetDomainList = new ArrayList<>();
-        for (String s : assetDomain.getDomain().split("\n")) {
-            AssetDomain domain = new AssetDomain();
-            BeanUtil.copyProperties(assetDomain, domain);
-            domain.setDomain(s.trim());
-            assetDomainList.add(domain);
-        }
-        Result<?> addResult = assetCommonOptionService.batchAdd(assetDomainList, AssetTypeEnums.DOMAIN);
-        if (addResult.getCode().equals(200)) {
+    public Result<String> add(@RequestBody AssetDomain assetDomain) {
+        if (assetCommonOptionService.addAssetByType(assetDomain, AssetTypeEnums.DOMAIN) != null) {
             return Result.OK("添加成功!");
         } else {
-            JSONObject jsonObject = (JSONObject) addResult.getResult();
-            return Result.OK(jsonObject.getString("errorMessage"));
+            return Result.error("添加失败，检查是否重复或缺少关键字段");
         }
     }
-
 
     /**
      * 编辑
@@ -95,12 +81,10 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
     @RequiresPermissions("testnet.server:asset_domain:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetDomain assetDomain) {
-        Result<?> editResult = assetCommonOptionService.updateAssetByType(assetDomain, AssetTypeEnums.DOMAIN);
-        if (editResult.getCode().equals(200)) {
+        if (assetCommonOptionService.updateAssetByType(assetDomain, AssetTypeEnums.DOMAIN) != null) {
             return Result.OK("编辑成功!");
         } else {
-            JSONObject jsonObject = (JSONObject) editResult.getResult();
-            return Result.OK(jsonObject.getString("errorMessage"));
+            return Result.error("编辑失败，检查是否重复或缺少关键字段");
         }
     }
 
@@ -142,8 +126,12 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
      */
     @ApiOperation(value = "主域名-通过id查询", notes = "主域名-通过id查询")
     @GetMapping(value = "/queryById")
-    public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
-        return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.DOMAIN);
+    public Result<AssetDomain> queryById(@RequestParam(name = "id", required = true) String id) {
+        AssetDomain assetDomain = assetCommonOptionService.getByIdAndAssetType(id, AssetTypeEnums.DOMAIN);
+        if (assetDomain == null) {
+            return Result.error("未找到对应数据");
+        }
+        return Result.OK(assetDomain);
     }
 
     /**
@@ -155,7 +143,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
     @RequiresPermissions("testnet.server:asset_domain:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetDomain assetDomain) {
-        return super.exportXlsSheet(request, assetDomain, AssetDomain.class, "主域名", null, 50000);
+        return super.exportXlsSheet(request, assetDomain, AssetDomain.class, "主域名",null,50000);
         // return super.exportXls(request, assetDomain, AssetDomain.class, "主域名");
     }
 
@@ -169,7 +157,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
     @RequiresPermissions("testnet.server:asset_domain:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return assetCommonOptionService.importExcel(request, response, AssetDomain.class, AssetTypeEnums.DOMAIN);
+        return super.importExcel(request, response, AssetDomain.class);
     }
 
 }

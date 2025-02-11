@@ -6,8 +6,6 @@
  **/
 package testnet.common.utils;
 
-import lombok.SneakyThrows;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,9 +17,9 @@ public class HashUtils {
      *
      * @param input 待计算哈希值的字符串
      * @return MD5 哈希值的十六进制字符串表示
+     * @throws NoSuchAlgorithmException 如果无法找到 MD5 摘要算法
      */
-    @SneakyThrows
-    public static String calculateMD5(String input) {
+    public static String calculateMD5(String input) throws NoSuchAlgorithmException {
         return calculateHash(input, "MD5");
     }
 
@@ -30,9 +28,9 @@ public class HashUtils {
      *
      * @param input 待计算哈希值的字符串
      * @return SHA-256 哈希值的十六进制字符串表示
+     * @throws NoSuchAlgorithmException 如果无法找到 SHA-256 摘要算法
      */
-    @SneakyThrows
-    public static String calculateSHA256(String input) {
+    public static String calculateSHA256(String input) throws NoSuchAlgorithmException {
         return calculateHash(input, "SHA-256");
     }
 
@@ -42,9 +40,9 @@ public class HashUtils {
      * @param input     待计算哈希值的字符串
      * @param algorithm 摘要算法名称（如 "MD5" 或 "SHA-256"）
      * @return 使用指定算法计算得到的哈希值的十六进制字符串表示
+     * @throws NoSuchAlgorithmException 如果无法找到指定的摘要算法
      */
-    @SneakyThrows
-    private static String calculateHash(String input, String algorithm) {
+    private static String calculateHash(String input, String algorithm) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
 

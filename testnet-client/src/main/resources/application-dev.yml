@@ -1,6 +1,17 @@
-grpc:
-  client:
-    GLOBAL:
-      negotiation-type: plaintext
-      enable-keep-alive: true
-      address: ${GRPC_ADDRESS:static://localhost:9090}
+liteflow:
+  rule-source-ext-data-map:
+    url: jdbc:mysql://192.168.68.144:3306/jeecg-boot
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.68.144:3306/jeecg-boot
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+  redis:
+    database: 0
+    host: 192.168.68.144
+    port: 6379
+    password: ''

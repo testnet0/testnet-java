@@ -5,20 +5,26 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hccake.ballcat.starter.ip2region.core.IpInfo;
+import com.hccake.ballcat.starter.ip2region.searcher.Ip2regionSearcher;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.jeecg.modules.testnet.server.dto.AssetIpDTO;
 import org.jeecg.modules.testnet.server.entity.asset.AssetIp;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetIpMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetPortMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetVulMapper;
-import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetIpSubdomainRelationService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
+import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.asset.AssetIpVO;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import testnet.common.enums.AssetTypeEnums;
+import testnet.common.utils.IpUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -34,22 +40,27 @@ public class AssetIpServiceImpl extends ServiceImpl<AssetIpMapper, AssetIp> impl
 
     @Resource
     private IAssetIpSubdomainRelationService assetIpSubdomainRelationService;
+    @Resource
+    private IAssetValidService assetValidService;
+
+    @Resource
+    private Ip2regionSearcher ip2regionService;
 
     @Resource
     private AssetPortMapper assetPortMapper;
 
+    @Resource
+    private AssetPortServiceImpl assetPortService;
 
     @Resource
     private AssetVulMapper assetVulMapper;
 
-    @Resource
-    private AssetWebMapper assetWebMapper;
-
 
     @Override
     public IPage<AssetIp> page(IPage<AssetIp> page, QueryWrapper<AssetIp> queryWrapper, Map<String, String[]> parameterMap) {
-        if (parameterMap != null && parameterMap.containsKey("sub_domain")) {
-            queryWrapper.inSql("id", "SELECT aisd.ip_id FROM asset_ip_sub_domain aisd LEFT JOIN asset_sub_domain asb ON asb.id = aisd.subdomain_id WHERE asb.sub_domain LIKE '%" + parameterMap.get("sub_domain")[0] + "%'");
+        if (parameterMap != null && parameterMap.containsKey("sub_domain_id")) {
+            String domainId = parameterMap.get("sub_domain_id")[0];
+            queryWrapper.in("id", assetIpSubdomainRelationService.getIpIdsBySubDomainId(domainId));
         }
         return super.page(page, queryWrapper);
     }
@@ -68,44 +79,68 @@ public class AssetIpServiceImpl extends ServiceImpl<AssetIpMapper, AssetIp> impl
     public AssetIpDTO convertDTO(AssetIp assetIp) {
         AssetIpDTO assetIpDTO = new AssetIpDTO();
         BeanUtil.copyProperties(assetIp, assetIpDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-        assetIpDTO.setSubDomains(assetIpSubdomainRelationService.getSubDomainsByIpId(assetIp.getId()));
+        assetIpDTO.setSubDomainIds(assetIpSubdomainRelationService.getSubDomainsByIpId(assetIp.getId()));
         return assetIpDTO;
     }
 
     @Override
     public boolean addAssetByType(AssetIpDTO asset) {
         assetIpSubdomainRelationService.addDomainRelation(asset);
-        return save(assetIpSubdomainRelationService.getExtra(asset));
+        return save(getExtra(asset));
     }
 
     @Override
     public boolean updateAssetByType(AssetIpDTO asset) {
+        // 这里目前没有从IP获取域名的情况 所以只有手工编辑
         assetIpSubdomainRelationService.delByAssetIpId(asset.getId());
         assetIpSubdomainRelationService.addDomainRelation(asset);
-        return updateById(asset);
+        return updateById(getExtra(asset));
     }
 
     @Override
     public void delRelation(List<String> list) {
         list.forEach(id -> {
-            // 删除ip和子域名的关联
             assetIpSubdomainRelationService.delByAssetIpId(id);
-            // 删除ip关联的端口
+            assetVulMapper.delByIpId(id);
             List<String> portIds = assetPortMapper.getPortIdsByIpId(id);
-            if (!portIds.isEmpty()) {
-                assetPortMapper.delByPortIds(portIds);
-                // 删除端口关联的web
-                assetWebMapper.deleteByPortId(portIds);
-            }
+            assetPortService.delRelation(portIds);
+            removeById(id);
         });
-        // 删除ip关联的漏洞
-        assetVulMapper.delByIpIds(list);
-        this.removeBatchByIds(list);
     }
 
-    @Cacheable(value = "asset:ip:cache", key = "#ip + ':' + #projectId", unless = "#result == null")
-    public AssetIp selectByIp(String ip, String projectId) {
-        return baseMapper.selectByIp(ip, projectId);
+    @Override
+    public boolean saveBatch(Collection<AssetIp> entityList) {
+        List<AssetIp> assetIpList = new ArrayList<>();
+        for (AssetIp assetIp : entityList) {
+            if (assetValidService.isValid(assetIp, AssetTypeEnums.IP)) {
+                if (assetValidService.getUniqueAsset(assetIp, this, AssetTypeEnums.IP) == null) {
+                    assetIpList.add(assetIp);
+                } else {
+                    log.info("ip:{} 重复,跳过", assetIp.getIp());
+                }
+            }
+        }
+        return super.saveBatch(assetIpList);
+    }
+
+    private AssetIpDTO getExtra(AssetIpDTO assetIpDTO) {
+        if (StringUtils.isNotBlank(assetIpDTO.getIp())) {
+            IpInfo address = ip2regionService.search(assetIpDTO.getIp());
+            if (address != null) {
+                BeanUtil.copyProperties(address, assetIpDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
+            }
+        }
+        if (IpUtils.isIpv6(assetIpDTO.getIp())) {
+            assetIpDTO.setIsIpv6("Y");
+        } else {
+            assetIpDTO.setIsIpv6("N");
+        }
+        if (IpUtils.isPrivateIP(assetIpDTO.getIp())) {
+            assetIpDTO.setIsPublic("N");
+        } else {
+            assetIpDTO.setIsPublic("Y");
+        }
+        return assetIpDTO;
     }
 
 }

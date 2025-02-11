@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @Description: 搜索引擎语法
  * @Author: jeecg-boot
- * @Date: 2024-09-12
+ * @Date:   2024-09-12
  * @Version: V1.0
  */
 public interface ISearchEngineKeywordService extends IService<SearchEngineKeyword> {

@@ -1,3 +1,4 @@
+version: '2'
 services:
   testnet-mysql:
     image: testnet0/mysql:8.3
@@ -21,4 +22,15 @@ services:
     image: testnet0/redis:5.0
     ports:
       - "6379:6379"
+    restart: always
+
+  testnet-es:
+    image: testnet0/elasticsearch:7.10.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
     restart: always

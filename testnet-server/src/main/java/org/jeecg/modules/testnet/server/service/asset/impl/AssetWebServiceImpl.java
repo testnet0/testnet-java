@@ -2,40 +2,33 @@ package org.jeecg.modules.testnet.server.service.asset.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.jeecg.common.es.JeecgElasticsearchTemplate;
 import org.jeecg.modules.testnet.server.dto.AssetApiDTO;
-import org.jeecg.modules.testnet.server.dto.AssetIpDTO;
-import org.jeecg.modules.testnet.server.dto.AssetSubDomainIpsDTO;
 import org.jeecg.modules.testnet.server.dto.asset.AssetWebDTO;
-import org.jeecg.modules.testnet.server.entity.asset.AssetIp;
 import org.jeecg.modules.testnet.server.entity.asset.AssetPort;
-import org.jeecg.modules.testnet.server.entity.asset.AssetSubDomain;
 import org.jeecg.modules.testnet.server.entity.asset.AssetWeb;
+import org.jeecg.modules.testnet.server.mapper.asset.AssetPortMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
+import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.AssetWebVO;
 import org.springframework.stereotype.Service;
+import testnet.common.constan.Constants;
+import testnet.common.enums.AssetTypeEnums;
+import testnet.common.utils.HttpUtils;
 
 import javax.annotation.Resource;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static testnet.common.utils.IpUtils.isValidIPAddress;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @Description: WEB服务
@@ -46,26 +39,46 @@ import static testnet.common.utils.IpUtils.isValidIPAddress;
 @Service
 @Slf4j
 public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> implements IAssetService<AssetWeb, AssetWebVO, AssetWebDTO> {
+    @Resource
+    private IAssetValidService assetValidService;
 
     @Resource
-    private AssetPortServiceImpl assetPortService;
+    private AssetPortMapper assetPortMapper;
 
     @Resource
     private AssetApiServiceImpl assetApiService;
 
-    @Resource
-    private AssetIpServiceImpl assetIpService;
 
     @Resource
-    private AssetSubDomainServiceImpl assetSubDomainService;
+    private JeecgElasticsearchTemplate elasticsearchTemplate;
 
     @Override
     public IPage<AssetWeb> page(IPage<AssetWeb> page, QueryWrapper<AssetWeb> queryWrapper, Map<String, String[]> parameterMap) {
-        if (parameterMap != null && parameterMap.containsKey("subdomain")) {
-            queryWrapper.inSql("domain", "SELECT id from asset_sub_domain WHERE sub_domain LIKE '%" + parameterMap.get("subdomain")[0] + "%'");
-        }
-        if (parameterMap != null && parameterMap.containsKey("ip")) {
-            queryWrapper.inSql("port_id", "select ap.id from asset_port ap LEFT JOIN asset_ip ai ON ap.ip = ai.id where ai.ip like '%" + parameterMap.get("ip")[0] + "%'");
+        if (parameterMap != null && parameterMap.containsKey("body")) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("body", parameterMap.get("body")[0]);
+            JSONObject match = new JSONObject();
+            match.put("match", jsonObject);
+            JSONObject finalJson = elasticsearchTemplate.buildQuery(null, match, (page.getCurrent() - 1) * page.getSize(), page.getSize());
+            JSONObject result = elasticsearchTemplate.search(Constants.ES_WEB_INDEX, Constants.ES_WEB_TYPE, finalJson);
+            JSONObject hits = result.getJSONObject("hits");
+            if (hits != null && !hits.getJSONArray("hits").isEmpty()) {
+                long totalHits = hits.getJSONObject("total").getLong("value");
+                JSONArray jsonArray = hits.getJSONArray("hits");
+                List<AssetWeb> assetWebList = new ArrayList<>();
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject json = jsonArray.getJSONObject(i).getJSONObject("_source");
+                    AssetWeb assetWeb = JSON.parseObject(json.toJSONString(), AssetWeb.class);
+                    assetWebList.add(assetWeb);
+                }
+                IPage<AssetWeb> resultPage = new Page<>(page.getCurrent(), page.getSize());
+                resultPage.setRecords(assetWebList);
+                resultPage.setTotal(totalHits);
+                return resultPage;
+            } else {
+                log.info("未查询到数据");
+                queryWrapper.in("port_id", "-1");
+            }
         }
         return super.page(page, queryWrapper);
     }
@@ -75,7 +88,7 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
         AssetWebVO assetWebVO = new AssetWebVO();
         BeanUtil.copyProperties(record, assetWebVO, CopyOptions.create().setIgnoreNullValue(true));
         if (StringUtils.isNotBlank(record.getPortId())) {
-            AssetPort assetPort = assetPortService.getById(record.getPortId());
+            AssetPort assetPort = assetPortMapper.selectById(record.getPortId());
             if (assetPort != null) {
                 assetWebVO.setIp(assetPort.getIp());
             }
@@ -92,59 +105,8 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
 
     @Override
     public boolean addAssetByType(AssetWebDTO asset) {
-        URLInfo urlInfo = extractURLInfo(asset.getWebUrl());
-        if (urlInfo != null) {
-            if (StringUtils.isNotBlank(urlInfo.getIp())) {
-                // 说明是ip格式
-                AssetIp assetIp = assetIpService.selectByIp(urlInfo.getIp(), asset.getProjectId());
-                if (assetIp == null) {
-                    AssetIpDTO assetIpDTO = new AssetIpDTO();
-                    assetIpDTO.setIp(urlInfo.getIp());
-                    assetIpDTO.setProjectId(asset.getProjectId());
-                    assetIpDTO.setSource(asset.getSource());
-                    assetIpService.addAssetByType(assetIpDTO);
-                    assetIp = new AssetIp();
-                    assetIp.setId(assetIpDTO.getId());
-                }
-                AssetPort assetPort = assetPortService.getPortByIpIdAndPort(assetIp.getId(), urlInfo.getPort());
-                if (assetPort == null) {
-                    assetPort = new AssetPort();
-                    assetPort.setIp(assetIp.getId());
-                    assetPort.setIsOpen("Y");
-                    assetPort.setPort(urlInfo.getPort());
-                    assetPort.setProtocol(urlInfo.getProtocol());
-                    assetPort.setService(urlInfo.getDomain());
-                    assetPort.setProjectId(asset.getProjectId());
-                    assetPort.setSource(asset.getSource());
-                    assetPortService.save(assetPort);
-                }
-                asset.setPortId(assetPort.getId());
-            }
-            if (StringUtils.isNotBlank(urlInfo.getDomain())) {
-                AssetSubDomain assetSubDomain = assetSubDomainService.selectBySubdomain(urlInfo.getDomain(), asset.getProjectId());
-                if (assetSubDomain == null) {
-                    AssetSubDomainIpsDTO assetSubDomainIpsDTO = new AssetSubDomainIpsDTO();
-                    assetSubDomainIpsDTO.setIps(urlInfo.getIp());
-                    assetSubDomainIpsDTO.setProjectId(asset.getProjectId());
-                    assetSubDomainIpsDTO.setSubDomain(urlInfo.getDomain());
-                    assetSubDomainService.addAssetByType(assetSubDomainIpsDTO);
-                    asset.setDomain(assetSubDomainIpsDTO.getId());
-                } else {
-                    AssetSubDomainIpsDTO assetSubDomainIpsDTO = assetSubDomainService.convertDTO(assetSubDomain);
-                    if (StringUtils.isEmpty(assetSubDomainIpsDTO.getIps())) {
-                        assetSubDomainIpsDTO.setIps(urlInfo.getIp());
-                    } else {
-                        if (!assetSubDomainIpsDTO.getIps().contains(urlInfo.getIp())) {
-                            assetSubDomainIpsDTO.setIps(assetSubDomainIpsDTO.getIps() + "," + urlInfo.getIp());
-                        }
-                    }
-                    assetSubDomainService.updateAssetByType(assetSubDomainIpsDTO);
-                    asset.setDomain(assetSubDomainIpsDTO.getId());
-                }
-            }
-
-        }
         if (save(asset)) {
+            saveAssetWebToES(asset);
             if (asset.getStatusCode() != null && asset.getStatusCode().equals(200)) {
                 AssetApiDTO assetApiDTO = new AssetApiDTO();
                 assetApiDTO.setAbsolutePath(asset.getWebUrl());
@@ -166,13 +128,62 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
             AssetWeb assetWeb = getById(asset.getId());
             asset.setTech(mergeTechArrays(asset.getTech(), assetWeb.getTech()));
         }
-        return updateById(asset);
+        if (updateById(asset)) {
+            saveAssetWebToES(asset);
+        }
+        return true;
     }
 
     @Override
     public void delRelation(List<String> list) {
         for (String id : list) {
             removeById(id);
+            elasticsearchTemplate.delete(Constants.ES_WEB_INDEX, Constants.ES_WEB_TYPE, id);
+        }
+    }
+
+    @Override
+    public boolean saveBatch(Collection<AssetWeb> entityList) {
+        List<AssetWeb> assetWebList = new ArrayList<>();
+        for (AssetWeb assetWeb : entityList) {
+            if (assetValidService.isValid(assetWeb, AssetTypeEnums.WEB)) {
+                if (assetValidService.getUniqueAsset(assetWeb, this, AssetTypeEnums.WEB) == null) {
+                    assetWebList.add(assetWeb);
+                } else {
+                    log.info("web:{} 重复，跳过", assetWeb);
+                }
+            }
+        }
+        return super.saveBatch(assetWebList);
+    }
+
+
+    public AssetWebVO getWebBody(String id) {
+        try {
+            JSONObject json = elasticsearchTemplate.getDataById(Constants.ES_WEB_INDEX, Constants.ES_WEB_TYPE, id);
+            if (json != null) {
+                return JSON.parseObject(json.toJSONString(), AssetWebVO.class);
+            }
+        } catch (Exception e) {
+            log.info("getWebBody error", e);
+            AssetWebVO assetWebVO = new AssetWebVO();
+            AssetWeb assetWeb = getById(id);
+            BeanUtil.copyProperties(assetWeb, assetWebVO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
+            return assetWebVO;
+        }
+        return null;
+    }
+
+    private void saveAssetWebToES(AssetWebDTO assetWeb) {
+        JSONObject jsonObject = (JSONObject) JSONObject.toJSON(assetWeb);
+        try {
+            if (assetWeb.getBody() != null && assetWeb.getBody().startsWith("http")) {
+                String body = HttpUtils.get(assetWeb.getBody()).getBody().replace("{", "\\{").replace("}", "\\}").replace("[", "\\[").replace("]", "\\]");
+                jsonObject.put("body", body);
+            }
+            elasticsearchTemplate.saveOrUpdate(Constants.ES_WEB_INDEX, Constants.ES_WEB_TYPE, assetWeb.getId(), jsonObject);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -214,73 +225,11 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
         return baseMapper.findWebByPortId(id);
     }
 
-    @Getter
-    @Setter
-    @AllArgsConstructor
-    static class URLInfo {
-        private String protocol;
-        private String domain;
-        private int port;
-        private String ip;
+    public List<String> getWebIdBySubDomainId(String id) {
+        return baseMapper.getWebIdBySubDomainId(id);
     }
 
-    /**
-     * 通过域名获取IP地址
-     */
-    private static String getIPFromDomain(String domain) {
-        try {
-            InetAddress address = InetAddress.getByName(domain);
-            return address.getHostAddress(); // 返回IP地址
-        } catch (UnknownHostException e) {
-            log.error("无法解析域名: {}", domain);
-            return ""; // 解析失败返回空字符串
-        }
+    public List<AssetWeb> getWebBySubDomainId(String id) {
+        return baseMapper.getWebBySubDomainId(id);
     }
-
-    private static URLInfo extractURLInfo(String urlStr) {
-        try {
-            URL url = new URL(urlStr);
-            String protocol = url.getProtocol();
-            String host = url.getHost();
-            int port = url.getPort();
-            if (port == -1) {
-                // 根据协议设置默认端口
-                if ("http".equals(protocol)) {
-                    port = 80;
-                } else if ("https".equals(protocol)) {
-                    port = 443;
-                } else {
-                    port = url.getDefaultPort();
-                }
-            }
-
-            // 判断host是否是IP地址（IPv4或IPv6）
-            String ip = "";
-            String domain = "";
-            // 去掉IPv6地址的方括号
-            String cleanedHost = removeBrackets(host);
-            if (isValidIPAddress(cleanedHost)) {
-                ip = cleanedHost;
-            } else {
-                domain = cleanedHost;
-                ip = getIPFromDomain(domain);
-            }
-
-            return new URLInfo(protocol, domain, port, ip);
-        } catch (MalformedURLException e) {
-            log.error("提供的URL格式不正确:{} ", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * 去掉IPv6地址的方括号
-     */
-    private static String removeBrackets(String host) {
-        if (host.startsWith("[") && host.endsWith("]")) {
-            return host.substring(1, host.length() - 1);
-        }
-        return host;
-    }
-
 }

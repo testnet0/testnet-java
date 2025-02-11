@@ -84,10 +84,6 @@ public class DynamicDBUtil {
         } else {
             DruidDataSource dataSource = getJdbcDataSource(dbSource);
             if(dataSource!=null && dataSource.isEnable()){
-
-                // 【TV360X-2060】设置超时时间 6秒
-                dataSource.setMaxWait(6000);
-
                 DataSourceCachePool.putCacheBasicDataSource(dbKey, dataSource);
             }else{
                 throw new JeecgBootException("动态数据源连接失败，dbKey："+dbKey);
@@ -110,10 +106,9 @@ public class DynamicDBUtil {
                 dataSource.getConnection().commit();
                 dataSource.getConnection().close();
                 dataSource.close();
-                DataSourceCachePool.removeCache(dbKey);
             }
         } catch (SQLException e) {
-            log.warn(e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 
