@@ -90,13 +90,14 @@ public class AssetIpServiceImpl extends ServiceImpl<AssetIpMapper, AssetIp> impl
         list.forEach(id -> {
             // 删除ip和子域名的关联
             assetIpSubdomainRelationService.delByAssetIpId(id);
-            // 删除ip关联的端口
+            // 删除端口关联的web
             List<String> portIds = assetPortMapper.getPortIdsByIpId(id);
             if (!portIds.isEmpty()) {
-                assetPortMapper.delByPortIds(portIds);
                 // 删除端口关联的web
                 assetWebMapper.deleteByPortId(portIds);
             }
+            // 删除ip关联的端口
+            assetPortMapper.delByIpId(id);
         });
         // 删除ip关联的漏洞
         assetVulMapper.delByIpIds(list);

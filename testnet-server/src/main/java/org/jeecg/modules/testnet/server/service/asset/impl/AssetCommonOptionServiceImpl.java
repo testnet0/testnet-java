@@ -542,7 +542,6 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
     }
 
     @Override
-    @Async
     public void deleteAssetByQuery(String params) {
         JSONObject jsonObject = JSONObject.parseObject(params);
         String assetType = jsonObject.getString("assetType");

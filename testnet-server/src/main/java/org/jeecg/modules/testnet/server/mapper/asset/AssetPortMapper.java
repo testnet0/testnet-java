@@ -35,6 +35,4 @@ public interface AssetPortMapper extends BaseMapper<AssetPort> {
     @Select("SELECT * FROM asset_port WHERE ip = #{ipId} AND port = #{port}")
     AssetPort getPortByIpIdAndPort(@Param("ipId") String ipId, @Param("port") Integer port);
 
-    @Delete("DELETE FROM asset_port WHERE id IN (#{portIds})")
-    void delByPortIds(List<String> portIds);
 }

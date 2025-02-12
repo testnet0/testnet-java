@@ -19,7 +19,7 @@ import java.util.List;
 public class AssetApiTreeCacheServiceImpl extends ServiceImpl<AssetApiTreeMapper, AssetApiTree> {
 
 
-    @Cacheable(value = "asset:api_tree_id::cache", key = "#id")
+    @Cacheable(value = "asset:api_tree_id::cache", key = "#id", unless = "#result == null ")
     public AssetApiTree selectById(String id) {
         return baseMapper.selectById(id);
     }

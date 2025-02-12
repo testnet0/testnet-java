@@ -47,7 +47,7 @@ public class AssetLabelServiceImpl extends ServiceImpl<AssetLabelMapper, AssetLa
     }
 
     @Override
-    @Cacheable(value = "asset:label:cache", key = "#s")
+    @Cacheable(value = "asset:label:cache", key = "#s", unless = "#result == null ")
     public AssetLabel getByLabelIdOrName(String s) {
         return assetLabelMapper.getByLabelIdOrName(s);
     }
