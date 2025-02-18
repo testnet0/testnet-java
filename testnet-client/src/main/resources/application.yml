@@ -6,23 +6,7 @@ logging:
     logging:
       com.baomidou.mybatisplus.core.mapper: DEBUG
 spring:
-  datasource:
-    url: jdbc:sqlite:/testnet-client/result/fallback.db
-    driver-class-name: org.sqlite.JDBC
-    username:
-    password:
-  application:
-    name: testnet-executor
   profiles:
     active: '@profile.name@'
-#
 liteflow:
   print-banner: false
-testnet:
-  client:
-    name: testnet-client
-    version: v2.0
-  grpc:
-    token: ${TESTNET_GRPC_TOKEN}
-  result:
-    path: /tmp/

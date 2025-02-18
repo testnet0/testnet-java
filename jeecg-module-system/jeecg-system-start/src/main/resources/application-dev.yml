@@ -290,6 +290,7 @@ jeecg:
   # ElasticSearch 6设置
   elasticsearch:
     cluster-name: jeecg-ES
+    userPass: xxx
     cluster-nodes: 127.0.0.1:9200
     check-enabled: false
 #cas单点登录

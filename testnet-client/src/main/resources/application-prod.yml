@@ -1,6 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:/testnet-client/result/fallback.db
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+  application:
+    name: testnet-executor
 testnet:
   client:
     name: ${CLIENT_NAME}
+    version: v2.0
+  grpc:
+    token: ${TESTNET_GRPC_TOKEN}
+  result:
+    path: /tmp/
 grpc:
   client:
     GLOBAL:
