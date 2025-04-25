@@ -3,8 +3,8 @@ package org.jeecg.modules.testnet.server.controller.liteflow;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletResponse;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "节点")
+@Tag(name = "节点")
 @RestController
 @RequestMapping("/testnet.server/client")
 @Slf4j
@@ -44,7 +44,7 @@ public class ClientController extends JeecgController<Client, IClientService> {
      * @return
      */
     //@AutoLog(value = "节点-分页列表查询")
-    @ApiOperation(value = "节点-分页列表查询", notes = "节点-分页列表查询")
+    @Operation(summary = "节点-分页列表查询")
     @GetMapping(value = "/list")
     public Result<IPage<Client>> queryPageList(Client client,
                                                @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -63,7 +63,7 @@ public class ClientController extends JeecgController<Client, IClientService> {
      * @return
      */
     @AutoLog(value = "节点-添加")
-    @ApiOperation(value = "节点-添加", notes = "节点-添加")
+    @Operation(summary = "节点-添加")
     @RequiresPermissions("testnet.server:client:add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody Client client) {
@@ -78,7 +78,7 @@ public class ClientController extends JeecgController<Client, IClientService> {
      * @return
      */
     @AutoLog(value = "节点-编辑")
-    @ApiOperation(value = "节点-编辑", notes = "节点-编辑")
+    @Operation(summary = "节点-编辑")
     @RequiresPermissions("testnet.server:client:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody Client client) {
@@ -93,7 +93,7 @@ public class ClientController extends JeecgController<Client, IClientService> {
      * @return
      */
     @AutoLog(value = "节点-通过id删除")
-    @ApiOperation(value = "节点-通过id删除", notes = "节点-通过id删除")
+    @Operation(summary = "节点-通过id删除")
     @RequiresPermissions("testnet.server:client:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
@@ -108,7 +108,7 @@ public class ClientController extends JeecgController<Client, IClientService> {
      * @return
      */
     @AutoLog(value = "节点-批量删除")
-    @ApiOperation(value = "节点-批量删除", notes = "节点-批量删除")
+    @Operation(summary = "节点-批量删除")
     @RequiresPermissions("testnet.server:client:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
@@ -123,7 +123,7 @@ public class ClientController extends JeecgController<Client, IClientService> {
      * @return
      */
     //@AutoLog(value = "节点-通过id查询")
-    @ApiOperation(value = "节点-通过id查询", notes = "节点-通过id查询")
+    @Operation(summary = "节点-通过id查询")
     @GetMapping(value = "/queryById")
     public Result<Client> queryById(@RequestParam(name = "id", required = true) String id) {
         Client client = clientService.getById(id);

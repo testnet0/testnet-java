@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.testnet.server.dto.AssetIpDTO;
 import org.jeecg.modules.testnet.server.entity.asset.AssetIp;
+import org.jeecg.modules.testnet.server.entity.asset.AssetWeb;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetIpMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetPortMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetVulMapper;
@@ -19,6 +20,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -48,10 +50,20 @@ public class AssetIpServiceImpl extends ServiceImpl<AssetIpMapper, AssetIp> impl
 
     @Override
     public IPage<AssetIp> page(IPage<AssetIp> page, QueryWrapper<AssetIp> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper,parameterMap);
+        return super.page(page, queryWrapper);
+    }
+
+    @Override
+    public List<AssetIp> list(QueryWrapper<AssetIp> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper,parameterMap);
+        return super.list(queryWrapper);
+    }
+
+    private void queryGen(QueryWrapper<AssetIp> queryWrapper, Map<String, String[]> parameterMap) {
         if (parameterMap != null && parameterMap.containsKey("sub_domain")) {
             queryWrapper.inSql("id", "SELECT aisd.ip_id FROM asset_ip_sub_domain aisd LEFT JOIN asset_sub_domain asb ON asb.id = aisd.subdomain_id WHERE asb.sub_domain LIKE '%" + parameterMap.get("sub_domain")[0] + "%'");
         }
-        return super.page(page, queryWrapper);
     }
 
     @Override
@@ -66,10 +78,13 @@ public class AssetIpServiceImpl extends ServiceImpl<AssetIpMapper, AssetIp> impl
 
     @Override
     public AssetIpDTO convertDTO(AssetIp assetIp) {
-        AssetIpDTO assetIpDTO = new AssetIpDTO();
-        BeanUtil.copyProperties(assetIp, assetIpDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-        assetIpDTO.setSubDomains(assetIpSubdomainRelationService.getSubDomainsByIpId(assetIp.getId()));
-        return assetIpDTO;
+       if(assetIp!=null){
+           AssetIpDTO assetIpDTO = new AssetIpDTO();
+           BeanUtil.copyProperties(assetIp, assetIpDTO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
+           assetIpDTO.setSubDomains(assetIpSubdomainRelationService.getSubDomainsByIpId(assetIp.getId()));
+           return assetIpDTO;
+       }
+       return null;
     }
 
     @Override

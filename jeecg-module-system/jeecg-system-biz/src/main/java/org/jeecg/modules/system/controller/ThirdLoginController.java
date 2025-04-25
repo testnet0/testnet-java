@@ -5,7 +5,7 @@ import cn.hutool.core.util.RandomUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xkcoding.justauth.AuthRequestFactory;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import me.zhyd.oauth.model.AuthCallback;
 import me.zhyd.oauth.model.AuthResponse;
@@ -15,6 +15,7 @@ import me.zhyd.oauth.utils.StringUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.constant.CommonConstant;
 import org.jeecg.common.constant.enums.MessageTypeEnum;
+import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.common.system.util.JwtUtil;
 import org.jeecg.common.util.*;
 import org.jeecg.modules.base.service.BaseCommonService;
@@ -73,6 +74,9 @@ public class ThirdLoginController {
 
 	@Autowired
 	private ISysThirdAppConfigService appConfigService;
+
+	@Autowired
+	public ISysBaseAPI sysBaseAPI;
 
 	@RequestMapping("/render/{source}")
     public void render(@PathVariable("source") String source, HttpServletResponse response) throws IOException {
@@ -228,7 +232,11 @@ public class ThirdLoginController {
 	public Result<JSONObject> getThirdLoginUser(@PathVariable("token") String token,@PathVariable("thirdType") String thirdType,@PathVariable("tenantId") String tenantId) throws Exception {
 		Result<JSONObject> result = new Result<JSONObject>();
 		String username = JwtUtil.getUsername(token);
-
+		//update-begin---author:chenrui ---date:20250210  for：[QQYUN-11021]三方登录接口通过token获取用户信息漏洞修复------------
+		if (!TokenUtils.verifyToken(token, sysBaseAPI, redisUtil)) {
+			return Result.noauth("token验证失败");
+		}
+		//update-end---author:chenrui ---date:20250210  for：[QQYUN-11021]三方登录接口通过token获取用户信息漏洞修复------------
 		//1. 校验用户是否有效
 		SysUser sysUser = sysUserService.getUserByName(username);
 		result = sysUserService.checkUserIsEffective(sysUser);
@@ -275,7 +283,7 @@ public class ThirdLoginController {
 	 * @param jsonObject
 	 * @return
 	 */
-	@ApiOperation("手机号登录接口")
+	@Operation(summary ="手机号登录接口")
 	@PostMapping("/bindingThirdPhone")
 	@ResponseBody
 	public Result<String> bindingThirdPhone(@RequestBody JSONObject jsonObject) {

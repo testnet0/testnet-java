@@ -7,7 +7,7 @@
 package org.jeecg.modules.testnet.server.service.dashboard;
 
 public interface IDashBoardService {
-    String getCardData();
+    String getCardData(String projectId);
 
     String getTaskData();
 

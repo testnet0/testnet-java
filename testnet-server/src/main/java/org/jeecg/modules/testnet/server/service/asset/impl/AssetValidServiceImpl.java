@@ -136,9 +136,7 @@ public class AssetValidServiceImpl implements IAssetValidService {
                 map.put("project_id", "projectId");
                 break;
             case "web":
-                map.put("port_id", "portId");
-                map.put("domain", "domain");
-                map.put("project_id", "projectId");
+                map.put("web_url", "webUrl");
                 break;
             case "vul":
                 map.put("asset_type", "assetType");

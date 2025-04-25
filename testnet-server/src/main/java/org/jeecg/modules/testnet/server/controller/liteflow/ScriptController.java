@@ -3,8 +3,8 @@ package org.jeecg.modules.testnet.server.controller.liteflow;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -13,13 +13,14 @@ import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.testnet.server.entity.liteflow.Script;
 import org.jeecg.modules.testnet.server.service.liteflow.IScriptService;
+import org.jeecg.modules.testnet.server.vo.workflow.LiteFlowNodeVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * @Description: 脚本
@@ -27,7 +28,7 @@ import javax.servlet.http.HttpServletResponse;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "脚本")
+@Tag(name = "脚本")
 @RestController
 @RequestMapping("/testnet.server/script")
 @Slf4j
@@ -45,7 +46,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * @return
      */
     //@AutoLog(value = "脚本-分页列表查询")
-    @ApiOperation(value = "脚本-分页列表查询", notes = "脚本-分页列表查询")
+    @Operation(summary = "脚本-分页列表查询")
     @GetMapping(value = "/list")
     public Result<IPage<Script>> queryPageList(Script script,
                                                @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -58,6 +59,13 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
         return Result.OK(pageList);
     }
 
+    @Operation(summary = "获取节点列表")
+    @GetMapping(value = "/getNodeList")
+    public Result<List<LiteFlowNodeVO>> queryPageList() {
+        List<LiteFlowNodeVO> liteFlowNodeVOS = scriptService.listNode();
+        return Result.OK(liteFlowNodeVOS);
+    }
+
     /**
      * 添加
      *
@@ -65,7 +73,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * @return
      */
     @AutoLog(value = "脚本-添加")
-    @ApiOperation(value = "脚本-添加", notes = "脚本-添加")
+    @Operation(summary = "脚本-添加")
     @RequiresPermissions("testnet.server:script:add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody Script script) {
@@ -80,7 +88,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * @return
      */
     @AutoLog(value = "脚本-通过id复制")
-    @ApiOperation(value = "脚本-通过id复制", notes = "脚本-通过id复制")
+    @Operation(summary = "脚本-通过id复制")
     @RequiresPermissions("testnet.server:script:add")
     @GetMapping(value = "/copyScript")
     public Result<String> copyScript(@RequestParam(name = "id", required = true) String id) {
@@ -96,7 +104,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * @return
      */
     @AutoLog(value = "脚本-编辑")
-    @ApiOperation(value = "脚本-编辑", notes = "脚本-编辑")
+    @Operation(summary = "脚本-编辑")
     @RequiresPermissions("testnet.server:script:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody Script script) {
@@ -108,7 +116,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * 更新状态
      */
     @AutoLog(value = "脚本管理-更新状态")
-    @ApiOperation(value = "脚本管理-更新状态", notes = "脚本管理-更新状态")
+    @Operation(summary = "脚本管理-更新状态")
     @RequiresPermissions("testnet.server:script:edit")
     @GetMapping(value = "/changeStatus")
     public Result<String> changeStatus(@RequestParam(name = "id", required = true) String id, @RequestParam(name = "status", required = true) Boolean status) {
@@ -123,7 +131,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * @return
      */
     @AutoLog(value = "脚本-通过id删除")
-    @ApiOperation(value = "脚本-通过id删除", notes = "脚本-通过id删除")
+    @Operation(summary = "脚本-通过id删除")
     @RequiresPermissions("testnet.server:script:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
@@ -138,7 +146,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * @return
      */
     @AutoLog(value = "脚本-批量删除")
-    @ApiOperation(value = "脚本-批量删除", notes = "脚本-批量删除")
+    @Operation(summary = "脚本-批量删除")
     @RequiresPermissions("testnet.server:script:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
@@ -155,7 +163,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
      * @return
      */
     //@AutoLog(value = "脚本-通过id查询")
-    @ApiOperation(value = "脚本-通过id查询", notes = "脚本-通过id查询")
+    @Operation(summary = "脚本-通过id查询")
     @GetMapping(value = "/queryById")
     public Result<Script> queryById(@RequestParam(name = "id", required = true) String id) {
         Script script = scriptService.getById(id);
@@ -189,5 +197,7 @@ public class ScriptController extends JeecgController<Script, IScriptService> {
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
         return super.importExcel(request, response, Script.class);
     }
+
+
 
 }

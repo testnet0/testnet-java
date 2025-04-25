@@ -2,24 +2,23 @@ package org.jeecg.modules.testnet.server;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.jeecg.common.es.JeecgElasticsearchTemplate;
 import org.jeecg.modules.system.service.ISysUserService;
 import org.jeecg.modules.testnet.server.entity.system.InstallFlag;
 import org.jeecg.modules.testnet.server.service.system.IInstallFlagService;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import testnet.common.constan.Constants;
 
 import javax.annotation.Resource;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 @Component
 @Slf4j
 public class TestNetServerRunner implements ApplicationRunner, DisposableBean {
-    @Resource
-    private JeecgElasticsearchTemplate jeecgElasticsearchTemplate;
+
 
     @Resource
     private IInstallFlagService installFlagService;
@@ -27,8 +26,16 @@ public class TestNetServerRunner implements ApplicationRunner, DisposableBean {
     @Resource
     private ISysUserService sysUserService;
 
+    @Resource
+    private Environment env;
+
     @Override
     public void run(ApplicationArguments args) {
+        // 判断当前启动模式
+        if (!isProductionEnvironment()) {
+            log.info("当前环境不是生产环境，跳过初始化...");
+            return;
+        }
         InstallFlag installFlag = installFlagService.getFlag();
         if (installFlag.getInstalled().equals(0)) {
             log.info("首次安装，开始初始化...");
@@ -38,6 +45,10 @@ public class TestNetServerRunner implements ApplicationRunner, DisposableBean {
             installFlag.setInstalled(1);
             installFlagService.saveOrUpdate(installFlag);
         }
+    }
+
+    private boolean isProductionEnvironment() {
+        return Arrays.asList(env.getActiveProfiles()).contains("prod");
     }
 
     @Override

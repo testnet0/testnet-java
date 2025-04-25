@@ -1,7 +1,7 @@
 package org.jeecg.modules.testnet.server.service.liteflow.impl;
 
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -264,6 +264,7 @@ public class LiteFlowTaskServiceImpl extends ServiceImpl<LiteFlowTaskMapper, Lit
             if (redissonLockClient.tryLock(id, 10, 10)) {
                 liteFlowTaskMapper.updateById(liteFlowTask);
             }
+            redissonLockClient.unlock(liteFlowTask.getId());
             return Result.ok("停止成功！");
         } else {
             return Result.error("没有准备中的任务！");

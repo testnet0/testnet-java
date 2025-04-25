@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -24,7 +24,7 @@ import java.io.Serializable;
 @TableName("client")
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "client对象", description = "节点")
+@Schema(description="节点")
 public class Client implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -32,66 +32,66 @@ public class Client implements Serializable {
      * 主键
      */
     @TableId(type = IdType.ASSIGN_ID)
-    @ApiModelProperty(value = "主键")
+    @Schema(description = "主键")
     private java.lang.String id;
     /**
      * 节点名称
      */
     @Excel(name = "节点名称", width = 15)
-    @ApiModelProperty(value = "节点名称")
+    @Schema(description = "节点名称")
     private java.lang.String clientName;
     /**
      * 节点版本
      */
     @Excel(name = "节点版本", width = 15)
-    @ApiModelProperty(value = "节点版本")
+    @Schema(description = "节点版本")
     private java.lang.String clientVersion;
     /**
      * 节点状态
      */
     @Excel(name = "节点状态", width = 15)
-    @ApiModelProperty(value = "节点状态")
+    @Schema(description = "节点状态")
     private java.lang.String status;
     /**
      * 创建人
      */
-    @ApiModelProperty(value = "创建人")
+    @Schema(description = "创建人")
     private java.lang.String createBy;
     /**
      * 创建日期
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "创建日期")
+    @Schema(description = "创建日期")
     private java.util.Date createTime;
     /**
      * 最后上报时间
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "最后上报时间")
+    @Schema(description = "最后上报时间")
     private java.util.Date updateTime;
     /**
      * 更新人
      */
-    @ApiModelProperty(value = "更新人")
+    @Schema(description = "更新人")
     private java.lang.String updateBy;
     /**
      * 所属部门
      */
-    @ApiModelProperty(value = "所属部门")
+    @Schema(description = "所属部门")
     private java.lang.String sysOrgCode;
 
     /**
      * CPU使用率
      */
-    @ApiModelProperty(value = "CPU使用率")
+    @Schema(description = "CPU使用率")
     private java.lang.Double cpuUsage;
 
-    @ApiModelProperty(value = "总内存")
+    @Schema(description = "总内存")
     private java.lang.Integer totalMemory;
 
-    @ApiModelProperty(value = "可用内存")
+    @Schema(description = "可用内存")
     private java.lang.Integer freeMemory;
 
 }

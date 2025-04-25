@@ -16,7 +16,7 @@ import org.jeecg.modules.testnet.server.mapper.asset.AssetApiMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetApiTreeService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
-import org.jeecg.modules.testnet.server.vo.AssetApiVO;
+import org.jeecg.modules.testnet.server.vo.asset.AssetApiVO;
 import org.springframework.stereotype.Service;
 import testnet.common.enums.AssetTypeEnums;
 import testnet.common.utils.HashUtils;
@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @Description: 接口资产
@@ -47,20 +46,26 @@ public class AssetApiServiceImpl extends ServiceImpl<AssetApiMapper, AssetApi> i
 
     @Override
     public IPage<AssetApi> page(IPage<AssetApi> page, QueryWrapper<AssetApi> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper, parameterMap);
+        return super.page(page, queryWrapper);
+    }
+
+    @Override
+    public List<AssetApi> list(QueryWrapper<AssetApi> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper, parameterMap);
+        return super.list(queryWrapper);
+    }
+
+    private void queryGen(QueryWrapper<AssetApi> queryWrapper, Map<String, String[]> parameterMap) {
         if (parameterMap != null && parameterMap.containsKey("pid")) {
             String parentId = parameterMap.get("pid")[0];
-            if (!parentId.equals("0")) {
-                // 计算耗时
-                long startTime = System.nanoTime(); // 开始时间纳秒级
+            if (StringUtils.isNotBlank(parentId) && !parentId.equals("0")) {
                 String childId = assetApiTreeService.queryTreeChildIds(parentId);
-                long endTime = System.nanoTime(); // 结束时间纳秒级
-                long duration = TimeUnit.NANOSECONDS.toMillis(endTime - startTime);
-                log.info("查询子树ID耗时：{} 毫秒", duration);
                 queryWrapper.in("asset_web_tree_id", Arrays.asList(childId.split(",")));
             }
         }
-        return super.page(page, queryWrapper);
     }
+
 
     @Override
     public AssetApiVO convertVO(AssetApi assetApi) {
@@ -97,8 +102,8 @@ public class AssetApiServiceImpl extends ServiceImpl<AssetApiMapper, AssetApi> i
                     absolutePath = url.getProtocol() + "://" + url.getHost();
                 }
                 String[] parts;
-                String path = url.getPath();
-                if (path.equals("/")) {
+                String path = url.getPath().replaceAll("//", "/");
+                if (path.equals("/") || path.isEmpty()) {
                     parts = new String[]{""};
                 } else {
                     parts = path.split("/");

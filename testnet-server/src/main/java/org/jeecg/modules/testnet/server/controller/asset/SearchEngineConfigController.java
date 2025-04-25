@@ -3,8 +3,8 @@ package org.jeecg.modules.testnet.server.controller.asset;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "空间引擎配置")
+@Tag(name = "空间引擎配置")
 @RestController
 @RequestMapping("/testnet/assetSearchEngine")
 @Slf4j
@@ -43,7 +43,7 @@ public class SearchEngineConfigController extends JeecgController<AssetSearchEng
      * @return
      */
     //@AutoLog(value = "空间引擎配置-分页列表查询")
-    @ApiOperation(value = "空间引擎配置-分页列表查询", notes = "空间引擎配置-分页列表查询")
+    @Operation(summary = "空间引擎配置-分页列表查询")
     @GetMapping(value = "/list")
     public Result<IPage<AssetSearchEngine>> queryPageList(AssetSearchEngine assetSearchEngine,
                                                           @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -63,7 +63,7 @@ public class SearchEngineConfigController extends JeecgController<AssetSearchEng
      * @return
      */
     @AutoLog(value = "空间引擎配置-编辑")
-    @ApiOperation(value = "空间引擎配置-编辑", notes = "空间引擎配置-编辑")
+    @Operation(summary = "空间引擎配置-编辑")
     @RequiresPermissions("testnet:asset_search_engine:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetSearchEngine assetSearchEngine) {

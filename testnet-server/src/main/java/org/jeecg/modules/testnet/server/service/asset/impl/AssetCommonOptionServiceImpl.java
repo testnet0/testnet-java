@@ -8,8 +8,8 @@ package org.jeecg.modules.testnet.server.service.asset.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -46,6 +46,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -113,12 +114,13 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
     @Override
     public <D extends AssetBase> List<? extends AssetBase> queryAssetDOListByQueryAndAssetType(String params, String assetType) {
         JSONObject jsonObject = JSONObject.parseObject(params);
-        JSONObject query = jsonObject.getJSONObject("queryParam");
+        JSONObject queryObject = jsonObject.getJSONObject("queryObject");
+
         String asset = jsonObject.getString("queryObject");
         List<? extends AssetBase> assetsList = new ArrayList<>();
         Map<String, String[]> queryMap = new HashMap<>();
-        if (query != null) {
-            query.forEach((k, v) -> {
+        if (queryObject != null) {
+            queryObject.forEach((k, v) -> {
                 if (v instanceof JSONArray) {
                     JSONArray jsonArray1 = (JSONArray) v;
                     List<String> list = new ArrayList<>();
@@ -140,7 +142,7 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
                 } else {
                     queryWrapper = QueryGenerator.initQueryWrapper(assetClass.getDeclaredConstructor().newInstance(), queryMap);
                 }
-                return assetService.list(queryWrapper);
+                return assetService.list(queryWrapper, queryMap);
             }
         } catch (Exception e) {
             log.error("查询资产类型错误:{}", e.getMessage());
@@ -153,8 +155,25 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
         try {
             IAssetService<D, ? extends AssetBase, ? extends AssetBase> assetService = (IAssetService<D, ?, ?>) getAssetServiceByType(assetType);
             if (assetService != null) {
-                assetService.delRelation(Arrays.asList(assetId.split(",")));
-                assetService.removeById(assetId);
+                List<String> ids = Arrays.asList(assetId.split(","));
+                assetService.delRelation(ids);
+                // 创建线程池
+                ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                // 提交删除关系的任务
+                executorService.submit(() -> assetService.delRelation(ids));
+                // 提交删除每个ID的任务
+                for (String id : ids) {
+                    final String finalId = id;
+                    executorService.submit(() -> assetService.removeById(finalId));
+                }
+                // 关闭线程池
+                executorService.shutdown();
+                try {
+                    // 等待所有任务完成
+                    executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                } catch (InterruptedException e) {
+                    log.error("删除资产类型：{} 错误:{}", assetType, e.getMessage());
+                }
             }
         } catch (Exception e) {
             log.error("删除资产类型：{} 错误:{}", assetType, e.getMessage());
@@ -342,6 +361,9 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
             if (assetService != null) {
                 Result<T> assetVaildResult = assetValidService.isValid(asset, assetType);
                 if (!assetVaildResult.isSuccess()) {
+                    if (StringUtils.isNotBlank(taskId)) {
+                        logService.addINFOLog("server", "更新资产:" + asset + " 失败,原因:" + assetVaildResult.getMessage(), subTaskId);
+                    }
                     return assetVaildResult;
                 }
                 D oldAsset;
@@ -350,7 +372,13 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
                 if (project == null) {
                     project = new Project();
                     project.setProjectName(asset.getProjectId());
-                    projectService.save(project);
+                    try {
+                        // 并发下可能重复创建项目
+                        projectService.save(project);
+                    } catch (Exception e) {
+                        log.warn("项目已存在，重新查询: {}", asset.getProjectId(), e);
+                        project = projectService.getByProjectIdOrName(asset.getProjectId());
+                    }
                 }
                 asset.setProjectId(project.getId());
                 // 处理资产标签
@@ -364,7 +392,14 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
                         if (assetLabel == null) {
                             assetLabel = new AssetLabel();
                             assetLabel.setLabelName(s);
-                            assetLabelService.save(assetLabel);
+                            try {
+                                // 并发下可能重复创建标签
+                                assetLabelService.save(assetLabel);
+                            } catch (Exception e) {
+                                log.warn("标签已存在，重新查询: {}", asset.getAssetLabel(), e);
+                                assetLabel = assetLabelService.getByLabelIdOrName(s);
+                            }
+
                         }
                         idList.add(assetLabel.getId());
                     }
@@ -435,7 +470,7 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
     }
 
     @Override
-    public <D extends AssetBase> long getCountByDate(AssetTypeEnums assetType) {
+    public <D extends AssetBase> long getCountByDate(AssetTypeEnums assetType, String projectId) {
         try {
             IAssetService<D, ? extends AssetBase, ? extends AssetBase> assetService = (IAssetService<D, ? extends AssetBase, ? extends AssetBase>) getAssetServiceByType(assetType);
             if (assetService != null) {
@@ -445,6 +480,9 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
                 LocalDateTime endOfDay = LocalDateTime.of(now.toLocalDate(), LocalTime.MAX);
                 queryWrapper.ge("create_time", startOfDay);
                 queryWrapper.le("create_time", endOfDay);
+                if (StringUtils.isNotBlank(projectId)) {
+                    queryWrapper.eq("project_id", projectId);
+                }
                 return assetService.count(queryWrapper);
             }
         } catch (Exception e) {
@@ -454,11 +492,15 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
     }
 
     @Override
-    public <D extends AssetBase> long getAllCountByAssetType(AssetTypeEnums assetType) {
+    public <D extends AssetBase> long getAllCountByAssetType(AssetTypeEnums assetType, String projectId) {
         try {
             IAssetService<D, ? extends AssetBase, ? extends AssetBase> assetService = (IAssetService<D, ? extends AssetBase, ? extends AssetBase>) getAssetServiceByType(assetType);
             if (assetService != null) {
-                return assetService.count();
+                QueryWrapper<D> queryWrapper = new QueryWrapper<>();
+                if (StringUtils.isNotBlank(projectId)) {
+                    queryWrapper.eq("project_id", projectId);
+                }
+                return assetService.count(queryWrapper);
             }
         } catch (Exception e) {
             log.error("获取资产总数错误,资产类型:{},错误信息:{}", assetType, e.getMessage());
@@ -578,13 +620,37 @@ public class AssetCommonOptionServiceImpl implements IAssetCommonOptionService {
     public <T extends AssetBase> Result<?> batchAdd(List<T> list, AssetTypeEnums assetType) {
         List<String> errorMessage = new ArrayList<>();
         long start = System.currentTimeMillis();
+        // 创建线程池
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        // 用于存储Future对象的列表
+        List<Future<Result<?>>> futures = new ArrayList<>();
+
+        // 提交任务到线程池
         for (int i = 0; i < list.size(); i++) {
-            T t = list.get(i);
-            Result<?> result = addOrUpdate(t, assetType);
-            if (!result.isSuccess()) {
-                errorMessage.add("第" + (i + 1) + "行数据处理失败,原因:" + result.getMessage());
+            final int index = i;
+            final T t = list.get(i);
+            Future<Result<?>> future = executorService.submit(() -> {
+                Result<?> result = addOrUpdate(t, assetType);
+                if (!result.isSuccess()) {
+                    errorMessage.add("第" + (index + 1) + "行数据处理失败,原因:" + result.getMessage());
+                }
+                return result;
+            });
+            futures.add(future);
+        }
+
+        // 等待所有任务完成
+        for (Future<Result<?>> future : futures) {
+            try {
+                future.get(); // 这里会阻塞直到任务完成
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("任务执行异常: {}", e.getMessage());
             }
         }
+
+        // 关闭线程池
+        executorService.shutdown();
         log.info("消耗时间" + (System.currentTimeMillis() - start) + "毫秒");
         if (errorMessage.isEmpty()) {
             return Result.ok("共" + list.size() + "行数据全部成功！");

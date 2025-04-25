@@ -2,8 +2,8 @@ package org.jeecg.modules.testnet.server.service.asset.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -22,7 +22,7 @@ import org.jeecg.modules.testnet.server.entity.asset.AssetSubDomain;
 import org.jeecg.modules.testnet.server.entity.asset.AssetWeb;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
-import org.jeecg.modules.testnet.server.vo.AssetWebVO;
+import org.jeecg.modules.testnet.server.vo.asset.AssetWebVO;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -61,13 +61,23 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
 
     @Override
     public IPage<AssetWeb> page(IPage<AssetWeb> page, QueryWrapper<AssetWeb> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper, parameterMap);
+        return super.page(page, queryWrapper);
+    }
+
+    @Override
+    public List<AssetWeb> list(QueryWrapper<AssetWeb> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper, parameterMap);
+        return super.list(queryWrapper);
+    }
+
+    private void queryGen(QueryWrapper<AssetWeb> queryWrapper, Map<String, String[]> parameterMap) {
         if (parameterMap != null && parameterMap.containsKey("subdomain")) {
             queryWrapper.inSql("domain", "SELECT id from asset_sub_domain WHERE sub_domain LIKE '%" + parameterMap.get("subdomain")[0] + "%'");
         }
         if (parameterMap != null && parameterMap.containsKey("ip")) {
             queryWrapper.inSql("port_id", "select ap.id from asset_port ap LEFT JOIN asset_ip ai ON ap.ip = ai.id where ai.ip like '%" + parameterMap.get("ip")[0] + "%'");
         }
-        return super.page(page, queryWrapper);
     }
 
     @Override
@@ -102,9 +112,14 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
                     assetIpDTO.setIp(urlInfo.getIp());
                     assetIpDTO.setProjectId(asset.getProjectId());
                     assetIpDTO.setSource(asset.getSource());
-                    assetIpService.addAssetByType(assetIpDTO);
-                    assetIp = new AssetIp();
-                    assetIp.setId(assetIpDTO.getId());
+                    try {
+                        assetIpService.addAssetByType(assetIpDTO);
+                        assetIp = new AssetIp();
+                        assetIp.setId(assetIpDTO.getId());
+                    } catch (Exception e) {
+                        log.warn("主键冲突，重新查询资产: {}", asset, e);
+                        assetIp = assetIpService.selectByIp(urlInfo.getIp(), asset.getProjectId());
+                    }
                 }
                 AssetPort assetPort = assetPortService.getPortByIpIdAndPort(assetIp.getId(), urlInfo.getPort());
                 if (assetPort == null) {
@@ -113,10 +128,15 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
                     assetPort.setIsOpen("Y");
                     assetPort.setPort(urlInfo.getPort());
                     assetPort.setProtocol(urlInfo.getProtocol());
-                    assetPort.setService(urlInfo.getDomain());
+                    // assetPort.setService(urlInfo.getDomain());
                     assetPort.setProjectId(asset.getProjectId());
                     assetPort.setSource(asset.getSource());
-                    assetPortService.save(assetPort);
+                    try {
+                        assetPortService.save(assetPort);
+                    } catch (Exception e) {
+                        log.warn("主键冲突，重新查询资产: {}", asset, e);
+                        assetPort = assetPortService.getPortByIpIdAndPort(assetIp.getId(), urlInfo.getPort());
+                    }
                 }
                 asset.setPortId(assetPort.getId());
             }
@@ -127,8 +147,14 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
                     assetSubDomainIpsDTO.setIps(urlInfo.getIp());
                     assetSubDomainIpsDTO.setProjectId(asset.getProjectId());
                     assetSubDomainIpsDTO.setSubDomain(urlInfo.getDomain());
-                    assetSubDomainService.addAssetByType(assetSubDomainIpsDTO);
-                    asset.setDomain(assetSubDomainIpsDTO.getId());
+                    try {
+                        assetSubDomainService.addAssetByType(assetSubDomainIpsDTO);
+                        asset.setDomain(assetSubDomainIpsDTO.getId());
+                    } catch (Exception e) {
+                        log.warn("主键冲突，重新查询资产: {}", asset, e);
+                        assetSubDomain = assetSubDomainService.selectBySubdomain(urlInfo.getDomain(), asset.getProjectId());
+                        asset.setDomain(assetSubDomain.getId());
+                    }
                 } else {
                     AssetSubDomainIpsDTO assetSubDomainIpsDTO = assetSubDomainService.convertDTO(assetSubDomain);
                     if (StringUtils.isEmpty(assetSubDomainIpsDTO.getIps())) {
@@ -145,7 +171,7 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
 
         }
         if (save(asset)) {
-            if (asset.getStatusCode() != null && asset.getStatusCode().equals(200)) {
+//            if (asset.getStatusCode() != null && asset.getStatusCode().equals(200)) {
                 AssetApiDTO assetApiDTO = new AssetApiDTO();
                 assetApiDTO.setAbsolutePath(asset.getWebUrl());
                 assetApiDTO.setTitle(asset.getWebTitle());
@@ -154,7 +180,7 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
                 assetApiDTO.setStatusCode(asset.getStatusCode());
                 assetApiDTO.setContentLength(asset.getContentLength());
                 assetApiService.addAssetByType(assetApiDTO);
-            }
+           // }
         }
         return true;
     }
@@ -185,6 +211,12 @@ public class AssetWebServiceImpl extends ServiceImpl<AssetWebMapper, AssetWeb> i
             return newTechJson;
         }
 
+        if (!newTechJson.startsWith("[")) {
+            newTechJson = "[" + newTechJson + "]";
+        }
+        if (!oldTechJson.startsWith("[")) {
+            oldTechJson = "[" + oldTechJson + "]";
+        }
         // 解析新的和旧的JSONArray
         JSONArray newTechArray = JSONArray.parseArray(newTechJson);
         JSONArray oldTechArray = JSONArray.parseArray(oldTechJson);

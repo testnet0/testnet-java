@@ -9,7 +9,7 @@ package org.jeecg.modules.testnet.server.entity.asset;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -21,7 +21,7 @@ public class AssetIpSubDomainRelation {
      * 主键
      */
     @TableId(type = IdType.ASSIGN_ID)
-    @ApiModelProperty(value = "主键")
+    @Schema(description = "主键")
     private java.lang.String id;
 
     private String ipId;

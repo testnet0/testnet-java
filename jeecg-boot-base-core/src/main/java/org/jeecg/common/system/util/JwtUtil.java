@@ -6,6 +6,17 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
@@ -19,16 +30,6 @@ import org.jeecg.common.system.vo.SysUserCacheInfo;
 import org.jeecg.common.util.DateUtils;
 import org.jeecg.common.util.SpringContextUtils;
 import org.jeecg.common.util.oConvertUtils;
-
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Date;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @Author Scott
@@ -199,11 +200,13 @@ public class JwtUtil {
 		}
 		//update-begin---author:chenrui ---date:20250107  for：[QQYUN-10785]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
 		// 是否存在字符串标志
-		boolean multiStr = false;
+		boolean multiStr;
 		if(oConvertUtils.isNotEmpty(key) && key.trim().matches("^\\[\\w+]$")){
 			key = key.substring(1,key.length()-1);
 			multiStr = true;
-		}
+		} else {
+            multiStr = false;
+        }
 		//update-end---author:chenrui ---date:20250107  for：[QQYUN-10785]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
 		//替换为当前系统时间(年月日)
 		if (key.equals(DataBaseConstant.SYS_DATE)|| key.toLowerCase().equals(DataBaseConstant.SYS_DATE_TABLE)) {
@@ -286,7 +289,15 @@ public class JwtUtil {
 					//update-begin---author:chenrui ---date:20250107  for：[QQYUN-10785]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
 					returnValue = user.getSysMultiOrgCode().stream()
 							.filter(Objects::nonNull)
-							.map(orgCode -> "'" + orgCode + "'")
+							//update-begin---author:chenrui ---date:20250224  for：[issues/7288]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
+							.map(orgCode -> {
+								if (multiStr) {
+									return "'" + orgCode + "'";
+								} else {
+									return orgCode;
+								}
+							})
+							//update-end---author:chenrui ---date:20250224  for：[issues/7288]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
 							.collect(Collectors.joining(", "));
 					//update-end---author:chenrui ---date:20250107  for：[QQYUN-10785]数据权限，查看自己拥有部门的权限中存在问题 #7288------------
 				}

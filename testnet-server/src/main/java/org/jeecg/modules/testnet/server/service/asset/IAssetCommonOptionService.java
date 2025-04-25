@@ -34,9 +34,9 @@ public interface IAssetCommonOptionService {
 
     <T extends AssetBase> Result<? extends AssetBase> addOrUpdate(T asset, AssetTypeEnums assetType);
 
-    <D extends AssetBase> long getCountByDate(AssetTypeEnums assetType);
+    <D extends AssetBase> long getCountByDate(AssetTypeEnums assetType, String projectId);
 
-    <D extends AssetBase> long getAllCountByAssetType(AssetTypeEnums assetType);
+    <D extends AssetBase> long getAllCountByAssetType(AssetTypeEnums assetType, String projectId);
 
     <D extends AssetBase, V extends AssetBase> IPage<V> page(D asset, Integer pageNo, Integer pageSize, Map<String, String[]> parameterMap, AssetTypeEnums assetType);
 
@@ -61,7 +61,6 @@ public interface IAssetCommonOptionService {
     <D extends AssetBase> void handleChangeLabels(String params);
 
     void handleChangeVulStatus(String params);
-
 
     <T extends AssetBase, D extends AssetBase> D getUniqueAsset(T asset, AssetTypeEnums assetType);
 

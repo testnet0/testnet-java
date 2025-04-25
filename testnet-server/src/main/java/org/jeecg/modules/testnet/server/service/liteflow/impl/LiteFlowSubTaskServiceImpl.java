@@ -1,28 +1,22 @@
 package org.jeecg.modules.testnet.server.service.liteflow.impl;
 
 
-import cn.hutool.core.codec.Base64Decoder;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.lucene.store.Directory;
 import org.jeecg.boot.starter.lock.client.RedissonLockClient;
-import org.jeecg.common.es.JeecgElasticsearchTemplate;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
 import org.jeecg.modules.testnet.server.mapper.liteflow.LiteFlowSubTaskMapper;
 import org.jeecg.modules.testnet.server.mapper.liteflow.LiteFlowTaskMapper;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowSubTaskService;
 import org.jeecg.modules.testnet.server.service.lucene.LuceneService;
-import org.jeecg.modules.testnet.server.vo.LiteflowInstanceLogVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import testnet.common.constan.Constants;
 import testnet.common.enums.LiteFlowStatusEnums;
 
 import javax.annotation.Resource;
@@ -94,8 +88,8 @@ public class LiteFlowSubTaskServiceImpl extends ServiceImpl<LiteFlowSubTaskMappe
     }
 
     @Override
-    public IPage<JSONObject> getLogById(String id, Integer pageNo, Integer pageSize) {
-        return luceneService.searchLogsByTaskId(id, pageNo, pageSize);
+    public IPage<JSONObject> getLogById(String id, Integer pageNo, Integer pageSize,String keyword) {
+        return luceneService.searchLogsByTaskId(id, pageNo, pageSize, keyword);
     }
 
     @Override

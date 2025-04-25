@@ -16,8 +16,7 @@ import org.jeecg.modules.testnet.server.mapper.asset.AssetSubDomainMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetVulMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
-import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
-import org.jeecg.modules.testnet.server.vo.AssetVulVO;
+import org.jeecg.modules.testnet.server.vo.asset.AssetVulVO;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -36,9 +35,6 @@ import java.util.Map;
 public class AssetVulServiceImpl extends ServiceImpl<AssetVulMapper, AssetVul> implements IAssetService<AssetVul, AssetVulVO, AssetVulDTO> {
 
     @Resource
-    private IAssetValidService assetValidService;
-
-    @Resource
     private AssetSubDomainMapper assetSubDomainMapper;
 
     @Resource
@@ -53,6 +49,11 @@ public class AssetVulServiceImpl extends ServiceImpl<AssetVulMapper, AssetVul> i
     @Override
     public IPage<AssetVul> page(IPage<AssetVul> page, QueryWrapper<AssetVul> queryWrapper, Map<String, String[]> parameterMap) {
         return super.page(page, queryWrapper);
+    }
+
+    @Override
+    public List<AssetVul> list(QueryWrapper<AssetVul> queryWrapper, Map<String, String[]> parameterMap) {
+        return super.list(queryWrapper);
     }
 
     @Override
@@ -134,20 +135,6 @@ public class AssetVulServiceImpl extends ServiceImpl<AssetVulMapper, AssetVul> i
         list.forEach(this::removeById);
     }
 
-//    @Override
-//    public boolean saveBatch(Collection<AssetVul> entityList) {
-//        List<AssetVul> assetVulList = new ArrayList<>();
-//        for (AssetVul assetVul : entityList) {
-//            if (assetValidService.isValid((AssetVulDTO) assetVul, AssetTypeEnums.VUL).isSuccess()) {
-//                if (assetValidService.getUniqueAsset((AssetVulDTO) assetVul, this, AssetTypeEnums.VUL) == null) {
-//                    assetVulList.add(assetVul);
-//                } else {
-//                    log.info("漏洞:{} 重复,跳过", assetVul);
-//                }
-//            }
-//        }
-//        return super.saveBatch(assetVulList);
-//    }
 
     @Override
     public List<AssetVul> list(Wrapper<AssetVul> queryWrapper) {

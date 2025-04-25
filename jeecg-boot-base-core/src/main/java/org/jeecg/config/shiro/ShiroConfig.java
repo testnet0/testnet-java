@@ -134,7 +134,7 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/swagger-ui.html", "anon");
         filterChainDefinitionMap.put("/swagger**/**", "anon");
         filterChainDefinitionMap.put("/webjars/**", "anon");
-        filterChainDefinitionMap.put("/v2/**", "anon");
+        filterChainDefinitionMap.put("/v3/**", "anon");
 
         // update-begin--Author:sunjianlei Date:20210510 for：排除消息通告查看详情页面（用于第三方APP）
         filterChainDefinitionMap.put("/sys/annountCement/show/**", "anon");
@@ -180,6 +180,8 @@ public class ShiroConfig {
         // 企业微信证书排除
         filterChainDefinitionMap.put("/WW_verify*", "anon");
 
+        filterChainDefinitionMap.put("/openapi/call/**", "anon");
+
         // 添加自己的过滤器并且取名为jwt
         Map<String, Filter> filterMap = new HashMap<String, Filter>(1);
         //如果cloudServer为空 则说明是单体 需要加载跨域配置【微服务跨域切换】
@@ -215,6 +217,10 @@ public class ShiroConfig {
         //update-begin---author:chenrui ---date:20241202  for：[issues/7491]运行时间好长，效率慢 ------------
         registration.addUrlPatterns("/test/ai/chat/send");
         //update-end---author:chenrui ---date:20241202  for：[issues/7491]运行时间好长，效率慢 ------------
+        registration.addUrlPatterns("/airag/flow/run");
+        registration.addUrlPatterns("/airag/flow/debug");
+        registration.addUrlPatterns("/airag/chat/send");
+        registration.addUrlPatterns("/airag/app/debug");
         //支持异步
         registration.setAsyncSupported(true);
         registration.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ASYNC);
@@ -314,7 +320,7 @@ public class ShiroConfig {
 
             return sentinelManager;
         }
-        
+
         // redis 单机支持，在集群为空，或者集群无机器时候使用 add by jzyadmin@163.com
         if (lettuceConnectionFactory.getClusterConfiguration() == null || lettuceConnectionFactory.getClusterConfiguration().getClusterNodes().isEmpty()) {
             RedisManager redisManager = new RedisManager();

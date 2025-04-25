@@ -1,6 +1,7 @@
 package org.jeecg.modules.testnet.server.service.grpc;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -8,11 +9,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.jeecg.boot.starter.lock.client.RedissonLockClient;
 import org.jeecg.modules.testnet.server.entity.client.Client;
 import org.jeecg.modules.testnet.server.entity.client.ClientConfig;
-import org.jeecg.modules.testnet.server.entity.client.ClientTools;
 import org.jeecg.modules.testnet.server.entity.liteflow.Chain;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
-import org.jeecg.modules.testnet.server.entity.liteflow.Script;
 import org.jeecg.modules.testnet.server.service.client.IClientConfigService;
 import org.jeecg.modules.testnet.server.service.client.IClientService;
 import org.jeecg.modules.testnet.server.service.liteflow.IChainService;
@@ -64,6 +63,7 @@ public class ClientMessageServiceImpl extends ClientMessageServiceGrpc.ClientMes
 
     @Resource
     private ILiteFlowTaskService liteFlowTaskService;
+
 
     @Override
     public void reportClientStatus(ClientStatusMessage request, StreamObserver<ClientResponse> responseObserver) {
@@ -212,72 +212,51 @@ public class ClientMessageServiceImpl extends ClientMessageServiceGrpc.ClientMes
         if (undoList != null && !undoList.isEmpty()) {
             log.info("扫描到{}条待执行任务", undoList.size());
             undoList.forEach(liteFlowTask -> {
-                int currentThreadCount = liteFlowSubTaskService.getCurrentThreadCount(liteFlowTask.getChainId(), clientId);
-                ClientConfig clientConfig = clientConfigService.getClientConfig(clientId, liteFlowTask.getChainId());
-                Integer maxThreads = 0;
-                String config;
-                Chain chain = chainService.getById(liteFlowTask.getChainId());
-                if (clientConfig == null) {
-                    log.info("任务:{} 没有配置，使用默认配置", liteFlowTask.getChainId());
-                    if (chain == null) {
-                        log.error("任务:{} 没有默认配置,执行失败！", liteFlowTask.getChainId());
-                        return;
-                    } else {
-                        maxThreads = chain.getDefaultThread();
-                        config = chain.getConfig();
-                    }
-                } else {
-                    config = clientConfig.getConfig();
-                    maxThreads = clientConfig.getMaxThreads();
-                }
-                if (currentThreadCount < maxThreads) {
-                    List<LiteFlowSubTask> subTaskList = liteFlowSubTaskService.getPendingList(liteFlowTask.getId(), (maxThreads - currentThreadCount));
-                    if (subTaskList != null && !subTaskList.isEmpty()) {
-                        subTaskList.forEach(liteFlowSubTask -> {
-                            if (StringUtils.isNotBlank(config)) {
-                                Yaml yaml = new Yaml();
-                                liteFlowSubTask.setConfig(JSONObject.toJSONString(yaml.load(config)));
-                            }
-                            liteFlowSubTask.setClientId(clientId);
-                            liteFlowSubTask.setTaskStatus(LiteFlowStatusEnums.RUNNING.name());
-                            liteFlowSubTaskService.updateById(liteFlowSubTask);
-                            TaskExecuteMessage taskExecuteMessage = getTaskExecuteMessage(liteFlowTask, liteFlowSubTask, chain);
-                            taskExecuteMessages.add(taskExecuteMessage);
-                            // sendMessage(liteFlowTask, liteFlowSubTask, chain, client.getClientName());
-                        });
-                        liteFlowTask.setUnFinishedChain(liteFlowTask.getUnFinishedChain() - subTaskList.size());
-                        if (redissonLockClient.tryLock(liteFlowTask.getId(), 10, 10)) {
-                            try {
-                                liteFlowTaskService.updateById(liteFlowTask);
-                            } catch (Exception e) {
-                                log.error("更新主表未完成任务数量失败!", e);
-                            } finally {
-                                redissonLockClient.unlock(liteFlowTask.getId());
+                        int currentThreadCount = liteFlowSubTaskService.getCurrentThreadCount(liteFlowTask.getChainId(), clientId);
+                        ClientConfig clientConfig = clientConfigService.getClientConfig(clientId, liteFlowTask.getChainId());
+                        Integer maxThreads = 0;
+                        String config;
+                        Chain chain = chainService.getById(liteFlowTask.getChainId());
+                        if (clientConfig == null) {
+                            log.info("任务:{} 没有配置，使用默认配置", liteFlowTask.getChainId());
+                            if (chain == null) {
+                                log.error("任务:{} 没有默认配置,执行失败！", liteFlowTask.getChainId());
+                                return;
+                            } else {
+                                maxThreads = chain.getDefaultThread();
+                                config = chain.getConfig();
                             }
                         } else {
-                            log.error("获取锁失败，更新主表未完成任务数量失败!");
+                            config = clientConfig.getConfig();
+                            maxThreads = clientConfig.getMaxThreads();
                         }
+                        if (currentThreadCount < maxThreads) {
+                            List<LiteFlowSubTask> subTaskList = liteFlowSubTaskService.getPendingList(liteFlowTask.getId(), (maxThreads - currentThreadCount));
+                            if (subTaskList != null && !subTaskList.isEmpty()) {
+                                log.info("任务:{} 获取到{}条待执行子任务", liteFlowTask.getId(), subTaskList.size());
+                                subTaskList.forEach(liteFlowSubTask -> {
+                                    if (StringUtils.isNotBlank(config)) {
+                                        Yaml yaml = new Yaml();
+                                        liteFlowSubTask.setConfig(JSON.toJSONString(yaml.load(config)));
+                                    }
+                                    liteFlowSubTask.setClientId(clientId);
+                                    liteFlowSubTask.setTaskStatus(LiteFlowStatusEnums.RUNNING.name());
+                                    liteFlowSubTaskService.updateById(liteFlowSubTask);
+                                    TaskExecuteMessage taskExecuteMessage = getTaskExecuteMessage(liteFlowTask, liteFlowSubTask, chain);
+                                    taskExecuteMessages.add(taskExecuteMessage);
+                                });
+                                if (redissonLockClient.tryLock(liteFlowTask.getId(), 10, 10)) {
+                                    liteFlowTask.setUnFinishedChain(liteFlowTask.getUnFinishedChain() - subTaskList.size());
+                                    liteFlowTaskService.updateById(liteFlowTask);
+                                } else {
+                                    log.error("获取锁失败，更新主表未完成任务数量失败!");
+                                }
+                            }
+                        }
+                        redissonLockClient.unlock(liteFlowTask.getId());
+
                     }
-                }
-                return;
-//                switch (liteFlowTask.getRouter()) {
-//                    case "0":
-//                        // 分配给空闲节点
-//                        onlineClients.forEach(client -> {
-//                            executeTask(liteFlowTask, client);
-//                        });
-//                        break;
-//                    case "1":
-//                        // 分配指定节点
-//                        for (String clientId : liteFlowTask.getClientId().split(",")) {
-//                            Client client = clientService.getById(clientId);
-//                            if (client != null && client.getStatus().equals("Y")) {
-//                                executeTask(liteFlowTask, client);
-//                            }
-//                        }
-//                        break;
-//                }
-            });
+            );
 
         }
         return taskExecuteMessages;

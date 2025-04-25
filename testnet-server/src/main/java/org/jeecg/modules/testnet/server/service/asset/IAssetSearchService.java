@@ -5,7 +5,7 @@ import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.testnet.server.dto.AssetSearchDTO;
 import org.jeecg.modules.testnet.server.dto.AssetSearchImportDTO;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
-import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
+import org.jeecg.modules.testnet.server.vo.asset.AssetSearchVO;
 
 public interface IAssetSearchService {
 

@@ -3,8 +3,8 @@ package org.jeecg.modules.testnet.server.controller.liteflow;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -34,7 +34,7 @@ import java.util.List;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "流程管理")
+@Tag(name = "流程管理")
 @RestController
 @RequestMapping("/testnet.server/chain")
 @Slf4j
@@ -59,7 +59,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     //@AutoLog(value = "流程管理-分页列表查询")
-    @ApiOperation(value = "流程管理-分页列表查询", notes = "流程管理-分页列表查询")
+    @Operation(summary = "流程管理-分页列表查询")
     @GetMapping(value = "/list")
     public Result<IPage<Chain>> queryPageList(Chain chain,
                                               @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -79,7 +79,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     @AutoLog(value = "流程管理-添加")
-    @ApiOperation(value = "流程管理-添加", notes = "流程管理-添加")
+    @Operation(summary = "流程管理-添加")
     @RequiresPermissions("testnet.server:chain:add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody Chain chain) {
@@ -96,7 +96,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     @AutoLog(value = "流程管理-复制")
-    @ApiOperation(value = "流程管理-复制", notes = "流程管理-复制")
+    @Operation(summary = "流程管理-复制")
     @RequiresPermissions("testnet.server:chain:add")
     @GetMapping(value = "/copyChain")
     public Result<String> copyChain(@RequestParam(name = "id", required = true) String id) {
@@ -109,7 +109,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * 更新状态
      */
     @AutoLog(value = "流程管理-更新状态")
-    @ApiOperation(value = "流程管理-更新状态", notes = "流程管理-更新状态")
+    @Operation(summary = "流程管理-更新状态")
     @RequiresPermissions("testnet.server:chain:edit")
     @GetMapping(value = "/changeStatus")
     public Result<String> changeStatus(@RequestParam(name = "field", required = true) String field, @RequestParam(name = "id", required = true) String id, @RequestParam(name = "status", required = true) Boolean status) {
@@ -125,7 +125,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     @AutoLog(value = "流程管理-编辑")
-    @ApiOperation(value = "流程管理-编辑", notes = "流程管理-编辑")
+    @Operation(summary = "流程管理-编辑")
     @RequiresPermissions("testnet.server:chain:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody Chain chain) {
@@ -142,7 +142,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     @AutoLog(value = "流程管理-通过id删除")
-    @ApiOperation(value = "流程管理-通过id删除", notes = "流程管理-通过id删除")
+    @Operation(summary = "流程管理-通过id删除")
     @RequiresPermissions("testnet.server:chain:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
@@ -159,7 +159,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     @AutoLog(value = "流程管理-批量删除")
-    @ApiOperation(value = "流程管理-批量删除", notes = "流程管理-批量删除")
+    @Operation(summary = "流程管理-批量删除")
     @RequiresPermissions("testnet.server:chain:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
@@ -176,7 +176,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     //@AutoLog(value = "流程管理-通过id查询")
-    @ApiOperation(value = "流程管理-通过id查询", notes = "流程管理-通过id查询")
+    @Operation(summary = "流程管理-通过id查询")
     @GetMapping(value = "/queryById")
     public Result<Chain> queryById(@RequestParam(name = "id", required = true) String id) {
         Chain chain = chainService.getById(id);
@@ -192,7 +192,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @param assetType
      * @return
      */
-    @ApiOperation(value = "流程管理-通过资产类型查询", notes = "流程管理-通过资产类型查")
+    @Operation(summary = "流程管理-通过资产类型查询")
     @GetMapping(value = "/queryByAssetType")
     @RequiresPermissions("testnet.server:chain:queryByAssetType")
     public Result<List<Chain>> queryByAssetType(@RequestParam(name = "assetType") String assetType) {
@@ -234,7 +234,7 @@ public class ChainController extends JeecgController<Chain, IChainService> {
      * @return
      */
     //@AutoLog(value = "流程管理-查询所有的处理器")
-    @ApiOperation(value = "流程管理-查询所有的处理器", notes = "流程管理-查询所有的处理器")
+    @Operation(summary = "流程管理-查询所有的处理器")
     @GetMapping(value = "/getProcessList")
     public Result<List<DictModel>> getProcessList() {
         List<DictModel> chain = assetResultProcessorService.getProcessList();

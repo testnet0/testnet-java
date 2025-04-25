@@ -14,7 +14,6 @@ import org.jeecg.modules.testnet.server.mapper.asset.AssetPortMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetWebMapper;
 import org.jeecg.modules.testnet.server.service.asset.IAssetIpSubdomainRelationService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
-import org.jeecg.modules.testnet.server.service.asset.IAssetValidService;
 import org.jeecg.modules.testnet.server.vo.asset.AssetPortVO;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -46,13 +45,23 @@ public class AssetPortServiceImpl extends ServiceImpl<AssetPortMapper, AssetPort
 
     @Override
     public IPage<AssetPort> page(IPage<AssetPort> page, QueryWrapper<AssetPort> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper, parameterMap);
+        return super.page(page, queryWrapper);
+    }
+
+    @Override
+    public List<AssetPort> list(QueryWrapper<AssetPort> queryWrapper, Map<String, String[]> parameterMap) {
+        queryGen(queryWrapper, parameterMap);
+        return super.list(queryWrapper);
+    }
+
+    private void queryGen(QueryWrapper<AssetPort> queryWrapper, Map<String, String[]> parameterMap) {
         if (parameterMap != null && parameterMap.containsKey("subdomain")) {
             queryWrapper.inSql("ip", "SELECT aisd.ip_id FROM asset_ip_sub_domain aisd LEFT JOIN asset_sub_domain asd ON asd.id = aisd.subdomain_id WHERE asd.sub_domain LIKE '%" + parameterMap.get("subdomain")[0] + "%'");
         }
         if (parameterMap != null && parameterMap.containsKey("ips")) {
             queryWrapper.inSql("ip", "select id from asset_ip where ip like '%" + parameterMap.get("ips")[0] + "%'");
         }
-        return super.page(page, queryWrapper);
     }
 
     @Override

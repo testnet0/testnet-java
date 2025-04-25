@@ -8,6 +8,7 @@ package org.jeecg.modules.testnet.server.controller.dashboard;
 
 import org.jeecg.modules.testnet.server.service.dashboard.IDashBoardService;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -21,8 +22,8 @@ public class DashBoardController {
     private IDashBoardService dashBoardService;
 
     @RequestMapping("/getCardData")
-    public String getCardData() {
-        return dashBoardService.getCardData();
+    public String getCardData(@RequestParam(required = false) String projectId ) {
+        return dashBoardService.getCardData(projectId);
     }
 
     @RequestMapping("/getScriptData")

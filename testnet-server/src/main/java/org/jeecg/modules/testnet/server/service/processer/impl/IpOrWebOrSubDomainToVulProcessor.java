@@ -8,7 +8,7 @@ package org.jeecg.modules.testnet.server.service.processer.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.modules.testnet.server.dto.asset.AssetVulDTO;

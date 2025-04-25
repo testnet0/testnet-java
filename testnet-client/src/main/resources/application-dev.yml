@@ -9,7 +9,7 @@ spring:
 testnet:
   client:
     name: testnet-client
-    version: v2.0
+    version: v2.2
   grpc:
     token: 123456
   result:

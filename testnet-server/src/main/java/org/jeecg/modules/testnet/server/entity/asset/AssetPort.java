@@ -1,8 +1,8 @@
 package org.jeecg.modules.testnet.server.entity.asset;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -21,7 +21,7 @@ import java.io.Serializable;
 @TableName("asset_port")
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "asset_port对象", description = "端口")
+@Schema(description="端口")
 public class AssetPort extends AssetBase implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -29,14 +29,14 @@ public class AssetPort extends AssetBase implements Serializable {
      * 端口号
      */
     @Excel(name = "端口号", width = 15)
-    @ApiModelProperty(value = "端口号")
+    @Schema(description = "端口号")
     private java.lang.Integer port;
     /**
      * 所属ip
      */
     @Excel(name = "所属ip", width = 15, dictTable = "asset_ip", dicText = "ip", dicCode = "id")
     @Dict(dictTable = "asset_ip", dicText = "ip", dicCode = "id")
-    @ApiModelProperty(value = "所属ip")
+    @Schema(description = "所属ip")
     private java.lang.String ip;
 
 
@@ -44,14 +44,14 @@ public class AssetPort extends AssetBase implements Serializable {
      * 协议
      */
     @Excel(name = "协议", width = 15)
-    @ApiModelProperty(value = "协议")
+    @Schema(description = "协议")
     private java.lang.String protocol;
 
     /**
      * 服务
      */
     @Excel(name = "服务", width = 15)
-    @ApiModelProperty(value = "服务")
+    @Schema(description = "服务")
     private java.lang.String service;
 
 
@@ -59,20 +59,20 @@ public class AssetPort extends AssetBase implements Serializable {
      * 产品
      */
     @Excel(name = "产品", width = 15)
-    @ApiModelProperty(value = "产品")
+    @Schema(description = "产品")
     private java.lang.String product;
     /**
      * 版本
      */
     @Excel(name = "版本", width = 15)
-    @ApiModelProperty(value = "版本")
+    @Schema(description = "版本")
     private java.lang.String version;
     /**
      * Web资产
      */
     @Excel(name = "Web资产", width = 15, dicCode = "is_open")
     @Dict(dicCode = "is_open")
-    @ApiModelProperty(value = "Web资产")
+    @Schema(description = "Web资产")
     private java.lang.String isWeb;
 
     /**
@@ -80,7 +80,7 @@ public class AssetPort extends AssetBase implements Serializable {
      */
     @Excel(name = "是否TLS", width = 15, dicCode = "is_open")
     @Dict(dicCode = "is_open")
-    @ApiModelProperty(value = "是否TLS")
+    @Schema(description = "是否TLS")
     private java.lang.String isTls;
 
     /**
@@ -88,7 +88,7 @@ public class AssetPort extends AssetBase implements Serializable {
      */
     @Excel(name = "端口开放", width = 15, dicCode = "is_open")
     @Dict(dicCode = "is_open")
-    @ApiModelProperty(value = "端口开放")
+    @Schema(description = "端口开放")
     private java.lang.String isOpen;
 
 }

@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jeecg.modules.testnet.server.entity.asset.AssetCompany;
 import org.jeecg.modules.testnet.server.entity.asset.AssetDomain;
-import org.jeecg.modules.testnet.server.entity.asset.AssetIpSubDomainRelation;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetCompanyMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetDomainMapper;
 import org.jeecg.modules.testnet.server.mapper.asset.AssetSubDomainMapper;
@@ -47,6 +46,11 @@ public class AssetDomainServiceImpl extends ServiceImpl<AssetDomainMapper, Asset
     @Override
     public IPage<AssetDomain> page(IPage<AssetDomain> page, QueryWrapper<AssetDomain> queryWrapper, Map<String, String[]> parameterMap) {
         return super.page(page, queryWrapper);
+    }
+
+    @Override
+    public List<AssetDomain> list(QueryWrapper<AssetDomain> queryWrapper, Map<String, String[]> parameterMap) {
+        return super.list(queryWrapper);
     }
 
     @Override
@@ -90,7 +94,12 @@ public class AssetDomainServiceImpl extends ServiceImpl<AssetDomainMapper, Asset
             assetCompany.setCompanyName(assetDomain.getCompanyId());
             assetCompany.setSource(assetDomain.getSource());
             assetCompany.setProjectId(assetDomain.getProjectId());
-            assetCompanyMapper.insert(assetCompany);
+            try {
+                assetCompanyMapper.insert(assetCompany);
+            }catch (Exception e){
+                log.warn("主键冲突，重新查询资产: {}", assetCompany, e);
+                assetCompany = assetCompanyMapper.getCompanyByIdORName(assetDomain.getCompanyId());
+            }
         }
         assetDomain.setCompanyId(assetCompany.getId());
     }

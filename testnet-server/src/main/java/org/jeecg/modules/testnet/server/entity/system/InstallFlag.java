@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -25,7 +25,7 @@ import java.io.Serializable;
 @TableName("install_flag")
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "install_flag对象", description = "安装记录表")
+@Schema(description="安装记录表")
 public class InstallFlag implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -33,41 +33,41 @@ public class InstallFlag implements Serializable {
      * 主键
      */
     @TableId(type = IdType.ASSIGN_ID)
-    @ApiModelProperty(value = "主键")
+    @Schema(description = "主键")
     private java.lang.String id;
     /**
      * 创建人
      */
-    @ApiModelProperty(value = "创建人")
+    @Schema(description = "创建人")
     private java.lang.String createBy;
     /**
      * 创建日期
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "创建日期")
+    @Schema(description = "创建日期")
     private java.util.Date createTime;
     /**
      * 更新人
      */
-    @ApiModelProperty(value = "更新人")
+    @Schema(description = "更新人")
     private java.lang.String updateBy;
     /**
      * 更新日期
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "更新日期")
+    @Schema(description = "更新日期")
     private java.util.Date updateTime;
     /**
      * 所属部门
      */
-    @ApiModelProperty(value = "所属部门")
+    @Schema(description = "所属部门")
     private java.lang.String sysOrgCode;
     /**
      * 已安装
      */
     @Excel(name = "已安装", width = 15)
-    @ApiModelProperty(value = "已安装")
+    @Schema(description = "已安装")
     private java.lang.Integer installed;
 }

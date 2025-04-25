@@ -6,7 +6,7 @@
  **/
 package org.jeecg.modules.testnet.server.service.asset.impl;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.net.InternetDomainName;
@@ -27,7 +27,7 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetSearchEngineService;
 import org.jeecg.modules.testnet.server.service.asset.IAssetSearchService;
 import org.jeecg.modules.testnet.server.service.liteflow.ILiteFlowSubTaskService;
 import org.jeecg.modules.testnet.server.service.search.impl.*;
-import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
+import org.jeecg.modules.testnet.server.vo.asset.AssetSearchVO;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import testnet.common.enums.AssetTypeEnums;

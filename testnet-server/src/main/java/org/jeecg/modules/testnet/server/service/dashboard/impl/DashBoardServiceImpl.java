@@ -6,7 +6,7 @@
  **/
 package org.jeecg.modules.testnet.server.service.dashboard.impl;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import org.jeecg.modules.testnet.server.entity.dashboard.StatisticsCard;
 import org.jeecg.modules.testnet.server.entity.dashboard.ToDoCard;
 import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
@@ -49,14 +49,14 @@ public class DashBoardServiceImpl implements IDashBoardService {
 
 
     @Override
-    public String getCardData() {
+    public String getCardData(String projectId) {
         List<ToDoCard> toDoCardList = new ArrayList<>();
 
         for (AssetTypeEnums value : AssetTypeEnums.values()) {
-            long count = assetCommonOptionService.getCountByDate(value);
+            long count = assetCommonOptionService.getCountByDate(value, projectId);
             ToDoCard toDocard = new ToDoCard();
             toDocard.setTitle(value.getDescription());
-            toDocard.setTotalCount(assetCommonOptionService.getAllCountByAssetType(value));
+            toDocard.setTotalCount(assetCommonOptionService.getAllCountByAssetType(value, projectId));
             toDocard.setTodayIncreaseCount(count);
             toDoCardList.add(toDocard);
         }

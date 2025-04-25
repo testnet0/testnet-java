@@ -1,6 +1,6 @@
 package org.jeecg.modules.testnet.server.vo.asset;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.jeecg.common.aspect.annotation.Dict;
@@ -20,7 +20,7 @@ public class AssetSubDomainVO extends AssetSubDomain {
      */
     @Excel(name = "资产标签", width = 15, dictTable = "asset_label", dicText = "label_name", dicCode = "id")
     @Dict(dictTable = "asset_label", dicText = "label_name", dicCode = "id")
-    @ApiModelProperty(value = "资产标签")
+    @Schema(description = "资产标签")
     private java.lang.String domainLabel;
 
     private long openPort;

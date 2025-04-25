@@ -1,6 +1,6 @@
 package org.jeecg.modules.testnet.server.service.lucene;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.SneakyThrows;
@@ -14,14 +14,14 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
+
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,13 +78,28 @@ public class LuceneService {
      * 根据 taskId 精确搜索日志文档（支持分页）
      */
     @SneakyThrows
-    public IPage<JSONObject> searchLogsByTaskId(String taskId, int pageNo, int pageSize) {
+    public IPage<JSONObject> searchLogsByTaskId(String taskId, int pageNo, int pageSize, String keyword) {
         try (IndexReader reader = DirectoryReader.open(logDirectory)) {
             IndexSearcher searcher = new IndexSearcher(reader);
 
             // 创建 TermQuery，精确匹配 taskId
             Term term = new Term("taskId", taskId);
-            Query query = new TermQuery(term);
+            Query taskIdQuery = new TermQuery(term);
+
+            // 创建 BooleanQuery
+            BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
+            booleanQueryBuilder.add(taskIdQuery, BooleanClause.Occur.MUST);
+
+            // 如果 keyword 不为空，则添加关键字搜索
+            if (keyword != null && !keyword.isEmpty()) {
+                SmartChineseAnalyzer analyzer = new SmartChineseAnalyzer();
+                QueryParser parser = new QueryParser("message", analyzer);
+                Query keywordQuery = parser.parse(keyword);
+                booleanQueryBuilder.add(keywordQuery, BooleanClause.Occur.MUST);
+            }
+
+            // 构建最终的查询
+            Query query = booleanQueryBuilder.build();
 
             // 计算分页参数
             int start = (pageNo - 1) * pageSize;
@@ -115,6 +130,7 @@ public class LuceneService {
             return page;
         }
     }
+
 
     /**
      * 搜索 web 索引（支持分页）

@@ -7,7 +7,7 @@
 package org.jeecg.modules.testnet.server.entity.asset;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.jeecg.common.aspect.annotation.Dict;
 import org.jeecgframework.poi.excel.annotation.Excel;
@@ -23,35 +23,35 @@ public class AssetApiTree extends AssetBase implements Serializable {
      */
     @Excel(name = "所属WEB", width = 15, dictTable = "asset_web", dicText = "web_url", dicCode = "id")
     @Dict(dictTable = "asset_web", dicText = "web_url", dicCode = "id")
-    @ApiModelProperty(value = "所属WEB")
+    @Schema(description = "所属WEB")
     private java.lang.String assetWebId;
 
     /**
      * 相对路径
      */
     @Excel(name = "相对路径", width = 15)
-    @ApiModelProperty(value = "相对路径")
+    @Schema(description = "相对路径")
     private java.lang.String relativePath;
 
     /**
      * 绝对路径
      */
     @Excel(name = "绝对路径", width = 15)
-    @ApiModelProperty(value = "绝对路径")
+    @Schema(description = "绝对路径")
     private java.lang.String absolutePath;
 
     /**
      * 父级节点
      */
     @Excel(name = "父级节点", width = 15)
-    @ApiModelProperty(value = "父级节点")
+    @Schema(description = "父级节点")
     private java.lang.String pid;
     /**
      * 是否有子节点
      */
     @Excel(name = "是否有子节点", width = 15, dicCode = "yn")
     @Dict(dicCode = "yn")
-    @ApiModelProperty(value = "是否有子节点")
+    @Schema(description = "是否有子节点")
     private java.lang.String hasChild;
 
 

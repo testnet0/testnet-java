@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -25,7 +25,7 @@ import java.io.Serializable;
 @TableName("asset_search_engine")
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "asset_search_engine对象", description = "空间引擎配置")
+@Schema(description="空间引擎配置")
 public class AssetSearchEngine implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -33,55 +33,55 @@ public class AssetSearchEngine implements Serializable {
      * 主键
      */
     @TableId(type = IdType.ASSIGN_ID)
-    @ApiModelProperty(value = "主键")
+    @Schema(description = "主键")
     private java.lang.String id;
     /**
      * 创建人
      */
-    @ApiModelProperty(value = "创建人")
+    @Schema(description = "创建人")
     private java.lang.String createBy;
     /**
      * 创建日期
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "创建日期")
+    @Schema(description = "创建日期")
     private java.util.Date createTime;
     /**
      * 更新人
      */
-    @ApiModelProperty(value = "更新人")
+    @Schema(description = "更新人")
     private java.lang.String updateBy;
     /**
      * 更新日期
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "更新日期")
+    @Schema(description = "更新日期")
     private java.util.Date updateTime;
     /**
      * 所属部门
      */
-    @ApiModelProperty(value = "所属部门")
+    @Schema(description = "所属部门")
     private java.lang.String sysOrgCode;
     /**
      * 引擎名称
      */
     @Excel(name = "引擎名称", width = 15, dicCode = "engine_name")
     @Dict(dicCode = "engine_name")
-    @ApiModelProperty(value = "引擎名称")
+    @Schema(description = "引擎名称")
     private java.lang.String engineName;
     /**
      * 引擎Token
      */
     @Excel(name = "引擎Token", width = 15)
-    @ApiModelProperty(value = "引擎Token")
+    @Schema(description = "引擎Token")
     private java.lang.String engineToken;
 
     /**
      * 引擎Host地址
      */
     @Excel(name = "引擎Host地址", width = 15)
-    @ApiModelProperty(value = "引擎Host地址")
+    @Schema(description = "引擎Host地址")
     private java.lang.String engineHost;
 }

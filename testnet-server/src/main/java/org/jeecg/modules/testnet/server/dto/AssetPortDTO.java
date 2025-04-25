@@ -18,5 +18,6 @@ import java.util.List;
 public class AssetPortDTO extends AssetPort {
     private List<AssetSubDomainVO> domains;
     private String ip_dictText;
+    private String portRange;
 
 }

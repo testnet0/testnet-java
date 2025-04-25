@@ -1,12 +1,10 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -16,7 +14,6 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.testnet.server.entity.asset.Project;
 import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.asset.IProjectService;
-import org.jeecg.modules.testnet.server.vo.ProjectVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -25,8 +22,6 @@ import testnet.common.enums.AssetTypeEnums;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @Description: 项目
@@ -34,7 +29,7 @@ import java.util.List;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "项目")
+@Tag(name = "项目")
 @RestController
 @RequestMapping("/testnet.server/project")
 @Slf4j
@@ -55,33 +50,16 @@ public class ProjectController extends JeecgController<Project, IProjectService>
      * @return
      */
     //@AutoLog(value = "项目-分页列表查询")
-    @ApiOperation(value = "项目-分页列表查询", notes = "项目-分页列表查询")
+    @Operation(summary = "项目-分页列表查询")
     @GetMapping(value = "/list")
-    public Result<IPage<ProjectVO>> queryPageList(Project project,
+    public Result<IPage<Project>> queryPageList(Project project,
                                                   @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                                   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                                   HttpServletRequest req) {
         QueryWrapper<Project> queryWrapper = QueryGenerator.initQueryWrapper(project, req.getParameterMap());
         Page<Project> page = new Page<Project>(pageNo, pageSize);
         IPage<Project> pageList = projectService.page(page, queryWrapper);
-        List<ProjectVO> projectVOList = new ArrayList<>();
-        pageList.getRecords().forEach(record -> {
-            ProjectVO projectVO = new ProjectVO();
-            BeanUtil.copyProperties(record, projectVO, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-            projectVO.setAssetIPCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.IP));
-            projectVO.setAssetDomainCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.DOMAIN));
-            projectVO.setAssetSubDomainCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.SUB_DOMAIN));
-            projectVO.setAssetCompanyCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.COMPANY));
-            projectVO.setAssetPortCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.PORT));
-            projectVO.setAssetApiCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.API));
-            projectVO.setAssetWebCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.WEB));
-            projectVO.setAssetVulCount(assetCommonOptionService.getCountByProjectId(record.getId(), AssetTypeEnums.VUL));
-            projectVOList.add(projectVO);
-        });
-        IPage<ProjectVO> pageVOList = new Page<>();
-        BeanUtil.copyProperties(pageList, pageVOList, CopyOptions.create().setIgnoreNullValue(true).setIgnoreError(true));
-        pageVOList.setRecords(projectVOList);
-        return Result.OK(pageVOList);
+        return Result.OK(pageList);
     }
 
     /**
@@ -91,7 +69,7 @@ public class ProjectController extends JeecgController<Project, IProjectService>
      * @return
      */
     @AutoLog(value = "项目-添加")
-    @ApiOperation(value = "项目-添加", notes = "项目-添加")
+    @Operation(summary = "项目-添加")
     @RequiresPermissions("testnet.server:project:add")
     @PostMapping(value = "/add")
     public Result<String> add(@RequestBody Project project) {
@@ -106,7 +84,7 @@ public class ProjectController extends JeecgController<Project, IProjectService>
      * @return
      */
     @AutoLog(value = "项目-编辑")
-    @ApiOperation(value = "项目-编辑", notes = "项目-编辑")
+    @Operation(summary = "项目-编辑")
     @RequiresPermissions("testnet.server:project:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody Project project) {
@@ -121,7 +99,7 @@ public class ProjectController extends JeecgController<Project, IProjectService>
      * @return
      */
     @AutoLog(value = "项目-通过id删除")
-    @ApiOperation(value = "项目-通过id删除", notes = "项目-通过id删除")
+    @Operation(summary = "项目-通过id删除")
     @RequiresPermissions("testnet.server:project:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
@@ -136,7 +114,7 @@ public class ProjectController extends JeecgController<Project, IProjectService>
      * @return
      */
     @AutoLog(value = "项目-批量删除")
-    @ApiOperation(value = "项目-批量删除", notes = "项目-批量删除")
+    @Operation(summary = "项目-批量删除")
     @RequiresPermissions("testnet.server:project:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
@@ -165,7 +143,7 @@ public class ProjectController extends JeecgController<Project, IProjectService>
      * @return
      */
     //@AutoLog(value = "项目-通过id查询")
-    @ApiOperation(value = "项目-通过id查询", notes = "项目-通过id查询")
+    @Operation(summary = "项目-通过id查询")
     @GetMapping(value = "/queryById")
     public Result<Project> queryById(@RequestParam(name = "id", required = true) String id) {
         Project project = projectService.getById(id);
@@ -184,8 +162,8 @@ public class ProjectController extends JeecgController<Project, IProjectService>
     @RequiresPermissions("testnet.server:project:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, Project project) {
-        return super.exportXlsSheet(request, project, Project.class, "项目", null, 50000);
-        // return super.exportXls(request, project, Project.class, "项目");
+       // return super.exportXlsSheet(request, project, Project.class, "项目", null, 50000);
+         return super.exportXls(request, project, Project.class, "项目");
     }
 
     /**

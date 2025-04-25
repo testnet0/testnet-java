@@ -96,13 +96,13 @@ public class FlywayConfig {
      */
     @Value("${spring.flyway.clean-disabled:true}")
     private Boolean cleanDisabled;
-    
+
     @PostConstruct
     public void migrate() {
         if(!enabled){
             return;
         }
-
+        
         DynamicRoutingDataSource ds = (DynamicRoutingDataSource) dataSource;
         Map<String, DataSource> dataSources = ds.getDataSources();
         dataSources.forEach((k, v) -> {

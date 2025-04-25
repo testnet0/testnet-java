@@ -31,4 +31,5 @@ public interface ILiteFlowMessageSendService {
 
     <T extends ResultBase> ClientMessageProto.ClientResponse sendResult(T result);
 
+
 }

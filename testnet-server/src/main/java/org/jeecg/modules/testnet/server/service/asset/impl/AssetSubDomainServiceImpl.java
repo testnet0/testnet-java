@@ -17,6 +17,7 @@ import org.jeecg.modules.testnet.server.service.asset.IAssetIpSubdomainRelationS
 import org.jeecg.modules.testnet.server.service.asset.IAssetService;
 import org.jeecg.modules.testnet.server.vo.asset.AssetSubDomainVO;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import testnet.common.utils.DomainUtils;
@@ -62,6 +63,17 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
     }
 
     @Override
+    public List<AssetSubDomain> list(QueryWrapper<AssetSubDomain> queryWrapper, Map<String, String[]> parameterMap) {
+        if (parameterMap != null && parameterMap.containsKey("ip")) {
+            queryWrapper.inSql("id", "SELECT aisd.subdomain_id FROM asset_ip_sub_domain aisd LEFT JOIN asset_ip ai ON ai.id = aisd.ip_id WHERE ai.ip LIKE '%" + parameterMap.get("ip")[0] + "%'");
+        }
+        if (parameterMap != null && parameterMap.containsKey("domain")) {
+            queryWrapper.inSql("domain_id", "select id from asset_domain where domain like '%" + parameterMap.get("domain")[0] + "%'");
+        }
+        return super.list(queryWrapper);
+    }
+
+    @Override
     public AssetSubDomainVO convertVO(AssetSubDomain record) {
         AssetSubDomainVO assetSubDomainVO = new AssetSubDomainVO();
         BeanUtils.copyProperties(record, assetSubDomainVO);
@@ -78,6 +90,7 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
     public AssetSubDomainIpsDTO convertDTO(AssetSubDomain asset) {
         AssetSubDomainIpsDTO assetSubDomainIpsDTO = new AssetSubDomainIpsDTO();
         BeanUtils.copyProperties(asset, assetSubDomainIpsDTO);
+        assetSubDomainIpsDTO.setIpList(assetIpSubdomainRelationService.getAssetIpBySubDomainId(asset.getId()));
         assetSubDomainIpsDTO.setIps(assetIpSubdomainRelationService.getIpsBySubDomainId(asset.getId()));
         return assetSubDomainIpsDTO;
     }
@@ -87,13 +100,18 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
         String subDomain = asset.getSubDomain();
         String topDomain = DomainUtils.getTopDomain(subDomain);
         if (StringUtils.isNotEmpty(topDomain)) {
-            AssetDomain existingDomain = assetDomainMapper.selectOne(new QueryWrapper<AssetDomain>().eq("domain", topDomain));
+            AssetDomain existingDomain = assetDomainMapper.selectOne(new QueryWrapper<AssetDomain>().eq("domain", topDomain).eq("project_id", asset.getProjectId()));
             if (existingDomain == null) {
                 existingDomain = new AssetDomain();
                 existingDomain.setDomain(topDomain);
                 existingDomain.setProjectId(asset.getProjectId());
                 existingDomain.setSource(asset.getSource());
-                assetDomainMapper.insert(existingDomain);
+                try {
+                    assetDomainMapper.insert(existingDomain);
+                } catch (Exception e) {
+                    log.warn("主键冲突，重新查询资产: {}", existingDomain, e);
+                    existingDomain = assetDomainMapper.selectOne(new QueryWrapper<AssetDomain>().eq("domain", topDomain).eq("project_id", asset.getProjectId()));
+                }
             }
             asset.setDomainId(existingDomain.getId());
             save(asset);
@@ -113,7 +131,11 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
     @Override
     public void delRelation(List<String> list) {
         list.forEach(id -> {
-            assetIpSubdomainRelationService.delByAssetSubDomainId(id);
+            AssetSubDomain assetSubDomain = getById(id);
+            if (assetSubDomain != null) {
+                evictCache(assetSubDomain.getDomainId(), assetSubDomain.getProjectId());
+                assetIpSubdomainRelationService.delByAssetSubDomainId(id);
+            }
         });
         assetWebMapper.deleteBySubDomainIds(list);
         assetVulMapper.delBySubDomainIds(list);
@@ -132,6 +154,10 @@ public class AssetSubDomainServiceImpl extends ServiceImpl<AssetSubDomainMapper,
             }
         }
         return newAssetSubDomainList;
+    }
+
+    @CacheEvict(value = "asset:domain:cache", key = "#domain + ':' + #projectId")
+    public void evictCache(String domain, String projectId) {
     }
 
     @Cacheable(value = "asset:domain:cache", key = "#domain + ':' + #projectId", unless = "#result == null")

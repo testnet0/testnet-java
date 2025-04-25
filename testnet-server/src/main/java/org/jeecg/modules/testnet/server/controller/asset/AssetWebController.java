@@ -1,10 +1,10 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -15,7 +15,6 @@ import org.jeecg.modules.testnet.server.entity.asset.AssetBase;
 import org.jeecg.modules.testnet.server.entity.asset.AssetWeb;
 import org.jeecg.modules.testnet.server.service.asset.IAssetCommonOptionService;
 import org.jeecg.modules.testnet.server.service.asset.impl.AssetWebServiceImpl;
-import org.jeecg.modules.testnet.server.vo.AssetWebVO;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import testnet.common.enums.AssetTypeEnums;
@@ -32,7 +31,7 @@ import java.util.List;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "WEB服务")
+@Tag(name = "WEB服务")
 @RestController
 @RequestMapping("/testnet.server/assetWeb")
 @Slf4j
@@ -41,8 +40,6 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     @Resource
     private IAssetCommonOptionService assetCommonOptionService;
 
-    @Resource
-    private AssetWebServiceImpl assetWebService;
 
     /**
      * 分页列表查询
@@ -54,7 +51,7 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
      * @return
      */
     //@AutoLog(value = "WEB服务-分页列表查询")
-    @ApiOperation(value = "WEB服务-分页列表查询", notes = "WEB服务-分页列表查询")
+    @Operation(summary = "WEB服务-分页列表查询")
     @GetMapping(value = "/list")
     public Result<IPage<? extends AssetBase>> queryPageList(AssetWeb assetWeb,
                                                             @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -70,7 +67,7 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
      * @return
      */
     @AutoLog(value = "Web-添加")
-    @ApiOperation(value = "Web-添加", notes = "Web-添加")
+    @Operation(summary = "Web-添加")
     @RequiresPermissions("testnet.server:asset_web:add")
     @PostMapping(value = "/add")
     public Result<?> add(@RequestBody AssetWebDTO assetWebDTO) {
@@ -99,7 +96,7 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
      * @return
      */
     @AutoLog(value = "Web-编辑")
-    @ApiOperation(value = "Web-编辑", notes = "Web-编辑")
+    @Operation(summary = "Web-编辑")
     @RequiresPermissions("testnet.server:asset_web:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetWebDTO assetWebDTO) {
@@ -119,7 +116,7 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
      * @return
      */
     @AutoLog(value = "WEB服务-通过id删除")
-    @ApiOperation(value = "WEB服务-通过id删除", notes = "WEB服务-通过id删除")
+    @Operation(summary = "WEB服务-通过id删除")
     @RequiresPermissions("testnet.server:asset_web:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
@@ -134,7 +131,7 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
      * @return
      */
     @AutoLog(value = "WEB服务-批量删除")
-    @ApiOperation(value = "WEB服务-批量删除", notes = "WEB服务-批量删除")
+    @Operation(summary = "WEB服务-批量删除")
     @RequiresPermissions("testnet.server:asset_web:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
@@ -149,7 +146,7 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
      * @return
      */
     //@AutoLog(value = "WEB服务-通过id查询")
-    @ApiOperation(value = "WEB服务-通过id查询", notes = "WEB服务-通过id查询")
+    @Operation(summary = "WEB服务-通过id查询")
     @GetMapping(value = "/queryById")
     public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
         return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.WEB);
@@ -164,8 +161,8 @@ public class AssetWebController extends JeecgController<AssetWeb, AssetWebServic
     @RequiresPermissions("testnet.server:asset_web:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetWeb assetWeb) {
-        return super.exportXlsSheet(request, assetWeb, AssetWeb.class, "WEB服务", null, 50000);
-        // return super.exportXls(request, assetWeb, AssetWeb.class, "WEB服务");
+        // return super.exportXlsSheet(request, assetWeb, AssetWeb.class, "WEB服务", null, 50000);
+        return super.exportXls(request, assetWeb, AssetWeb.class, "WEB服务");
     }
 
     /**

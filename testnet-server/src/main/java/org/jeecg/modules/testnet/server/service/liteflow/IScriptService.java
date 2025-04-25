@@ -3,6 +3,7 @@ package org.jeecg.modules.testnet.server.service.liteflow;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.testnet.server.entity.liteflow.Script;
+import org.jeecg.modules.testnet.server.vo.workflow.LiteFlowNodeVO;
 
 import java.util.List;
 
@@ -26,5 +27,5 @@ public interface IScriptService extends IService<Script> {
 
     void changeStatus(String id, Boolean status);
 
-    List<Script> needInstallScript();
+    List<LiteFlowNodeVO> listNode();
 }

@@ -8,7 +8,7 @@ package org.jeecg.modules.testnet.server.service.processer.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.api.ISysBaseAPI;
@@ -47,17 +47,27 @@ public class IpOrSubDomainToPortProcessor implements IAssetResultProcessorServic
         IpOrSubDomainToPortDTO dto = JSONObject.parseObject(resultBase.getResult(), IpOrSubDomainToPortDTO.class);
         List<IpOrSubDomainToPortDTO.Port> portList = dto.getPortList();
         String projectId = JSONObject.parseObject(liteFlowSubTask.getSubTaskParam()).getString("projectId");
+        // 先判断ip是否存在（缓存），再判断域名ip关系是否存在（缓存），再直接更新端口信息
         if (portList != null && !portList.isEmpty()) {
             portList.forEach(port -> {
                 AssetPortDTO assetPortDTO = new AssetPortDTO();
                 // 如果是子域名的端口扫描 需要先将ip存入数据库
-                AssetSubDomainIpsDTO assetSubDomainIpsDTO = new AssetSubDomainIpsDTO();
                 if (liteFlowTask.getAssetType().equals(AssetTypeEnums.SUB_DOMAIN.getCode())) {
+                    AssetSubDomainIpsDTO assetSubDomainIpsDTO = new AssetSubDomainIpsDTO();
                     assetSubDomainIpsDTO.setSubDomain(port.getHost());
                     assetSubDomainIpsDTO.setProjectId(projectId);
                     assetSubDomainIpsDTO.setIps(port.getIp());
+                    assetSubDomainIpsDTO.setSource(source);
                     assetCommonOptionService.addOrUpdate(assetSubDomainIpsDTO, AssetTypeEnums.SUB_DOMAIN, liteFlowTask.getId(), liteFlowSubTask.getId());
                 }
+                if(liteFlowTask.getAssetType().equals(AssetTypeEnums.IP.getCode())){
+                    AssetIpDTO assetIpDTO = new AssetIpDTO();
+                    assetIpDTO.setIp(port.getIp());
+                    assetIpDTO.setProjectId(projectId);
+                    assetIpDTO.setSource(source);
+                    assetCommonOptionService.addOrUpdate(assetIpDTO, AssetTypeEnums.IP, liteFlowTask.getId(), liteFlowSubTask.getId());
+                }
+
                 HashMap<String, String> fieldMap = new HashMap<>();
                 fieldMap.put("ip", port.getIp());
                 fieldMap.put("project_id", projectId);

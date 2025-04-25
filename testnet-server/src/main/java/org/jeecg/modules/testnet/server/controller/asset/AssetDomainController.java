@@ -1,10 +1,10 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -30,7 +30,7 @@ import java.util.List;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "主域名")
+@Tag(name = "主域名")
 @RestController
 @RequestMapping("/testnet.server/assetDomain")
 @Slf4j
@@ -50,7 +50,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
      * @return
      */
     //@AutoLog(value = "主域名-分页列表查询")
-    @ApiOperation(value = "主域名-分页列表查询", notes = "主域名-分页列表查询")
+    @Operation(summary = "主域名-分页列表查询")
     @GetMapping(value = "/list")
     public Result<IPage<? extends AssetBase>> queryPageList(AssetDomain assetDomain, @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo, @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize, HttpServletRequest req) {
         return Result.OK(assetCommonOptionService.page(assetDomain, pageNo, pageSize, req.getParameterMap(), AssetTypeEnums.DOMAIN));
@@ -63,7 +63,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
      * @return
      */
     @AutoLog(value = "主域名-添加")
-    @ApiOperation(value = "主域名-添加", notes = "主域名-添加")
+    @Operation(summary = "主域名-添加")
     @RequiresPermissions("testnet.server:asset_domain:add")
     @PostMapping(value = "/add")
     public Result<?> add(@RequestBody AssetDomain assetDomain) {
@@ -91,7 +91,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
      * @return
      */
     @AutoLog(value = "主域名-编辑")
-    @ApiOperation(value = "主域名-编辑", notes = "主域名-编辑")
+    @Operation(summary = "主域名-编辑")
     @RequiresPermissions("testnet.server:asset_domain:edit")
     @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
     public Result<String> edit(@RequestBody AssetDomain assetDomain) {
@@ -111,7 +111,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
      * @return
      */
     @AutoLog(value = "主域名-通过id删除")
-    @ApiOperation(value = "主域名-通过id删除", notes = "主域名-通过id删除")
+    @Operation(summary = "主域名-通过id删除")
     @RequiresPermissions("testnet.server:asset_domain:delete")
     @DeleteMapping(value = "/delete")
     public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
@@ -126,7 +126,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
      * @return
      */
     @AutoLog(value = "主域名-批量删除")
-    @ApiOperation(value = "主域名-批量删除", notes = "主域名-批量删除")
+    @Operation(summary = "主域名-批量删除")
     @RequiresPermissions("testnet.server:asset_domain:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
@@ -140,7 +140,7 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
      * @param id
      * @return
      */
-    @ApiOperation(value = "主域名-通过id查询", notes = "主域名-通过id查询")
+    @Operation(summary = "主域名-通过id查询")
     @GetMapping(value = "/queryById")
     public Result<? extends AssetBase> queryById(@RequestParam(name = "id", required = true) String id) {
         return assetCommonOptionService.getAssetDOByIdAndAssetType(id, AssetTypeEnums.DOMAIN);
@@ -155,8 +155,8 @@ public class AssetDomainController extends JeecgController<AssetDomain, AssetDom
     @RequiresPermissions("testnet.server:asset_domain:exportXls")
     @RequestMapping(value = "/exportXls")
     public ModelAndView exportXls(HttpServletRequest request, AssetDomain assetDomain) {
-        return super.exportXlsSheet(request, assetDomain, AssetDomain.class, "主域名", null, 50000);
-        // return super.exportXls(request, assetDomain, AssetDomain.class, "主域名");
+        // return super.exportXlsSheet(request, assetDomain, AssetDomain.class, "主域名", null, 50000);
+        return super.exportXls(request, assetDomain, AssetDomain.class, "主域名");
     }
 
     /**

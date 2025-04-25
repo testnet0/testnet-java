@@ -9,7 +9,7 @@ spring:
 testnet:
   client:
     name: ${CLIENT_NAME}
-    version: v2.0
+    version: v2.2
   grpc:
     token: ${TESTNET_GRPC_TOKEN}
   result:
@@ -17,9 +17,8 @@ testnet:
 grpc:
   client:
     GLOBAL:
-      negotiation-type: tls
+      negotiation-type: ${GRPC_TYPE:tls}
       security:
-        authority-override: localhost
         trust-cert-collection: selfsigned.crt
       enable-keep-alive: true
       address: ${GRPC_ADDRESS}

@@ -4,8 +4,10 @@ import com.yomahub.liteflow.builder.LiteFlowNodeBuilder;
 import com.yomahub.liteflow.builder.el.LiteFlowChainELBuilder;
 import com.yomahub.liteflow.enums.NodeTypeEnum;
 import com.yomahub.liteflow.flow.FlowBus;
+import com.yomahub.liteflow.meta.LiteflowMetaOperator;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import testnet.client.config.EnvConfig;
@@ -30,9 +32,6 @@ public class FlowDataFetcher {
 
     // 存储 script 的哈希值
     private final Map<String, String> scriptHashMap = new HashMap<>();
-
-    @Resource
-    private EnvConfig envConfig;
 
     /**
      * 拉取哈希值并更新数据
@@ -64,13 +63,18 @@ public class FlowDataFetcher {
                 // 拉取具体的 chain 内容
                 try {
                     ChainMessage chainMessage = liteFlowMessageServiceBlockingStub.getChainById(FlowByIdRequest.newBuilder().setId(id).build());
-                    LiteFlowChainELBuilder.createChain()
-                            .setChainId(chainMessage.getChainId())
-                            .setRoute(chainMessage.getRoute())
-                            .setNamespace(chainMessage.getNamespace())
-                            .setEL(chainMessage.getBody())
-                            .build();
-
+                    if (StringUtils.isBlank(oldHash)) {
+                        log.info("新增工作流:{}", id);
+                        LiteFlowChainELBuilder.createChain()
+                                .setChainId(chainMessage.getChainId())
+                                .setRoute(chainMessage.getRoute())
+                                .setNamespace(chainMessage.getNamespace())
+                                .setEL(chainMessage.getBody())
+                                .build();
+                    } else {
+                        log.info("更新工作流:{}", id);
+                        LiteflowMetaOperator.reloadOneChain(chainMessage.getChainId(), chainMessage.getBody());
+                    }
                 } catch (Exception e) {
                     log.error("拉取工作流失败，原因:{}", e.getMessage());
                 }
@@ -102,13 +106,19 @@ public class FlowDataFetcher {
                 // 拉取具体的 script 内容
                 try {
                     ScriptMessage scriptMessage = liteFlowMessageServiceBlockingStub.getScriptById(FlowByIdRequest.newBuilder().setId(scriptId).build());
-                    LiteFlowNodeBuilder.createScriptNode()
-                            .setId(scriptMessage.getNodeId())
-                            .setType(NodeTypeEnum.getEnumByCode(scriptMessage.getType()))
-                            .setName(scriptMessage.getName())
-                            .setScript(scriptMessage.getScript())
-                            .setLanguage(scriptMessage.getLanguage())
-                            .build();
+                    if (StringUtils.isBlank(oldHash)) {
+                        log.info("新增脚本:{}", scriptId);
+                        LiteFlowNodeBuilder.createScriptNode()
+                                .setId(scriptMessage.getNodeId())
+                                .setType(NodeTypeEnum.getEnumByCode(scriptMessage.getType()))
+                                .setName(scriptMessage.getName())
+                                .setScript(scriptMessage.getScript())
+                                .setLanguage(scriptMessage.getLanguage())
+                                .build();
+                    } else {
+                        log.info("更新脚本:{}", scriptId);
+                        LiteflowMetaOperator.reloadScript(scriptMessage.getNodeId(), scriptMessage.getScript());
+                    }
                 } catch (Exception e) {
                     log.error("拉取脚本失败,原因:{}", e.getMessage());
                 }
@@ -129,7 +139,7 @@ public class FlowDataFetcher {
     /**
      * 定时拉取并更新 Chain 和 Script 数据
      */
-    @Scheduled(fixedDelay = 60000) // 每60秒执行一次
+    @Scheduled(fixedDelay = 5 * 1000L) // 每5秒执行一次
     public void scheduledPullAndUpdateFlowData() {
         pullAndUpdateFlowData();
     }

@@ -1,8 +1,8 @@
 package org.jeecg.modules.testnet.server.controller.asset;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -22,7 +22,7 @@ import java.util.List;
  * @Date: 2024-06-01
  * @Version: V1.0
  */
-@Api(tags = "API")
+@Tag(name = "API")
 @RestController
 @RequestMapping("/testnet.server/assetApiTree")
 @Slf4j
@@ -75,7 +75,7 @@ public class AssetApiTreeController extends JeecgController<AssetApiTree, IAsset
      * @return
      */
     @AutoLog(value = "API-批量删除")
-    @ApiOperation(value = "API-批量删除", notes = "API-批量删除")
+    @Operation(summary = "API-批量删除")
     @RequiresPermissions("testnet.server:asset_api:deleteBatch")
     @DeleteMapping(value = "/deleteBatch")
     public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {

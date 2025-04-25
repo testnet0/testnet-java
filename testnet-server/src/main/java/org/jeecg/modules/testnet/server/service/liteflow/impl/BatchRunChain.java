@@ -6,8 +6,8 @@
  **/
 package org.jeecg.modules.testnet.server.service.liteflow.impl;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.modules.testnet.server.entity.liteflow.Chain;
 import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowSubTask;

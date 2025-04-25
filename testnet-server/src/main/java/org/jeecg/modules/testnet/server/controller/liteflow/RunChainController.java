@@ -6,8 +6,8 @@
  **/
 package org.jeecg.modules.testnet.server.controller.liteflow;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.List;
 
-@Api(tags = "流程管理")
+@Tag(name = "流程管理")
 @RestController
 @RequestMapping("/testnet.server/chain")
 @Slf4j
@@ -40,7 +40,7 @@ public class RunChainController {
      * @param params
      * @return
      */
-    @ApiOperation(value = "流程管理-批量运行工作流", notes = "流程管理-批量运行工作流")
+    @Operation(summary = "流程管理-批量运行工作流")
     @RequestMapping(value = "/batchRunTargetChain", method = {RequestMethod.POST})
     @RequiresPermissions("testnet.server:chain:batchRunTargetChain")
     public Result<String> batchRunTargetChain(@RequestBody String params) {

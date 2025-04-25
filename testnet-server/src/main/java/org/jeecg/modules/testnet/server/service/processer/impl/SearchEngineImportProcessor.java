@@ -1,6 +1,6 @@
 package org.jeecg.modules.testnet.server.service.processer.impl;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
@@ -11,7 +11,7 @@ import org.jeecg.modules.testnet.server.entity.liteflow.LiteFlowTask;
 import org.jeecg.modules.testnet.server.service.asset.IAssetSearchService;
 import org.jeecg.modules.testnet.server.service.log.ILogService;
 import org.jeecg.modules.testnet.server.service.processer.IAssetResultProcessorService;
-import org.jeecg.modules.testnet.server.vo.AssetSearchVO;
+import org.jeecg.modules.testnet.server.vo.asset.AssetSearchVO;
 import org.springframework.stereotype.Service;
 import testnet.grpc.ClientMessageProto.ResultMessage;
 

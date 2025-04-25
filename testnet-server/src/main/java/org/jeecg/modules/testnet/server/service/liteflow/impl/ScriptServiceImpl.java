@@ -1,15 +1,16 @@
 package org.jeecg.modules.testnet.server.service.liteflow.impl;
 
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.modules.system.service.ISysDataLogService;
 import org.jeecg.modules.testnet.server.entity.liteflow.Script;
 import org.jeecg.modules.testnet.server.mapper.liteflow.ScriptMapper;
 import org.jeecg.modules.testnet.server.service.liteflow.IScriptService;
+import org.jeecg.modules.testnet.server.vo.workflow.LiteFlowNodeVO;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -67,11 +68,22 @@ public class ScriptServiceImpl extends ServiceImpl<ScriptMapper, Script> impleme
     }
 
     @Override
-    public List<Script> needInstallScript() {
-        LambdaQueryWrapper<Script> query = new LambdaQueryWrapper<>();
-        query.eq(Script::getEnable, true);
-        query.eq(Script::getNeedInstall, true);
-        return list(query);
+    public List<LiteFlowNodeVO> listNode() {
+        List<LiteFlowNodeVO> nodeVOList = new ArrayList<>();
+        list().forEach(
+                script -> {
+                    if (script.getEnable()) {
+                        LiteFlowNodeVO nodeVO = new LiteFlowNodeVO();
+                        nodeVO.setId(script.getId());
+                        nodeVO.setName(script.getScriptName());
+                        nodeVO.setType("node");
+                        nodeVO.setShape("dynamic-node");
+                        nodeVOList.add(nodeVO);
+                    }
+                }
+        );
+        return nodeVOList;
     }
+
 
 }

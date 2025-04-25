@@ -15,6 +15,7 @@ import org.jeecg.modules.testnet.server.vo.asset.AssetCompanyVO;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,11 @@ public class AssetCompanyServiceImpl extends ServiceImpl<AssetCompanyMapper, Ass
     @Override
     public IPage<AssetCompany> page(IPage<AssetCompany> page, QueryWrapper<AssetCompany> queryWrapper, Map<String, String[]> parameterMap) {
         return super.page(page, queryWrapper);
+    }
+
+    @Override
+    public List<AssetCompany> list(QueryWrapper<AssetCompany> queryWrapper, Map<String, String[]> parameterMap) {
+        return super.list(queryWrapper);
     }
 
     @Override
